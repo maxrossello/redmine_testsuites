@@ -10,7 +10,7 @@ namespace :test do
       Rake::Task["test:plugins:units"].invoke
       Rake::Task["test:plugins:functionals"].invoke
       Rake::Task["test:plugins:integration"].invoke
-      Rake::Task["test:plugins:ui"].invoke
+      #Rake::Task["test:plugins:ui"].invoke
       Rake::Task["test:plugins:routing"].invoke
     end
 
