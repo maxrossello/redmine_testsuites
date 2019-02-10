@@ -41,6 +41,9 @@ Redmine::SudoMode.disable!
 $redmine_tmp_attachments_directory = "#{Rails.root}/tmp/test/attachments"
 FileUtils.mkdir_p $redmine_tmp_attachments_directory
 
+require "minitest/reporters"
+Minitest::Reporters.use!
+
 
 class ActionView::TestCase
   helper :application

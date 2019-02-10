@@ -51,6 +51,7 @@ Install this plugin into the Redmine plugins folder.
 
     cd {redmine root}
     git clone https://github.com/maxrossello/redmine_testsuites.git plugins/redmine_testsuites
+    bundle install
 
 Finally restart your server.
 
