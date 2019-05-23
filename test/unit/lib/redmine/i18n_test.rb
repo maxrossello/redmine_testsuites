@@ -237,6 +237,9 @@ class Redmine::I18nTest < ActiveSupport::TestCase
     assert_equal "Untranslated string", l(:untranslated)
     ::I18n.locale = 'fr'
     assert_equal "Pas de traduction", l(:untranslated)
+    
+    # missing reload harms later lookups
+    ::I18n.backend.reload!
   end
 
   def test_utf8
