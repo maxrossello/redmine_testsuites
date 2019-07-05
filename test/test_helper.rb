@@ -364,7 +364,7 @@ module Redmine
   end
 
   module ApiTest
-    API_FORMATS = %w(json xml).freeze
+    TS_API_FORMATS = %w(json xml).freeze
 
     # Base class for API tests
     class Base < Redmine::IntegrationTest
@@ -423,7 +423,7 @@ module Redmine
         raise ArgumentError unless request
         options = arg.slice!(request)
   
-        API_FORMATS.each do |format|
+        TS_API_FORMATS.each do |format|
           format_request = request.sub /$/, ".#{format}"
           super options.merge(format_request => arg[request], :format => format)
         end
