@@ -24,9 +24,14 @@ class TimelogControllerTest < Redmine::ControllerTest
            :trackers, :enumerations, :issue_statuses,
            :custom_fields, :custom_values,
            :projects_trackers, :custom_fields_trackers,
-           :custom_fields_projects
+           :custom_fields_projects, :issue_categories
 
   include Redmine::I18n
+
+  def setup
+    super
+    Setting.default_language = 'en'
+  end
 
   def test_new
     @request.session[:user_id] = 3
@@ -540,6 +545,11 @@ class TimelogControllerTest < Redmine::ControllerTest
     end
 
     assert_select 'form#bulk_edit_form[action=?]', '/time_entries/bulk_update' do
+      assert_select 'select[name=?]', 'time_entry[project_id]'
+
+      # Clear issue checkbox
+      assert_select 'input[name=?][value=?]', 'time_entry[issue_id]', 'none'
+
       # System wide custom field
       assert_select 'select[name=?]', 'time_entry[custom_field_values][10]'
 
@@ -556,6 +566,34 @@ class TimelogControllerTest < Redmine::ControllerTest
 
     get :bulk_edit, :params => {:ids => [1, 2, 6]}
     assert_response :success
+  end
+
+  def test_get_bulk_edit_on_different_projects_should_propose_only_common_activites
+    project = Project.find(3)
+    TimeEntryActivity.create!(:name => 'QA', :project => project, :parent => TimeEntryActivity.find_by_name('QA'), :active => false)
+    @request.session[:user_id] = 1
+
+    get :bulk_edit, :params => {:ids => [1, 2, 4]}
+    assert_response :success
+    assert_select 'select[id=?]', 'time_entry_activity_id' do
+      assert_select 'option', 3
+      assert_select 'option[value=?]', '11', 0, :text => 'QA'
+    end
+  end
+
+  def test_get_bulk_edit_on_same_project_should_propose_project_activities
+    project = Project.find(1)
+    override_activity = TimeEntryActivity.create!({:name => "QA override", :parent => TimeEntryActivity.find_by_name("QA"), :project => project})
+
+    @request.session[:user_id] = 1
+
+    get :bulk_edit, :params => {:ids => [1, 2]}
+    assert_response :success
+
+    assert_select 'select[id=?]', 'time_entry_activity_id' do
+      assert_select 'option', 4
+      assert_select 'option[value=?]', override_activity.id.to_s, :text => 'QA override'
+    end
   end
 
   def test_bulk_edit_with_edit_own_time_entries_permission
@@ -705,6 +743,50 @@ class TimelogControllerTest < Redmine::ControllerTest
 
     assert_select '.total-for-hours', :text => 'Hours: 162.90'
     assert_select 'form#query_form[action=?]', '/time_entries'
+
+    assert_equal ['Project', 'Date', 'User', 'Activity', 'Issue', 'Comment', 'Hours'], columns_in_list
+    assert_select '.query-totals>span', 1
+  end
+
+  def test_index_with_default_query_setting
+    with_settings :time_entry_list_defaults => {'column_names' => %w(spent_on issue user hours), 'totalable_names' => []} do
+      get :index
+      assert_response :success
+    end
+
+    assert_select 'table.time-entries thead' do
+      assert_select 'th.project'
+      assert_select 'th.spent_on'
+      assert_select 'th.issue'
+      assert_select 'th.user'
+      assert_select 'th.hours'
+    end
+    assert_select 'table.time-entries tbody' do
+      assert_select 'td.project'
+      assert_select 'td.spent_on'
+      assert_select 'td.issue'
+      assert_select 'td.user'
+      assert_select 'td.hours'
+    end
+    assert_equal ['Project', 'Date', 'Issue', 'User', 'Hours'], columns_in_list
+  end
+
+  def test_index_with_default_query_setting_using_custom_field
+    field = TimeEntryCustomField.create!(:name => 'Foo', :field_format => 'int')
+
+    with_settings :time_entry_list_defaults => {
+        'column_names' => ["spent_on", "user", "hours", "cf_#{field.id}"],
+        'totalable_names' => ["hours", "cf_#{field.id}"]
+      } do
+      get :index
+      assert_response :success
+    end
+
+    assert_equal ['Project', 'Date', 'User', 'Hours', 'Foo'], columns_in_list
+
+    assert_select '.total-for-hours'
+    assert_select ".total-for-cf-#{field.id}"
+    assert_select '.query-totals>span', 2
   end
 
   def test_index_all_projects_should_show_log_time_link
@@ -904,6 +986,25 @@ class TimelogControllerTest < Redmine::ControllerTest
     assert_equal [entry].map(&:id).map(&:to_s), css_select('input[name="ids[]"]').map {|e| e.attr('value')}
   end
 
+  def test_index_with_project_status_filter
+    project = Project.find(3)
+    project.close
+    project.save
+
+    get :index, :params => {
+        :set_filter => 1,
+        :f => ['project.status'],
+        :op => {'project.status' => '='},
+        :v => {'project.status' => ['1']}
+    }
+
+    assert_response :success
+
+    time_entries = css_select('input[name="ids[]"]').map {|e| e.attr('value')}
+    assert_include '1', time_entries
+    assert_not_include '4', time_entries
+  end
+
   def test_index_with_issue_status_column
     issue = Issue.generate!(:project_id => 1, :tracker_id => 1, :status_id => 4)
     entry = TimeEntry.generate!(:issue => issue)
@@ -912,6 +1013,8 @@ class TimelogControllerTest < Redmine::ControllerTest
       :c => %w(project spent_on issue comments hours issue.status)
     }
     assert_response :success
+
+    assert_select 'th.issue-status'
     assert_select 'td.issue-status', :text => issue.status.name
   end
 
@@ -976,6 +1079,43 @@ class TimelogControllerTest < Redmine::ControllerTest
     assert_equal Tracker.where(:id => [1, 2, 3]).sorted.pluck(:name), values
   end
 
+  def test_index_with_issue_category_filter
+    get :index, :params => {
+      :project_id => 'ecookbook',
+      :f => ['issue.category_id'],
+      :op => {'issue.category_id' => '='},
+      :v => {'issue.category_id' => ['1']}
+    }
+    assert_response :success
+    assert_equal ['1', '2'], css_select('input[name="ids[]"]').map {|e| e.attr('value')}
+  end
+
+  def test_index_with_issue_category_column
+    get :index, :params => {
+      :project_id => 'ecookbook',
+      :c => %w(project spent_on issue comments hours issue.category)
+    }
+
+    assert_response :success
+    assert_select 'td.issue-category', :text => 'Printing'
+  end
+
+  def test_index_with_issue_category_sort
+    issue = Issue.find(3)
+    issue.category_id = 2
+    issue.save!
+
+    get :index, :params => {
+      :c => ["hours", 'issue.category'],
+      :sort => 'issue.category'
+    }
+    assert_response :success
+
+    # Make sure that values are properly sorted
+    values = css_select("td.issue-category").map(&:text).reject(&:blank?)
+    assert_equal ['Printing', 'Printing', 'Recipes'], values
+  end
+
   def test_index_with_filter_on_issue_custom_field
     issue = Issue.generate!(:project_id => 1, :tracker_id => 1, :custom_field_values => {2 => 'filter_on_issue_custom_field'})
     entry = TimeEntry.generate!(:issue => issue, :hours => 2.5)
@@ -1024,7 +1164,7 @@ class TimelogControllerTest < Redmine::ControllerTest
       :sort => field_name
     }
     assert_response :success
-    assert_select "th a.sort", :text => 'String Field'
+    assert_select "th.cf_#{field.id} a.sort", :text => 'String Field'
 
     # Make sure that values are properly sorted
     values = css_select("td.#{field_name}").map(&:text).reject(&:blank?)
@@ -1096,7 +1236,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     with_settings :date_format => '%m/%d/%Y' do
       get :index, :params => {:format => 'csv'}
       assert_response :success
-      assert_equal 'text/csv; header=present', response.content_type
+      assert_equal 'text/csv', response.content_type
     end
   end
 
@@ -1104,7 +1244,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     with_settings :date_format => '%m/%d/%Y' do
       get :index, :params => {:project_id => 1, :format => 'csv'}
       assert_response :success
-      assert_equal 'text/csv; header=present', response.content_type
+      assert_equal 'text/csv', response.content_type
     end
   end
 

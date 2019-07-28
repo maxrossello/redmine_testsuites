@@ -33,10 +33,30 @@ class CalendarsControllerTest < Redmine::ControllerTest
            :queries
 
   def test_show
-    get :show, :params => {
-        :project_id => 1
-      }
+    with_settings :gravatar_enabled => '1' do
+      get :show, :params => {
+          :project_id => 1
+        }
+    end
     assert_response :success
+
+    # query form
+    assert_select 'form#query_form' do
+      assert_select 'div#query_form_with_buttons.hide-when-print' do
+        assert_select 'div#query_form_content' do
+          assert_select 'fieldset#filters.collapsible'
+        end
+        assert_select 'p.contextual'
+        assert_select 'p.buttons'
+      end
+    end
+
+    # Assert context menu on issues
+    assert_select 'form[data-cm-url=?]', '/issues/context_menu'
+    assert_select 'div.issue.hascontextmenu.tooltip' do
+      assert_select 'input[name=?][type=?]', 'ids[]', 'checkbox'
+      assert_select 'img[class="gravatar"]'
+    end
   end
 
   def test_show_should_run_custom_queries

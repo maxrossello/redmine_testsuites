@@ -35,6 +35,7 @@ class AttachmentFieldFormatTest < Redmine::IntegrationTest
            :attachments
 
   def setup
+    User.current = nil
     set_tmp_attachments_directory
     @field = IssueCustomField.generate!(:name => "File", :field_format => "attachment")
     log_user "jsmith", "jsmith"
@@ -85,7 +86,7 @@ class AttachmentFieldFormatTest < Redmine::IntegrationTest
     # preview the attachment
     get link.attr('href')
     assert_response :success
-    assert_template :file
+    assert_select 'h2', :text => "#{issue.tracker} ##{issue.id} » testfile.txt"
   end
 
   def test_create_without_attachment

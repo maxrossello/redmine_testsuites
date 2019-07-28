@@ -166,13 +166,13 @@ class Redmine::PluginTest < ActiveSupport::TestCase
         requires_redmine_plugin(:other, :version => ['98.0.0', '99.0.0'])
       end
       # Missing plugin
-      test.assert_raise Redmine::PluginNotFound do
+      test.assert_raise Redmine::PluginRequirementError do
         requires_redmine_plugin(:missing, :version_or_higher => '0.1.0')
       end
-      test.assert_raise Redmine::PluginNotFound do
+      test.assert_raise Redmine::PluginRequirementError do
         requires_redmine_plugin(:missing, '0.1.0')
       end
-      test.assert_raise Redmine::PluginNotFound do
+      test.assert_raise Redmine::PluginRequirementError do
         requires_redmine_plugin(:missing, :version => '0.1.0')
       end
     end
@@ -182,5 +182,14 @@ class Redmine::PluginTest < ActiveSupport::TestCase
     @klass.register(:foo) { settings :partial => 'foo/settings' }
     Rails.logger.expects(:warn)
     @klass.register(:bar) { settings :partial => 'foo/settings' }
+  end
+
+  def test_migrate_redmine_plugin
+    @klass.register :foo do
+      name 'Foo plugin'
+      version '0.0.1'
+    end
+
+    assert Redmine::Plugin.migrate('foo')
   end
 end

@@ -20,7 +20,7 @@ require File.expand_path('../../test_helper', __FILE__)
 class DocumentsControllerTest < Redmine::ControllerTest
   fixtures :projects, :users, :email_addresses, :roles, :members, :member_roles,
            :enabled_modules, :documents, :enumerations,
-           :groups_users, :attachments
+           :groups_users, :attachments, :user_preferences
 
   def setup
     User.current = nil
@@ -118,10 +118,10 @@ LOREM
             :title => 'DocumentsControllerTest#test_post_new',
             :description => 'This is a new document',
             :category_id => 2
-          },  
+          },
           :attachments => {
             '1' => {
-            'file' => uploaded_test_file('testfile.txt', 'text/plain')}    
+            'file' => uploaded_test_file('testfile.txt', 'text/plain')}
           }
         }
     end
@@ -132,7 +132,7 @@ LOREM
     assert_equal Enumeration.find(2), document.category
     assert_equal 1, document.attachments.size
     assert_equal 'testfile.txt', document.attachments.first.filename
-    assert_equal 1, ActionMailer::Base.deliveries.size
+    assert_equal 2, ActionMailer::Base.deliveries.size
   end
 
   def test_create_with_failure
@@ -159,7 +159,7 @@ LOREM
         :document => {
           :title => 'no default',
           :description => 'This is a new document',
-          :category_id => category1.id 
+          :category_id => category1.id
         }
       }
     assert_redirected_to '/projects/ecookbook/documents'
@@ -220,7 +220,7 @@ LOREM
           :id => 1,
           :attachments => {
             '1' => {
-            'file' => uploaded_test_file('testfile.txt', 'text/plain')}    
+            'file' => uploaded_test_file('testfile.txt', 'text/plain')}
           }
         }
     end

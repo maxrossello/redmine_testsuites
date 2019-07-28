@@ -17,12 +17,13 @@
 
 require File.expand_path('../../test_helper', __FILE__)
 
-class RepositoriesControllerTest < Redmine::ControllerTest
+class RepositoriesControllerTest < Redmine::RepositoryControllerTest
   fixtures :projects, :users, :email_addresses, :roles, :members, :member_roles, :enabled_modules,
            :repositories, :issues, :issue_statuses, :changesets, :changes,
            :issue_categories, :enumerations, :custom_fields, :custom_values, :trackers
 
   def setup
+    super
     User.current = nil
   end
 
@@ -179,9 +180,29 @@ class RepositoriesControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_show_should_show_diff_button_depending_on_browse_repository_permission
+    @request.session[:user_id] = 2
+    role = Role.find(1)
+
+    role.add_permission! :browse_repository
+    get :show, :params => {
+      :id => 1
+    }
+    assert_response :success
+    assert_select 'input[value="View differences"]'
+
+    role.remove_permission! :browse_repository
+    get :show, :params => {
+      :id => 1
+    }
+    assert_response :success
+    assert_select 'input[value="View differences"]', :count => 0
+  end
+
   def test_revisions
     get :revisions, :params => {
-        :id => 1
+        :id => 1,
+        :repository_id => 10
       }
     assert_response :success
     assert_select 'table.changesets'
@@ -209,6 +230,7 @@ class RepositoriesControllerTest < Redmine::ControllerTest
   def test_revision
     get :revision, :params => {
         :id => 1,
+        :repository_id => 10,
         :rev => 1
       }
     assert_response :success
@@ -221,6 +243,7 @@ class RepositoriesControllerTest < Redmine::ControllerTest
     with_settings :commit_logs_formatting => '0' do
       get :revision, :params => {
           :id => 1,
+          :repository_id => 10,
           :rev => 1
         }
       assert_response :success
@@ -234,11 +257,12 @@ class RepositoriesControllerTest < Redmine::ControllerTest
 
     get :revision, :params => {
         :id => 1,
+        :repository_id => 10,
         :rev => 1
       }
     assert_response :success
 
-    assert_select 'form[action=?]', '/projects/ecookbook/repository/revisions/1/issues' do
+    assert_select 'form[action=?]', '/projects/ecookbook/repository/10/revisions/1/issues' do
       assert_select 'input[name=?]', 'issue_id'
     end
   end
@@ -246,6 +270,7 @@ class RepositoriesControllerTest < Redmine::ControllerTest
   def test_revision_should_not_change_the_project_menu_link
     get :revision, :params => {
         :id => 1,
+        :repository_id => 10,
         :rev => 1
       }
     assert_response :success
@@ -256,13 +281,14 @@ class RepositoriesControllerTest < Redmine::ControllerTest
   def test_revision_with_before_nil_and_afer_normal
     get :revision, :params => {
         :id => 1,
+        :repository_id => 10,
         :rev => 1
       }
     assert_response :success
 
     assert_select 'div.contextual' do
-      assert_select 'a[href=?]', '/projects/ecookbook/repository/revisions/0', 0
-      assert_select 'a[href=?]', '/projects/ecookbook/repository/revisions/2'
+      assert_select 'a[href=?]', '/projects/ecookbook/repository/10/revisions/0', 0
+      assert_select 'a[href=?]', '/projects/ecookbook/repository/10/revisions/2'
     end
   end
 
@@ -271,6 +297,7 @@ class RepositoriesControllerTest < Redmine::ControllerTest
     assert_difference 'Changeset.find(103).issues.size' do
       post :add_related_issue, :params => {
           :id => 1,
+          :repository_id => 10,
           :rev => 4,
           :issue_id => 2,
           :format => 'js'
@@ -289,6 +316,7 @@ class RepositoriesControllerTest < Redmine::ControllerTest
     assert_difference 'Changeset.find(103).issues.size' do
       post :add_related_issue, :params => {
           :id => 1,
+          :repository_id => 10,
           :rev => 4,
           :issue_id => "#2",
           :format => 'js'
@@ -303,6 +331,7 @@ class RepositoriesControllerTest < Redmine::ControllerTest
     assert_no_difference 'Changeset.find(103).issues.size' do
       post :add_related_issue, :params => {
           :id => 1,
+          :repository_id => 10,
           :rev => 4,
           :issue_id => 9999,
           :format => 'js'
@@ -322,6 +351,7 @@ class RepositoriesControllerTest < Redmine::ControllerTest
     assert_difference 'Changeset.find(103).issues.size', -1 do
       delete :remove_related_issue, :params => {
           :id => 1,
+          :repository_id => 10,
           :rev => 4,
           :issue_id => 2,
           :format => 'js'
@@ -342,19 +372,29 @@ class RepositoriesControllerTest < Redmine::ControllerTest
 
     get :graph, :params => {
         :id => 1,
+        :repository_id => 10,
         :graph => 'commits_per_month'
       }
     assert_response :success
-    assert_equal 'image/svg+xml', @response.content_type
+    assert_equal 'application/json', response.content_type
+    data = ActiveSupport::JSON.decode(response.body)
+    assert_not_nil data['labels']
+    assert_not_nil data['commits']
+    assert_not_nil data['changes']
   end
 
   def test_graph_commits_per_author
     get :graph, :params => {
         :id => 1,
+        :repository_id => 10,
         :graph => 'commits_per_author'
       }
     assert_response :success
-    assert_equal 'image/svg+xml', @response.content_type
+    assert_equal 'application/json', response.content_type
+    data = ActiveSupport::JSON.decode(response.body)
+    assert_not_nil data['labels']
+    assert_not_nil data['commits']
+    assert_not_nil data['changes']
   end
 
   def test_get_committers

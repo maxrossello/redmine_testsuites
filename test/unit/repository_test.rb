@@ -221,7 +221,7 @@ class RepositoryTest < ActiveSupport::TestCase
 
   def test_should_not_create_with_disabled_scm
     # disable Subversion
-    with_settings :enabled_scm => ['Darcs', 'Git'] do
+    with_settings :enabled_scm => ['Mercurial', 'Git'] do
       repository = Repository::Subversion.new(
                       :project => Project.find(3), :url => "svn://localhost")
       assert !repository.save
@@ -262,14 +262,15 @@ class RepositoryTest < ActiveSupport::TestCase
     assert_equal User.find_by_login('dlopper'), journal.user
     assert_equal 'Applied in changeset r2.', journal.notes
 
-    # 2 email notifications
-    assert_equal 2, ActionMailer::Base.deliveries.size
-    mail = ActionMailer::Base.deliveries.first
-    assert_not_nil mail
-    assert mail.subject.starts_with?(
-        "[#{fixed_issue.project.name} - #{fixed_issue.tracker.name} ##{fixed_issue.id}]")
-    assert_mail_body_match(
-        "Status changed from #{old_status} to #{fixed_issue.status}", mail)
+    # 5 email notifications, 2 for #1, 3 for #2
+    assert_equal 5, ActionMailer::Base.deliveries.size
+    ActionMailer::Base.deliveries.first(2).each do |mail|
+      assert_not_nil mail
+      assert mail.subject.starts_with?(
+          "[#{fixed_issue.project.name} - #{fixed_issue.tracker.name} ##{fixed_issue.id}]")
+      assert_mail_body_match(
+          "Status changed from #{old_status} to #{fixed_issue.status}", mail)
+    end
 
     # ignoring commits referencing an issue of another project
     assert_equal [], Issue.find(4).changesets
@@ -277,22 +278,22 @@ class RepositoryTest < ActiveSupport::TestCase
 
   def test_for_changeset_comments_strip
     repository = Repository::Mercurial.create(
-                    :project => Project.find( 4 ),
+                    :project => Project.find(4),
                     :url => '/foo/bar/baz' )
-    comment = <<-COMMENT
-    This is a loooooooooooooooooooooooooooong comment                                                   
-                                                                                                       
-                                                                                            
-    COMMENT
+    long_whitespace = "                                                "
+    expected_comment = "This is a loooooooooooooooooooooooooooong comment"
+    comment = "#{expected_comment}#{long_whitespace}\n"
+    3.times {comment << "#{long_whitespace}\n"}
     changeset = Changeset.new(
       :comments => comment, :commit_date => Time.now,
       :revision => 0, :scmid => 'f39b7922fb3c',
       :committer => 'foo <foo@example.com>',
-      :committed_on => Time.now, :repository => repository )
-    assert( changeset.save )
-    assert_not_equal( comment, changeset.comments )
-    assert_equal( 'This is a loooooooooooooooooooooooooooong comment',
-                  changeset.comments )
+      :committed_on => Time.now, :repository => repository)
+    assert(changeset.save)
+    assert_not_equal comment, changeset.comments
+    assert_equal     expected_comment, changeset.comments
+    assert_equal     expected_comment, changeset.short_comments
+    assert_equal     "", changeset.long_comments
   end
 
   def test_for_urls_strip_cvs

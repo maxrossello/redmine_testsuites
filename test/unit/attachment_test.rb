@@ -23,10 +23,6 @@ class AttachmentTest < ActiveSupport::TestCase
   fixtures :users, :email_addresses, :projects, :roles, :members, :member_roles,
            :enabled_modules, :issues, :trackers, :attachments
 
-  # TODO: remove this with Rails 5 that supports after_commit callbacks
-  # in transactional fixtures (https://github.com/rails/rails/pull/18458)
-  self.use_transactional_fixtures = false
-
   def setup
     set_tmp_attachments_directory
   end
@@ -448,4 +444,21 @@ class AttachmentTest < ActiveSupport::TestCase
     puts '(ImageMagick convert not available)'
   end
 
+  def test_is_text
+    js_attachment = Attachment.new(
+      :container => Issue.find(1),
+      :file => uploaded_test_file('hello.js', 'application/javascript'),
+      :author => User.find(1))
+
+    to_test = {
+      js_attachment => true,               # hello.js (application/javascript)
+      attachments(:attachments_003) => false, # logo.gif (image/gif)
+      attachments(:attachments_004) => true,  # source.rb (application/x-ruby)
+      attachments(:attachments_015) => true,  # private.diff (text/x-diff)
+      attachments(:attachments_016) => false, # testfile.png (image/png)
+    }
+    to_test.each do |attachment, expected|
+      assert_equal expected, attachment.is_text?, attachment.inspect
+    end
+  end
 end

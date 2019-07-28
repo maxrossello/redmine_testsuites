@@ -17,7 +17,7 @@
 
 require File.expand_path('../../test_helper', __FILE__)
 
-class RepositoriesCvsControllerTest < Redmine::ControllerTest
+class RepositoriesCvsControllerTest < Redmine::RepositoryControllerTest
   tests RepositoriesController
 
   fixtures :projects, :users, :email_addresses, :roles, :members, :member_roles,
@@ -31,6 +31,7 @@ class RepositoriesCvsControllerTest < Redmine::ControllerTest
   NUM_REV = 7
 
   def setup
+    super
     Setting.default_language = 'en'
     User.current = nil
 
@@ -85,6 +86,7 @@ class RepositoriesCvsControllerTest < Redmine::ControllerTest
       assert_equal NUM_REV, @repository.changesets.count
       get :show, :params => {
           :id => PRJ_ID,
+          :repository_id => @repository.id,
           :path => repository_path_hash(['images'])[:param]
         }
       assert_response :success
@@ -104,6 +106,7 @@ class RepositoriesCvsControllerTest < Redmine::ControllerTest
       assert_equal NUM_REV, @repository.changesets.count
       get :show, :params => {
           :id => PRJ_ID,
+          :repository_id => @repository.id,
           :path => repository_path_hash(['images'])[:param],
           :rev => 1
         }
@@ -123,6 +126,7 @@ class RepositoriesCvsControllerTest < Redmine::ControllerTest
       assert_equal NUM_REV, @repository.changesets.count
       get :entry, :params => {
           :id => PRJ_ID,
+          :repository_id => @repository.id,
           :path => repository_path_hash(['sources', 'watchers_controller.rb'])[:param]
         }
       assert_response :success
@@ -138,6 +142,7 @@ class RepositoriesCvsControllerTest < Redmine::ControllerTest
       assert_equal NUM_REV, @repository.changesets.count
       get :entry, :params => {
           :id => PRJ_ID,
+          :repository_id => @repository.id,
           :path => repository_path_hash(['sources', 'watchers_controller.rb'])[:param],
           :rev => 2
         }
@@ -154,7 +159,8 @@ class RepositoriesCvsControllerTest < Redmine::ControllerTest
       assert_equal NUM_REV, @repository.changesets.count
       get :entry, :params => {
           :id => PRJ_ID,
-          :path => repository_path_hash(['sources', 'zzz.c'])[:param]
+          :repository_id => @repository.id,
+           :path => repository_path_hash(['sources', 'zzz.c'])[:param]
         }
       assert_select 'p#errorExplanation', :text => /The entry or revision was not found in the repository/
     end
@@ -166,6 +172,7 @@ class RepositoriesCvsControllerTest < Redmine::ControllerTest
       assert_equal NUM_REV, @repository.changesets.count
       get :entry, :params => {
           :id => PRJ_ID,
+          :repository_id => @repository.id,
           :path => repository_path_hash(['sources', 'watchers_controller.rb'])[:param],
           :format => 'raw'
         }
@@ -179,6 +186,7 @@ class RepositoriesCvsControllerTest < Redmine::ControllerTest
       assert_equal NUM_REV, @repository.changesets.count
       get :entry, :params => {
           :id => PRJ_ID,
+          :repository_id => @repository.id,
           :path => repository_path_hash(['sources'])[:param]
         }
       assert_response :success
@@ -193,6 +201,7 @@ class RepositoriesCvsControllerTest < Redmine::ControllerTest
       ['inline', 'sbs'].each do |dt|
         get :diff, :params => {
             :id => PRJ_ID,
+            :repository_id => @repository.id,
             :rev => 3,
             :type => dt
           }
@@ -211,6 +220,7 @@ class RepositoriesCvsControllerTest < Redmine::ControllerTest
       ['inline', 'sbs'].each do |dt|
         get :diff, :params => {
             :id => PRJ_ID,
+            :repository_id => @repository.id,
             :rev => 1,
             :type => dt
           }
@@ -231,6 +241,7 @@ class RepositoriesCvsControllerTest < Redmine::ControllerTest
       assert_equal NUM_REV, @repository.changesets.count
       get :annotate, :params => {
           :id => PRJ_ID,
+          :repository_id => @repository.id,
           :path => repository_path_hash(['sources', 'watchers_controller.rb'])[:param]
         }
       assert_response :success

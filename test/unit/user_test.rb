@@ -34,6 +34,7 @@ class UserTest < ActiveSupport::TestCase
     @admin = User.find(1)
     @jsmith = User.find(2)
     @dlopper = User.find(3)
+    User.current = nil
   end
 
   def test_admin_scope_without_args_should_return_admin_users
@@ -661,7 +662,7 @@ class UserTest < ActiveSupport::TestCase
   if ldap_configured?
     test "#try_to_login using LDAP with failed connection to the LDAP server" do
       auth_source = AuthSourceLdap.find(1)
-      AuthSource.any_instance.stubs(:initialize_ldap_con).raises(Net::LDAP::LdapError, 'Cannot connect')
+      AuthSource.any_instance.stubs(:initialize_ldap_con).raises(Net::LDAP::Error, 'Cannot connect')
 
       assert_nil User.try_to_login('edavis', 'wrong')
     end
@@ -1195,6 +1196,14 @@ class UserTest < ActiveSupport::TestCase
 
     issue.assigned_to = new_assignee
     assert assignee.notify_about?(issue)
+    assert new_assignee.notify_about?(issue)
+
+    issue.save!
+    assert assignee.notify_about?(issue)
+    assert new_assignee.notify_about?(issue)
+
+    issue.save!
+    assert !assignee.notify_about?(issue)
     assert new_assignee.notify_about?(issue)
   end
 

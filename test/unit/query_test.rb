@@ -1490,6 +1490,12 @@ class QueryTest < ActiveSupport::TestCase
     assert_equal [['id', 'desc']], q.sort_criteria
   end
 
+  def test_sort_criteria_should_have_only_first_three_elements
+    q = IssueQuery.new
+    q.sort_criteria = [['priority', 'desc'], ['tracker', 'asc'], ['priority', 'asc'], ['id', 'asc'], ['project', 'asc'], ['subject', 'asc']]
+    assert_equal [['priority', 'desc'], ['tracker', 'asc'], ['priority', 'asc']], q.sort_criteria
+  end
+
   def test_sort_criteria_should_remove_blank_keys
     q = IssueQuery.new
     q.sort_criteria = [['priority', 'desc'], [nil, 'desc'], ['', 'asc'], ['project', 'asc']]
@@ -1521,7 +1527,8 @@ class QueryTest < ActiveSupport::TestCase
     c = q.available_columns.find {|col| col.is_a?(QueryCustomFieldColumn) && col.custom_field.field_format == 'string' }
     assert c
     assert c.sortable
-    issues = q.issues(:order => "#{c.sortable} ASC")
+    q.sort_criteria = [[c.name.to_s, 'asc']]
+    issues = q.issues
     values = issues.collect {|i| i.custom_value_for(c.custom_field).to_s}
     assert !values.empty?
     assert_equal values.sort, values
@@ -1532,7 +1539,8 @@ class QueryTest < ActiveSupport::TestCase
     c = q.available_columns.find {|col| col.is_a?(QueryCustomFieldColumn) && col.custom_field.field_format == 'string' }
     assert c
     assert c.sortable
-    issues = q.issues(:order => "#{c.sortable} DESC")
+    q.sort_criteria = [[c.name.to_s, 'desc']]
+    issues = q.issues
     values = issues.collect {|i| i.custom_value_for(c.custom_field).to_s}
     assert !values.empty?
     assert_equal values.sort.reverse, values
@@ -1543,7 +1551,8 @@ class QueryTest < ActiveSupport::TestCase
     c = q.available_columns.find {|col| col.is_a?(QueryCustomFieldColumn) && col.custom_field.field_format == 'float' }
     assert c
     assert c.sortable
-    issues = q.issues(:order => "#{c.sortable} ASC")
+    q.sort_criteria = [[c.name.to_s, 'asc']]
+    issues = q.issues
     values = issues.collect {|i| begin; Kernel.Float(i.custom_value_for(c.custom_field).to_s); rescue; nil; end}.compact
     assert !values.empty?
     assert_equal values.sort, values
@@ -1741,9 +1750,9 @@ class QueryTest < ActiveSupport::TestCase
 
   def test_issue_ids
     q = IssueQuery.new(:name => '_')
-    order = "issues.subject, issues.id"
-    issues = q.issues(:order => order)
-    assert_equal issues.map(&:id), q.issue_ids(:order => order)
+    q.sort_criteria = ['subject', 'id']
+    issues = q.issues
+    assert_equal issues.map(&:id), q.issue_ids
   end
 
   def test_label_for
@@ -1780,9 +1789,28 @@ class QueryTest < ActiveSupport::TestCase
     assert q.editable_by?(admin)
     assert !q.editable_by?(manager)
     assert q.editable_by?(developer)
+  end
 
-    # Public query for all projects
+  def test_editable_by_for_global_query
+    admin = User.find(1)
+    manager = User.find(2)
+    developer = User.find(3)
+
     q = IssueQuery.find(4)
+
+    assert q.editable_by?(admin)
+    assert !q.editable_by?(manager)
+    assert !q.editable_by?(developer)
+  end
+
+  def test_editable_by_for_global_query_with_project_set
+    admin = User.find(1)
+    manager = User.find(2)
+    developer = User.find(3)
+
+    q = IssueQuery.find(4)
+    q.project = Project.find(1)
+
     assert q.editable_by?(admin)
     assert !q.editable_by?(manager)
     assert !q.editable_by?(developer)
@@ -1849,6 +1877,21 @@ class QueryTest < ActiveSupport::TestCase
 
     assert q.visible?(User.find(1))
     assert_nil IssueQuery.visible(User.find(1)).find_by_id(q.id)
+  end
+
+  def test_build_from_params_should_not_update_query_with_nil_param_values
+    q = IssueQuery.create!(:name => 'Query',
+                           :type => "IssueQuery",
+                           :user => User.find(7),
+                           :filters => {"status_id" => {:values => ["1"], :operator => "o"}},
+                           :column_names => [:tracker, :status],
+                           :sort_criteria => ['id', 'asc'],
+                           :group_by => "project",
+                           :options => { :totalable_names=>[:estimated_hours], :draw_relations => '1', :draw_progress_line => '1' }
+                            )
+    old_attributes = q.attributes
+    q.build_from_params({})
+    assert_equal old_attributes, q.attributes
   end
 
   test "#available_filters should include users of visible projects in cross-project view" do
@@ -2161,6 +2204,30 @@ class QueryTest < ActiveSupport::TestCase
     WorkflowTransition.create(:role_id => 1, :tracker_id => 2, :old_status_id => 1, :new_status_id => 3)
 
     assert_equal ['1','2','3','4','5','6'], query.available_filters['status_id'][:values].map(&:second)
+  end
+
+  def test_project_status_filter_should_be_available_in_global_queries
+    query = IssueQuery.new(:project => nil, :name => '_')
+    assert query.available_filters.has_key?('project.status')
+  end
+
+  def test_project_status_filter_should_be_available_when_project_has_subprojects
+    query = IssueQuery.new(:project => Project.find(1), :name => '_')
+    assert query.available_filters.has_key?('project.status')
+  end
+
+  def test_project_status_filter_should_not_be_available_when_project_is_leaf
+    query = IssueQuery.new(:project => Project.find(2), :name => '_')
+    assert !query.available_filters.has_key?('project.status')
+  end
+
+  def test_project_statuses_values_should_return_only_active_and_closed_statuses
+    set_language_if_valid 'en'
+    query = IssueQuery.new(:project => nil, :name => '_')
+    project_status_filter = query.available_filters['project.status']
+    assert_not_nil project_status_filter
+
+    assert_equal [["active", "1"], ["closed", "5"]], project_status_filter[:values]
   end
 
   def test_as_params_should_serialize_query
