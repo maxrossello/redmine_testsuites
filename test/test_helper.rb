@@ -42,7 +42,7 @@ $redmine_tmp_attachments_directory = "#{Rails.root}/tmp/test/attachments"
 FileUtils.mkdir_p $redmine_tmp_attachments_directory
 
 require "minitest/reporters"
-Minitest::Reporters.use!
+Minitest::Reporters.use! [Minitest::Reporters::ProgressReporter.new, Minitest::Reporters::HtmlReporter.new]
 
 
 class ActionView::TestCase
