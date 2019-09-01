@@ -26,6 +26,7 @@ class Redmine::PluginTest < ActiveSupport::TestCase
 
   def teardown
     @klass.clear
+    @klass.load
   end
 
   def test_register
