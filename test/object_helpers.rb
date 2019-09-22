@@ -87,8 +87,9 @@ module ObjectHelpers
   end
 
   # Generates an unsaved Issue
+  # Doesn't send notifications by default, use :notify => true to send them
   def Issue.generate(attributes={})
-    issue = Issue.new(attributes)
+    issue = Issue.new(attributes.reverse_merge(:notify => false))
     issue.project ||= Project.find(1)
     issue.tracker ||= issue.project.trackers.first
     issue.subject = 'Generated' if issue.subject.blank?
@@ -98,6 +99,7 @@ module ObjectHelpers
   end
 
   # Generates a saved Issue
+  # Doesn't send notifications by default, use :notify => true to send them
   def Issue.generate!(attributes={}, &block)
     issue = Issue.generate(attributes, &block)
     issue.save!
@@ -139,7 +141,7 @@ module ObjectHelpers
     version
   end
 
-  def TimeEntry.generate!(attributes={})
+  def TimeEntry.generate(attributes={})
     entry = TimeEntry.new(attributes)
     entry.user ||= User.find(2)
     entry.issue ||= Issue.find(1) unless entry.project
@@ -147,6 +149,11 @@ module ObjectHelpers
     entry.activity ||= TimeEntryActivity.first
     entry.spent_on ||= Date.today
     entry.hours ||= 1.0
+    entry
+  end
+
+  def TimeEntry.generate!(attributes={}, &block)
+    entry = TimeEntry.generate(attributes, &block)
     entry.save!
     entry
   end
@@ -220,6 +227,14 @@ module ObjectHelpers
     query.user ||= User.find(1)
     query.save!
     query
+  end
+
+  def Document.generate!(attributes={})
+    document = new(attributes)
+    document.title = "Generated document" if document.title.blank?
+    document.category ||= DocumentCategory.find(1)
+    document.save!
+    document
   end
 
   def generate_import(fixture_name='import_issues.csv')

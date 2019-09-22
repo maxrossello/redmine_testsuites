@@ -25,7 +25,8 @@ class TimeEntryQueryTest < ActiveSupport::TestCase
            :journals, :journal_details,
            :issue_categories, :enumerations,
            :groups_users,
-           :enabled_modules
+           :enabled_modules,
+           :custom_fields, :custom_fields_trackers, :custom_fields_projects
 
   def test_filter_values_without_project_should_be_arrays
     q = TimeEntryQuery.new
@@ -101,5 +102,25 @@ class TimeEntryQueryTest < ActiveSupport::TestCase
     assert_include "issue.cf_#{global.id}", query.available_columns.map(&:name).map(&:to_s)
     assert_include "issue.cf_#{field_on_project.id}", query.available_columns.map(&:name).map(&:to_s)
     assert_not_include "issue.cf_#{field_not_on_project.id}", query.available_columns.map(&:name).map(&:to_s)
+  end
+
+  def test_issue_category_filter_should_not_be_available_in_global_queries
+    query = TimeEntryQuery.new(:project => nil, :name => '_')
+    assert !query.available_filters.has_key?('issue.category_id')
+  end
+
+  def test_project_status_filter_should_be_available_in_global_queries
+    query = TimeEntryQuery.new(:project => nil, :name => '_')
+    assert query.available_filters.has_key?('project.status')
+  end
+
+  def test_project_status_filter_should_be_available_when_project_has_subprojects
+    query = TimeEntryQuery.new(:project => Project.find(1), :name => '_')
+    assert query.available_filters.has_key?('project.status')
+  end
+
+  def test_project_status_filter_should_not_be_available_when_project_is_leaf
+    query = TimeEntryQuery.new(:project => Project.find(2), :name => '_')
+    assert !query.available_filters.has_key?('project.status')
   end
 end

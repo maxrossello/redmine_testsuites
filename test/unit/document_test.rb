@@ -23,6 +23,10 @@ class DocumentTest < ActiveSupport::TestCase
            :users, :email_addresses, :members, :member_roles, :roles,
            :groups_users
 
+  def setup
+    User.current = nil
+  end
+
   def test_create
     doc = Document.new(:project => Project.find(1), :title => 'New document', :category => Enumeration.find_by_name('User documentation'))
     assert doc.save
@@ -41,7 +45,7 @@ class DocumentTest < ActiveSupport::TestCase
       doc = Document.new(:project => Project.find(1), :title => 'New document', :category => Enumeration.find_by_name('User documentation'))
       assert doc.save
     end
-    assert_equal 1, ActionMailer::Base.deliveries.size
+    assert_equal 2, ActionMailer::Base.deliveries.size
   end
 
   def test_create_with_default_category

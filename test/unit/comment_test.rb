@@ -18,7 +18,8 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class CommentTest < ActiveSupport::TestCase
-  fixtures :users, :email_addresses, :news, :comments, :projects, :enabled_modules
+  fixtures :users, :email_addresses, :news, :comments, :projects, :enabled_modules,
+           :user_preferences, :roles, :members, :member_roles
 
   def setup
     @jsmith = User.find(2)
@@ -36,7 +37,7 @@ class CommentTest < ActiveSupport::TestCase
     Watcher.create!(:watchable => @news, :user => @jsmith)
 
     with_settings :notified_events => %w(news_comment_added) do
-      assert_difference 'ActionMailer::Base.deliveries.size' do
+      assert_difference 'ActionMailer::Base.deliveries.size', 2 do
         Comment.create!(:commented => @news, :author => @jsmith, :comments => "my comment")
       end
     end

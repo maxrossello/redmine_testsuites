@@ -314,7 +314,7 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     version = Version.generate!(:name => 'Foo', :project => @project)
     version.stubs(:start_date).returns(today - 7)
     version.stubs(:due_date).returns(today + 7)
-    version.stubs(:completed_percent).returns(30)
+    version.stubs(:visible_fixed_issues => stub(:completed_percent => 30))
     @output_buffer = @gantt.line_for_version(version, :format => :html)
     assert_select "div.version.label", :text => /Foo/
     assert_select "div.version.label", :text => /30%/
@@ -351,6 +351,20 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     create_gantt
     @output_buffer = @gantt.line(today - 7, today + 7, 30, false, 'line', :format => :html, :zoom => 4)
     assert_select 'div.task_late[style*="width:30px"]', 1
+  end
+
+  test "#line late line should be the same width as task_todo if start date and end date are the same day" do
+    create_gantt
+    @output_buffer = @gantt.line(today - 7, today - 7, 0, false, 'line', :format => :html, :zoom => 4)
+    assert_select 'div.task_late[style*="width:2px"]', 1
+    assert_select 'div.task_todo[style*="width:2px"]', 1
+  end
+
+  test "#line late line should be the same width as task_todo if start date and today are the same day" do
+    create_gantt
+    @output_buffer = @gantt.line(today, today, 0, false, 'line', :format => :html, :zoom => 4)
+    assert_select 'div.task_late[style*="width:2px"]', 1
+    assert_select 'div.task_todo[style*="width:2px"]', 1
   end
 
   test "#line done line should start from the starting point on the left" do

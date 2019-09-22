@@ -23,6 +23,10 @@ class PrincipalTest < ActiveSupport::TestCase
   fixtures :users, :projects, :members, :member_roles, :roles,
            :email_addresses
 
+  def setup
+    User.current = nil
+  end
+
   def test_active_scope_should_return_groups_and_active_users
     result = Principal.active.to_a
     assert_include Group.first, result
@@ -52,11 +56,11 @@ class PrincipalTest < ActiveSupport::TestCase
     assert_equal expected.map(&:id).sort, Principal.visible(user).pluck(:id).sort
   end
 
-  def test_member_of_scope_should_return_the_union_of_all_members
+  def test_member_of_scope_should_return_the_union_of_all_active_and_locked_members
     projects = Project.find([1])
-    assert_equal [3, 2], Principal.member_of(projects).sort.map(&:id)
+    assert_equal [3, 5, 2], Principal.member_of(projects).sort.map(&:id)
     projects = Project.find([1, 2])
-    assert_equal [3, 2, 8, 11], Principal.member_of(projects).sort.map(&:id)
+    assert_equal [3, 5, 2, 8, 11], Principal.member_of(projects).sort.map(&:id)
   end
 
   def test_member_of_scope_should_be_empty_for_no_projects
@@ -125,6 +129,16 @@ class PrincipalTest < ActiveSupport::TestCase
 
     assert_equal 1, results.count
     assert_equal User.find(2), results.first
+  end
+
+  test "like scope should find lastname with spaces" do
+    user = User.find(1)
+    user.update_columns(:firstname => 'Leonardo', :lastname => 'da Vinci')
+
+    results = Principal.like('Leonardo da Vinci')
+
+    assert_equal 1, results.count
+    assert_equal user, results.first
   end
 
   def test_like_scope_with_cyrillic_name

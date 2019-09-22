@@ -33,7 +33,7 @@ class IssueImportTest < ActiveSupport::TestCase
            :custom_fields_trackers
 
   include Redmine::I18n
-  
+
   def setup
     set_language_if_valid 'en'
   end
@@ -155,6 +155,35 @@ class IssueImportTest < ActiveSupport::TestCase
 
     issues = new_records(Issue, 3) { import.run }
     assert_equal '3', issues.first.custom_field_value(field)
+  end
+
+  def test_list_custom_field_should_be_set
+    field = CustomField.find(1)
+    field.tracker_ids = Tracker.all.ids
+    field.save!
+    import = generate_import_with_mapping
+    import.mapping.merge!("cf_1" => '8')
+    import.save!
+
+    issues = new_records(Issue, 3) { import.run }
+    assert_equal 'PostgreSQL', issues[0].custom_field_value(1)
+    assert_equal 'MySQL', issues[1].custom_field_value(1)
+    assert_equal '', issues.third.custom_field_value(1)
+  end
+
+  def test_multiple_list_custom_field_should_be_set
+    field = CustomField.find(1)
+    field.tracker_ids = Tracker.all.ids
+    field.multiple = true
+    field.save!
+    import = generate_import_with_mapping
+    import.mapping.merge!("cf_1" => '15')
+    import.save!
+
+    issues = new_records(Issue, 3) { import.run }
+    assert_equal ['Oracle', 'PostgreSQL'], issues[0].custom_field_value(1).sort
+    assert_equal ['MySQL'], issues[1].custom_field_value(1)
+    assert_equal [''], issues.third.custom_field_value(1)
   end
 
   def test_is_private_should_be_set_based_on_user_locale

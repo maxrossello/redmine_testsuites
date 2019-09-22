@@ -80,6 +80,10 @@ class Redmine::WikiFormatting::TextileFormatterTest < ActionView::TestCase
       'p{border-right:1px}. text'    => '<p style="border-right:1px;">text</p>',
       'p{border-top:1px}. text'      => '<p style="border-top:1px;">text</p>',
       'p{border-bottom:1px}. text'   => '<p style="border-bottom:1px;">text</p>',
+      'p{width:50px}. text'          => '<p style="width:50px;">text</p>',
+      'p{max-width:100px}. text'     => '<p style="max-width:100px;">text</p>',
+      'p{height:40px}. text'         => '<p style="height:40px;">text</p>',
+      'p{max-height:80px}. text'     => '<p style="max-height:80px;">text</p>',
       }, false)
 
     # multiple styles
@@ -543,9 +547,9 @@ STR
 
   def test_should_allow_valid_language_class_attribute_on_code_tags
     # language name is double-quoted
-    assert_html_output({"<code class=\"ruby\">test</code>" => "<code class=\"ruby syntaxhl\"><span class=\"CodeRay\">test</span></code>"}, false)
+    assert_html_output({"<code class=\"ruby\">test</code>" => "<code class=\"ruby syntaxhl\"><span class=\"nb\">test</span></code>"}, false)
     # language name is single-quoted
-    assert_html_output({"<code class='ruby'>test</code>" => "<code class=\"ruby syntaxhl\"><span class=\"CodeRay\">test</span></code>"}, false)
+    assert_html_output({"<code class='ruby'>test</code>" => "<code class=\"ruby syntaxhl\"><span class=\"nb\">test</span></code>"}, false)
   end
 
   def test_should_not_allow_valid_language_class_attribute_on_non_code_offtags
@@ -578,6 +582,21 @@ STR
     assert_html_output({
       '!(wiki-class-foo#wiki-id-bar)test.png!' => "<p><img src=\"test.png\" class=\"wiki-class-foo\" id=\"wiki-id-bar\" alt=\"\" /></p>",
     }, false)
+  end
+
+  def test_footnotes
+    text = <<-STR
+This is some text[1].
+
+fn1. This is the foot note
+STR
+
+    expected = <<-EXPECTED
+<p>This is some text<sup><a href=\"#fn1\">1</a></sup>.</p>
+<p id="fn1" class="footnote"><sup>1</sup> This is the foot note</p>
+EXPECTED
+
+    assert_equal expected.gsub(%r{[\r\n\t]}, ''), to_html(text).gsub(%r{[\r\n\t]}, '')
   end
 
   # TODO: Remove this test after migrating to RedCloth 4

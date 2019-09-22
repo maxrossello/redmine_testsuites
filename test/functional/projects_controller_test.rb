@@ -65,6 +65,16 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_equal 'text/javascript', response.content_type
   end
 
+  def test_autocomplete_js_with_blank_search_term
+    get :autocomplete, :params => {
+        :format => 'js',
+        :q => ''
+      },
+      :xhr => true
+    assert_response :success
+    assert_equal 'text/javascript', response.content_type
+  end
+
   test "#index by non-admin user with view_time_entries permission should show overall spent time link" do
     @request.session[:user_id] = 3
     get :index
@@ -471,7 +481,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
       }
     assert_response :success
 
-    assert_select 'li', :text => /Development status/
+    assert_select 'li[class=?]', 'cf_3', :text => /Development status/
   end
 
   def test_show_should_not_display_hidden_custom_fields
@@ -518,9 +528,9 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response :success
   end
 
-  def show_archived_project_should_be_denied
+  def test_show_archived_project_should_be_denied
     project = Project.find_by_identifier('ecookbook')
-    project.archive!
+    project.archive
 
     get :show, :params => {
         :id => 'ecookbook'
@@ -528,6 +538,18 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response 403
     assert_select 'p', :text => /archived/
     assert_not_include project.name, response.body
+  end
+
+  def test_show_archived_project_should_show_unarchive_link_to_admins
+    @request.session[:user_id] = 1
+    project = Project.find_by_identifier('ecookbook')
+    project.archive
+  
+    get :show, :params => {
+        :id => 'ecookbook'
+      }
+    assert_response 403
+    assert_select 'a', :text => "Unarchive"
   end
 
   def test_show_should_not_show_private_subprojects_that_are_not_visible
@@ -593,22 +615,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     get :settings, :params => {
         :id => 1
       }
-    assert_response 302
-  end
-
-  def test_setting_with_wiki_module_and_no_wiki
-    Project.find(1).wiki.destroy
-    Role.find(1).add_permission! :manage_wiki
-    @request.session[:user_id] = 2
-
-    get :settings, :params => {
-        :id => 1
-      }
-    assert_response :success
-
-    assert_select 'form[action=?]', '/projects/ecookbook/wiki' do
-      assert_select 'input[name=?]', 'wiki[start_page]'
-    end
+    assert_response 403
   end
 
   def test_settings_should_accept_version_status_filter
@@ -648,6 +655,27 @@ class ProjectsControllerTest < Redmine::ControllerTest
       assert_select 'td.name', :text => '0.1'
     end
     assert_select 'a#tab-versions[href=?]', '/projects/ecookbook/settings/versions?version_name=.1&version_status='
+  end
+
+  def test_settings_should_show_default_version_in_versions_tab
+    project = Project.find(1)
+    project.default_version_id = 3
+    project.save!
+
+    @request.session[:user_id] = 2
+
+    get :settings, :params => {
+        :id => 'ecookbook',
+        :tab => 'versions',
+      }
+    assert_response :success
+
+    assert_select 'table.versions tbody' do
+      # asserts that only one version is marked as default
+      assert_select 'td.tick span.icon-checked', 1
+      # asserts which version is marked as default
+      assert_select 'tr:first-child td.tick span.icon-checked', 1
+    end
   end
 
   def test_settings_should_show_locked_members
@@ -737,7 +765,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :name => 'Closed'
         }
       }
-    assert_response 302
+    assert_response 403
     assert_equal 'eCookbook', Project.find(1).name
   end
 
@@ -757,15 +785,17 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_match /Successful update/, flash[:notice]
   end
 
-  def test_modules
+  def test_update_modules
     @request.session[:user_id] = 2
     Project.find(1).enabled_module_names = ['issue_tracking', 'news']
 
-    post :modules, :params => {
+    post :update, :params => {
         :id => 1,
-        :enabled_module_names => ['issue_tracking', 'repository', 'documents']
+        :project => {
+          :enabled_module_names => ['issue_tracking', 'repository', 'documents']
+        }
       }
-    assert_redirected_to '/projects/ecookbook/settings/modules'
+    assert_redirected_to '/projects/ecookbook/settings'
     assert_equal ['documents', 'issue_tracking', 'repository'], Project.find(1).enabled_module_names.sort
   end
 
@@ -906,10 +936,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
         :id => source.id
       }
     assert_response :success
-    assert_select 'fieldset#project_issue_custom_fields' do
-      assert_select 'input[type=checkbox][value=?][checked=checked]', field1.id.to_s
-      assert_select 'input[type=checkbox][value=?]:not([checked])', field2.id.to_s
-    end
+    assert_select 'input[type=hidden][name=?][value=?]', 'project[issue_custom_field_ids][]', field1.id.to_s
+    assert_select 'input[type=hidden][name=?][value=?]', 'project[issue_custom_field_ids][]', field2.id.to_s, 0
   end
 
   def test_post_copy_should_copy_requested_items

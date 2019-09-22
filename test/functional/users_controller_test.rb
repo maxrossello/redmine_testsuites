@@ -64,6 +64,47 @@ class UsersControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_index_csv
+    with_settings :default_language => 'en' do
+      get :index, :params => { :format => 'csv' }
+      assert_response :success
+
+      assert_equal User.logged.status(1).count, response.body.chomp.split("\n").size - 1
+      assert_include 'active', response.body
+      assert_not_include 'locked', response.body
+      assert_equal 'text/csv', @response.content_type
+    end
+  end
+
+  def test_index_csv_with_status_filter
+    with_settings :default_language => 'en' do
+      get :index, :params => { :status => 3, :format => 'csv' }
+      assert_response :success
+
+      assert_equal User.logged.status(3).count, response.body.chomp.split("\n").size - 1
+      assert_include 'locked', response.body
+      assert_not_include 'active', response.body
+      assert_equal 'text/csv', @response.content_type
+    end
+  end
+
+  def test_index_csv_with_name_filter
+    get :index, :params => {:name => 'John', :format => 'csv'}
+    assert_response :success
+
+    assert_equal User.logged.like('John').count, response.body.chomp.split("\n").size - 1
+    assert_include 'John', response.body
+    assert_equal 'text/csv', @response.content_type
+  end
+
+  def test_index_csv_with_group_filter
+    get :index, :params => {:group_id => '10', :format => 'csv'}
+    assert_response :success
+
+    assert_equal Group.find(10).users.count, response.body.chomp.split("\n").size - 1
+    assert_equal 'text/csv', @response.content_type
+  end
+
   def test_show
     @request.session[:user_id] = nil
     get :show, :params => {:id => 2}
@@ -77,7 +118,7 @@ class UsersControllerTest < Redmine::ControllerTest
     get :show, :params => {:id => 2}
     assert_response :success
 
-    assert_select 'li', :text => /Phone number/
+    assert_select 'li[class=?]', 'cf_4', :text => /Phone number/
   end
 
   def test_show_should_not_display_hidden_custom_fields
@@ -259,7 +300,7 @@ class UsersControllerTest < Redmine::ControllerTest
 
   def test_create_with_failure
     assert_no_difference 'User.count' do
-      post :create, :params => {:user => {}}
+      post :create, :params => {:user => {:login => 'foo'}}
     end
     assert_response :success
     assert_select_error /Email cannot be blank/
@@ -268,7 +309,9 @@ class UsersControllerTest < Redmine::ControllerTest
   def test_create_with_failure_sould_preserve_preference
     assert_no_difference 'User.count' do
       post :create, :params => {
-        :user => {},
+        :user => {
+          :login => 'foo'
+        },
         :pref => {
           'no_self_notified' => '1',
           'hide_mail' => '1',

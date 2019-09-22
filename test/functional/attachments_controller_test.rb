@@ -287,6 +287,16 @@ class AttachmentsControllerTest < Redmine::ControllerTest
     assert_response 404
   end
 
+  def test_show_renders_pagination
+    get :show, :params => { :id => 5, :type => 'inline' }
+    assert_response :success
+
+    assert_select 'ul.pages li.next', :text => /next/i
+    assert_select 'ul.pages li.previous', :text => /previous/i
+
+    set_tmp_attachments_directory
+  end
+
   def test_download_text_file
     get :download, :params => {
         :id => 4
@@ -347,6 +357,16 @@ class AttachmentsControllerTest < Redmine::ControllerTest
       }
     assert_response :success
     assert_equal 'text/x-ruby', @response.content_type
+    set_tmp_attachments_directory
+  end
+
+  def test_download_should_assign_application_octet_stream_if_content_type_is_not_determined
+    get :download, :params => {
+        :id => 22
+      }
+    assert_response :success
+    assert_nil Redmine::MimeType.of(attachments(:attachments_022).filename)
+    assert_equal 'application/octet-stream', @response.content_type
     set_tmp_attachments_directory
   end
 

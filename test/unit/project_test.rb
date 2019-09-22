@@ -192,18 +192,23 @@ class ProjectTest < ActiveSupport::TestCase
   def test_unarchive
     user = @ecookbook.members.first.user
     @ecookbook.archive
-    # A subproject of an archived project can not be unarchived
-    assert !@ecookbook_sub1.unarchive
 
     # Unarchive project
     assert @ecookbook.unarchive
-    @ecookbook.reload
     assert @ecookbook.active?
     assert !@ecookbook.archived?
     assert user.projects.include?(@ecookbook)
-    # Subproject can now be unarchived
+  end
+
+  def test_unarchive_child_project_should_unarchive_ancestors
+    @ecookbook.archive
     @ecookbook_sub1.reload
-    assert @ecookbook_sub1.unarchive
+    assert_equal Project::STATUS_ARCHIVED, @ecookbook_sub1.status
+
+    @ecookbook_sub1.unarchive
+    assert_equal Project::STATUS_ACTIVE, @ecookbook_sub1.status
+    @ecookbook.reload
+    assert_equal Project::STATUS_ACTIVE, @ecookbook.status
   end
 
   def test_unarchive_a_child_of_a_closed_project_should_set_status_to_closed
@@ -315,15 +320,13 @@ class ProjectTest < ActiveSupport::TestCase
   end
 
   def test_set_parent_should_add_roots_in_alphabetical_order
-    ProjectCustomField.delete_all
-    Project.delete_all
-    Project.create!(:name => 'Project C', :identifier => 'project-c').set_parent!(nil)
-    Project.create!(:name => 'Project B', :identifier => 'project-b').set_parent!(nil)
-    Project.create!(:name => 'Project D', :identifier => 'project-d').set_parent!(nil)
-    Project.create!(:name => 'Project A', :identifier => 'project-a').set_parent!(nil)
-
-    assert_equal 4, Project.count
-    assert_equal Project.all.sort_by(&:name), Project.all.sort_by(&:lft)
+    projects = new_records(Project, 4) do
+      Project.create!(:name => 'Project C', :identifier => 'project-c').set_parent!(nil)
+      Project.create!(:name => 'Project B', :identifier => 'project-b').set_parent!(nil)
+      Project.create!(:name => 'Project D', :identifier => 'project-d').set_parent!(nil)
+      Project.create!(:name => 'Project A', :identifier => 'project-a').set_parent!(nil)
+    end
+    assert_equal projects.sort_by(&:name), projects.sort_by(&:lft)
   end
 
   def test_set_parent_should_add_children_in_alphabetical_order
@@ -1006,18 +1009,27 @@ class ProjectTest < ActiveSupport::TestCase
     assert_kind_of String, p.css_classes
     assert_not_include 'archived', p.css_classes.split
     assert_not_include 'closed', p.css_classes.split
+    assert_include 'public', p.css_classes.split
   end
 
   def test_css_classes_for_archived_project
     p = Project.new
     p.status = Project::STATUS_ARCHIVED
     assert_include 'archived', p.css_classes.split
+    assert_include 'public', p.css_classes.split
   end
 
   def test_css_classes_for_closed_project
     p = Project.new
     p.status = Project::STATUS_CLOSED
     assert_include 'closed', p.css_classes.split
+    assert_include 'public', p.css_classes.split
+  end
+
+  def test_css_classes_for_private_project
+    p = Project.new
+    p.is_public = false
+    assert_not_include 'public', p.css_classes.split
   end
 
   def test_combination_of_visible_and_distinct_scopes_in_case_anonymous_group_has_memberships_should_not_error

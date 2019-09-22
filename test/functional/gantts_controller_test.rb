@@ -30,10 +30,31 @@ class GanttsControllerTest < Redmine::ControllerTest
   def test_gantt_should_work
     i2 = Issue.find(2)
     i2.update_attribute(:due_date, 1.month.from_now)
-    get :show, :params => {
-        :project_id => 1
-      }
+    with_settings :gravatar_enabled => '1' do
+      get :show, :params => {
+          :project_id => 1
+        }
+    end
     assert_response :success
+
+    # query form
+    assert_select 'form#query_form' do
+      assert_select 'div#query_form_with_buttons.hide-when-print' do
+        assert_select 'div#query_form_content' do
+          assert_select 'fieldset#filters.collapsible'
+          assert_select 'fieldset#options'
+        end
+        assert_select 'p.contextual'
+        assert_select 'p.buttons'
+      end
+    end
+
+    # Assert context menu on issues subject and gantt bar
+    assert_select 'div[class=?]', 'issue-subject hascontextmenu'
+    assert_select 'div.tooltip.hascontextmenu' do
+      assert_select 'img[class="gravatar"]'
+    end
+    assert_select "form[data-cm-url=?]", '/issues/context_menu'
 
     # Issue with start and due dates
     i = Issue.find(1)

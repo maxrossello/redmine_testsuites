@@ -58,7 +58,7 @@ class Redmine::WikiFormatting::MarkdownFormatterTest < ActionView::TestCase
     assert_include 'version:"1.0"', @formatter.new(text).to_html
   end
 
-  def test_should_support_syntax_highligth
+  def test_should_support_syntax_highlight
     text = <<-STR
 ~~~ruby
 def foo
@@ -66,7 +66,7 @@ end
 ~~~
 STR
     assert_select_in @formatter.new(text).to_html, 'pre code.ruby.syntaxhl' do
-      assert_select 'span.keyword', :text => 'def'
+      assert_select 'span.k', :text => 'def'
     end
   end
 
@@ -98,6 +98,30 @@ STR
     assert_equal "<p>This is a list:</p>\n\n<ul>\n<li>One</li>\n<li>Two</li>\n</ul>", @formatter.new(text).to_html.strip
   end
 
+  def test_footnotes
+    text = <<-STR
+This is some text[^1].
+
+[^1]: This is the foot note
+STR
+
+    expected = <<-EXPECTED
+<p>This is some text<sup id="fnref1"><a href="#fn1" rel="footnote">1</a></sup>.</p>
+<div class="footnotes">
+<hr>
+<ol>
+
+<li id="fn1">
+<p>This is the foot note&nbsp;<a href="#fnref1" rev="footnote">&#8617;</a></p>
+</li>
+
+</ol>
+</div>
+EXPECTED
+
+    assert_equal expected.gsub(%r{[\r\n\t]}, ''), @formatter.new(text).to_html.gsub(%r{[\r\n\t]}, '')
+  end
+
   STR_WITH_PRE = [
   # 0
 "# Title
@@ -109,7 +133,6 @@ Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas sed libero.",
 ~~~ruby
   def foo
   end
->>>>>>> .merge-right.r17266
 ~~~
 
 Morbi facilisis accumsan orci non pharetra.
@@ -154,5 +177,9 @@ Nulla nunc nisi, egestas in ornare vel, posuere ac libero."]
     assert_equal Digest::MD5.hexdigest(expected), result.last, "section hash did not match"
   end
 
+  def test_should_support_underlined_text
+    text = 'This _text_ should be underlined'
+    assert_equal '<p>This <u>text</u> should be underlined</p>', @formatter.new(text).to_html.strip
+  end
   end
 end

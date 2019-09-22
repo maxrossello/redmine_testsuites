@@ -40,6 +40,8 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     assert_nil auth_source.attr_mail
     assert_equal false, auth_source.onthefly_register
     assert_equal false, auth_source.tls
+    assert_equal true, auth_source.verify_peer
+    assert_equal :ldap, auth_source.ldap_mode
     assert_nil auth_source.filter
     assert_nil auth_source.timeout
   end
@@ -75,6 +77,42 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
 
     a.filter = "(mail=*@redmine.org)"
     assert a.valid?
+  end
+
+  test 'ldap_mode setter sets tls and verify_peer' do
+    a = AuthSourceLdap.new
+
+    a.ldap_mode = 'ldaps_verify_peer'
+    assert a.tls
+    assert a.verify_peer
+
+    a.ldap_mode = 'ldaps_verify_none'
+    assert a.tls
+    assert !a.verify_peer
+
+    a.ldap_mode = 'ldap'
+    assert !a.tls
+    assert !a.verify_peer
+  end
+
+  test 'ldap_mode getter reads from tls and verify_peer' do
+    a = AuthSourceLdap.new
+
+    a.tls = true
+    a.verify_peer = true
+    assert_equal :ldaps_verify_peer, a.ldap_mode
+
+    a.tls = true
+    a.verify_peer = false
+    assert_equal :ldaps_verify_none, a.ldap_mode
+
+    a.tls = false
+    a.verify_peer = false
+    assert_equal :ldap, a.ldap_mode
+
+    a.tls = false
+    a.verify_peer = true
+    assert_equal :ldap, a.ldap_mode
   end
 
   if ldap_configured?
@@ -150,7 +188,7 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     end
 
     def test_search_with_exception_should_return_an_empty_array
-      Net::LDAP.stubs(:new).raises(Net::LDAP::LdapError, 'Cannot connect')
+      Net::LDAP.stubs(:new).raises(Net::LDAP::Error, 'Cannot connect')
 
       results = AuthSource.search("exa")
       assert_equal [], results
@@ -159,7 +197,7 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     def test_test_connection_with_correct_host_and_port
       auth_source = AuthSourceLdap.find(1)
 
-      assert_nothing_raised Net::LDAP::Error do
+      assert_nothing_raised do
         auth_source.test_connection
       end
     end
@@ -169,7 +207,7 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
       auth_source.host = "badhost"
       auth_source.save!
 
-      assert_raise Net::LDAP::Error do
+      assert_raise AuthSourceException do
         auth_source.test_connection
       end
     end
@@ -179,7 +217,7 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
       auth_source.port = 1234
       auth_source.save!
 
-      assert_raise Net::LDAP::Error do
+      assert_raise AuthSourceException do
         auth_source.test_connection
       end
     end

@@ -32,8 +32,10 @@ class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
            :workflows
 
   def setup
-    CustomField.delete_all
+    CustomField.destroy_all
     Issue.delete_all
+    Watcher.delete_all
+
     field_attributes = {:field_format => 'string', :is_for_all => true, :is_filter => true, :trackers => Tracker.all}
     @fields = []
     @fields << (@field1 = IssueCustomField.create!(field_attributes.merge(:name => 'Field 1', :visible => true)))
@@ -220,7 +222,9 @@ class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
   end
 
   def test_index_with_partial_custom_field_visibility
+    CustomValue.delete_all
     Issue.delete_all
+
     p1 = Project.generate!
     p2 = Project.generate!
     user = User.generate!
@@ -282,7 +286,8 @@ class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
         assert_response 302
       end
     end
-    assert_equal users_to_test.values.uniq.size, ActionMailer::Base.deliveries.size
+
+    assert_equal users_to_test.keys.size, ActionMailer::Base.deliveries.size
     # tests that each user receives 1 email with the custom fields he is allowed to see only
     users_to_test.each do |user, fields|
       mails = ActionMailer::Base.deliveries.select {|m| m.bcc.include? user.mail}
@@ -319,7 +324,7 @@ class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
         }
       assert_response 302
     end
-    assert_equal users_to_test.values.uniq.size, ActionMailer::Base.deliveries.size
+    assert_equal users_to_test.keys.size, ActionMailer::Base.deliveries.size
     # tests that each user receives 1 email with the custom fields he is allowed to see only
     users_to_test.each do |user, fields|
       mails = ActionMailer::Base.deliveries.select {|m| m.bcc.include? user.mail}

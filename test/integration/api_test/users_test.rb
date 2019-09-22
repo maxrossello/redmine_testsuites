@@ -125,6 +125,18 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     assert_select 'user status', :text => User.find(1).status.to_s
   end
 
+  test "GET /users/:id should return admin status for current user" do
+    get '/users/2.xml', :headers => credentials('jsmith')
+    assert_response :success
+    assert_select 'user admin', :text => 'false'
+  end
+
+  test "GET /users/:id should not return admin status for other user" do
+    get '/users/3.xml', :headers => credentials('jsmith')
+    assert_response :success
+    assert_select 'user admin', 0
+  end
+
   test "POST /users.xml with valid parameters should create the user" do
     assert_difference('User.count') do
       post '/users.xml',
@@ -150,6 +162,22 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     assert_response :created
     assert_equal 'application/xml', @response.content_type
     assert_select 'user id', :text => user.id.to_s
+  end
+
+  test "POST /users.xml with generate_password should generate password" do
+    assert_difference('User.count') do
+      post '/users.xml',
+        :params => {
+          :user => {
+            :login => 'foo', :firstname => 'Firstname', :lastname => 'Lastname',
+            :mail => 'foo@example.net', :generate_password => 'true'
+          }
+        },
+        :headers => credentials('admin')
+    end
+
+    user = User.order('id DESC').first
+    assert user.hashed_password.present?
   end
 
   test "POST /users.json with valid parameters should create the user" do
