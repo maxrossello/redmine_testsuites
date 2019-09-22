@@ -61,6 +61,12 @@ class TimelogCustomFieldsVisibilityTest < Redmine::ControllerTest
     end
   end
 
+  def teardown
+    # cleanup User.current
+    @request.session[:user_id] = nil
+    get :index
+  end
+
   def test_index_should_show_visible_custom_fields_only
     @users_to_test.each do |user, fields|
       @request.session[:user_id] = user.id

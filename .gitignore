@@ -1,2 +1,13 @@
 Gemfile.lock
 config/overrides
+.buildpath
+.byebug_history
+.project
+config/
+db/
+files/
+log/
+public/
+test/
+tmp/
+
