@@ -143,7 +143,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.assigned_to = User.find(3)
 
     with_settings :notified_events => [] do
-      assert issue.save
+      assert issue.save 
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end

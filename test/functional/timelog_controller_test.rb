@@ -751,7 +751,8 @@ class TimelogControllerTest < Redmine::ControllerTest
     assert_select '.total-for-hours', :text => 'Hours: 162.90'
     assert_select 'form#query_form[action=?]', '/time_entries'
 
-    assert_equal ['Project', 'Date', 'User', 'Activity', 'Issue', 'Comment', 'Hours'], columns_in_list
+    #assert_equal ['Project', 'Date', 'User', 'Activity', 'Issue', 'Comment', 'Hours'], columns_in_list
+    assert_equal [I18n.t(:field_project), 'Date', 'User', 'Activity', I18n.t(:field_issue), 'Comment', 'Hours'], columns_in_list
     assert_select '.query-totals>span', 1
   end
 
@@ -775,7 +776,8 @@ class TimelogControllerTest < Redmine::ControllerTest
       assert_select 'td.user'
       assert_select 'td.hours'
     end
-    assert_equal ['Project', 'Date', 'Issue', 'User', 'Hours'], columns_in_list
+    #assert_equal ['Project', 'Date', 'Issue', 'User', 'Hours'], columns_in_list
+    assert_equal [I18n.t(:field_project), 'Date', I18n.t(:field_issue), 'User', 'Hours'], columns_in_list
   end
 
   def test_index_with_default_query_setting_using_custom_field
@@ -789,7 +791,8 @@ class TimelogControllerTest < Redmine::ControllerTest
       assert_response :success
     end
 
-    assert_equal ['Project', 'Date', 'User', 'Hours', 'Foo'], columns_in_list
+    #assert_equal ['Project', 'Date', 'User', 'Hours', 'Foo'], columns_in_list
+    assert_equal [I18n.t(:field_project), 'Date', 'User', 'Hours', 'Foo'], columns_in_list
 
     assert_select '.total-for-hours'
     assert_select ".total-for-cf-#{field.id}"

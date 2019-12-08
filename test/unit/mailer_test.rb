@@ -37,6 +37,11 @@ class MailerTest < ActiveSupport::TestCase
     Setting.default_language = 'en'
     User.current = nil
   end
+  
+  # redmine_testsuites
+  def teardown
+    set_language_if_valid 'en'
+  end
 
   def test_generated_links_in_emails
     with_settings :host_name => 'mydomain.foo', :protocol => 'https' do
@@ -527,9 +532,12 @@ class MailerTest < ActiveSupport::TestCase
     assert mail.bcc.include?('dlopper@somenet.foo')
     assert_mail_body_match 'Bug #3: Error 281 when updating a recipe', mail
     assert_select_email do
+      #assert_select 'a[href=?]',
+      #              'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
+      #              :text => 'View all issues'
       assert_select 'a[href=?]',
                     'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
-                    :text => 'View all issues'
+                    :text => "#{I18n.t :label_issue_view_all}"
     end
     #assert_equal '1 issue(s) due in the next 42 days', mail.subject
     assert_equal "#{I18n.t :mail_subject_reminder, {count: 1, days: 42}}", mail.subject

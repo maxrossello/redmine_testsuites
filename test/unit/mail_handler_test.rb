@@ -27,9 +27,11 @@ class MailHandlerTest < ActiveSupport::TestCase
            :workflows, :trackers, :projects_trackers,
            :versions, :enumerations, :issue_categories,
            :custom_fields, :custom_fields_trackers, :custom_fields_projects,
-           :boards, :messages
+           :boards, :messages,
+           :watchers  # redmine_testsuites
 
   FIXTURES_PATH = File.dirname(__FILE__) + '/../fixtures/mail_handler'
+  include ActiveJob::TestHelper  # redmine_testsuites
 
   def setup
     ActionMailer::Base.deliveries.clear
@@ -383,11 +385,14 @@ class MailHandlerTest < ActiveSupport::TestCase
   def test_add_issue_by_created_user
     Setting.default_language = 'en'
     assert_difference 'User.count' do
-      issue = submit_email(
+      issue = nil   # redmine_testsuites
+      perform_enqueued_jobs do  # redmine_testsuites
+        issue = submit_email(
                 'ticket_by_unknown_user.eml',
                 :issue => {:project => 'ecookbook'},
                 :unknown_user => 'create'
               )
+      end
       assert issue.is_a?(Issue)
       assert issue.author.active?
       assert_equal 'john.doe@somenet.foo', issue.author.mail
@@ -405,7 +410,10 @@ class MailHandlerTest < ActiveSupport::TestCase
   end
 
   def test_add_issue_should_send_notification
-    issue = submit_email('ticket_on_given_project.eml', :allow_override => 'all')
+    issue = nil  # redmine_testsuites
+    perform_enqueued_jobs do  # redmine_testsuites
+      issue = submit_email('ticket_on_given_project.eml', :allow_override => 'all')
+    end
     assert issue.is_a?(Issue)
     assert !issue.new_record?
 
@@ -433,12 +441,14 @@ class MailHandlerTest < ActiveSupport::TestCase
 
   def test_created_user_should_not_receive_account_information_with_no_account_info_option
     assert_difference 'User.count' do
-      submit_email(
-        'ticket_by_unknown_user.eml',
-        :issue => {:project => 'ecookbook'},
-        :unknown_user => 'create',
-        :no_account_notice => '1'
-      )
+      perform_enqueued_jobs do  # redmine_testsuites
+        submit_email(
+          'ticket_by_unknown_user.eml',
+          :issue => {:project => 'ecookbook'},
+          :unknown_user => 'create',
+          :no_account_notice => '1'
+        )
+      end
     end
 
     # only 2 emails for the new issue notification
@@ -818,7 +828,10 @@ class MailHandlerTest < ActiveSupport::TestCase
   def test_add_issue_should_send_email_notification
     Setting.notified_events = ['issue_added']
     # This email contains: 'Project: onlinestore'
-    issue = submit_email('ticket_on_given_project.eml')
+    issue = nil  # redmine_testsuites
+    perform_enqueued_jobs do  # redmine_testsuites
+      issue = submit_email('ticket_on_given_project.eml')
+    end
     assert issue.is_a?(Issue)
     assert_equal 1, ActionMailer::Base.deliveries.size
   end
@@ -915,7 +928,10 @@ class MailHandlerTest < ActiveSupport::TestCase
   end
 
   def test_update_issue_should_send_email_notification
-    journal = submit_email('ticket_reply.eml')
+    journal = nil # redmine_testsuites
+    perform_enqueued_jobs do  # redmine_testsuites
+      journal = submit_email('ticket_reply.eml')
+    end
     assert journal.is_a?(Journal)
     assert_equal 3, ActionMailer::Base.deliveries.size
   end

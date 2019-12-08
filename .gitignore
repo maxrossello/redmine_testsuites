@@ -10,3 +10,5 @@ log/
 public/
 test/
 tmp/
+.metadata/
+coverage/

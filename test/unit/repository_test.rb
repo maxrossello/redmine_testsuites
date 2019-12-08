@@ -41,6 +41,11 @@ class RepositoryTest < ActiveSupport::TestCase
     @repository = Project.find(1).repository
   end
 
+  # redmine_testsuites
+  def teardown
+    set_language_if_valid 'en'
+  end
+
   def test_blank_log_encoding_error_message
     set_language_if_valid 'en'
     repo = Repository::Bazaar.new(
@@ -231,6 +236,7 @@ class RepositoryTest < ActiveSupport::TestCase
   end
 
   def test_scan_changesets_for_issue_ids
+    set_language_if_valid 'en'  # redmine_testsuites
     Setting.default_language = 'en'
     Setting.commit_ref_keywords = 'refs , references, IssueID'
     Setting.commit_update_keywords = [

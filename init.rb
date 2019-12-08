@@ -1,4 +1,4 @@
-# Redmine plugin for Better Overviews
+# Redmine plugin for Plugin Testsuites
 # Copyright (C) 2018    Massimo Rossello 
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,10 +28,10 @@ if ENV["RAILS_ENV"] == "test"
     name 'Redmine Test Suites plugin'
     author 'Massimo Rossello'
     description 'Allows to run the Redmine test suite along with plugin tests, considering the different behaviors introduced by supported plugins over the Redmine default behavior.'
-    version '3.4.10'
+    version '4.0.4'
     url 'https://github.com/maxrossello/redmine_testsuites.git'
     author_url 'https://github.com/maxrossello'
-    requires_redmine :version => '3.4.10'
+    requires_redmine :version => '4.0.4'
   end 
 
   #Rails.application.config.active_support.test_order = :sorted

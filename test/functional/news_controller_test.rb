@@ -21,6 +21,7 @@ class NewsControllerTest < Redmine::ControllerTest
   fixtures :projects, :users, :email_addresses, :roles, :members, :member_roles,
            :enabled_modules, :news, :comments,
            :attachments
+  include ActiveJob::TestHelper  # redmine_testsuites
 
   def setup
     User.current = nil
@@ -111,7 +112,8 @@ class NewsControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
 
     with_settings :notified_events => %w(news_added) do
-      post :create, :params => {
+      perform_enqueued_jobs do  # redmine_testsuites
+        post :create, :params => {
           :project_id => 1,
           :news => {
             :title => 'NewsControllerTest',
@@ -119,6 +121,7 @@ class NewsControllerTest < Redmine::ControllerTest
             :summary => '' 
           }
         }
+      end
     end
     assert_redirected_to '/projects/ecookbook/news'
 

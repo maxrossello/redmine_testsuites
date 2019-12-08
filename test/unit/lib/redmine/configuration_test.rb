@@ -21,7 +21,7 @@ class Redmine::ConfigurationTest < ActiveSupport::TestCase
   def setup
     @conf = Redmine::Configuration
   end
-
+  
   def test_empty
     assert_kind_of Hash, load_conf('empty.yml.example', 'test')
   end
