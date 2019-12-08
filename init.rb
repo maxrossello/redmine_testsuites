@@ -39,7 +39,7 @@ if ENV["RAILS_ENV"] == "test"
   # each hash contains conditions in AND; plugin is supported if any hash in array matches 
   supported_plugins = {
     redmine_testsuites:        {},
-    redmine_translation_terms: [{ version_or_higher: '3.4.8' }]
+    redmine_translation_terms: [{ version_or_higher: '4.0.0' }]
   }
   
   require_dependency 'testsuites_versions'
