@@ -43,7 +43,8 @@ class IssuesControllerTest < Redmine::ControllerTest
            :journal_details,
            :queries,
            :repositories,
-           :changesets
+           :changesets,
+           :watchers
 
   include Redmine::I18n
 
@@ -591,7 +592,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       }
     assert_response :success
 
-    assert_equal 'text/csv', @response.content_type
+    assert_equal 'text/csv', @response.media_type
     assert response.body.starts_with?("#,")
     lines = response.body.chomp.split("\n")
     # default columns + id and project
@@ -604,8 +605,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         :format => 'csv'
       }
     assert_response :success
-
-    assert_equal 'text/csv', @response.content_type
+    assert_equal 'text/csv', @response.media_type
   end
 
   def test_index_csv_without_any_filters
@@ -632,8 +632,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       assert_response :success
     end
-
-    assert_equal 'text/csv', response.content_type
+    assert_equal 'text/csv', response.media_type
     headers = response.body.chomp.split("\n").first.split(',')
     assert_include 'Description', headers
     assert_include 'test_index_csv_with_description', response.body
@@ -649,7 +648,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         :c => %w(subject spent_hours)
       }
     assert_response :success
-    assert_equal 'text/csv', @response.content_type
+    assert_equal 'text/csv', @response.media_type
     lines = @response.body.chomp.split("\n")
     assert_include "#{issue.id},#{issue.subject},7.33", lines
   end
@@ -661,7 +660,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       }
     assert_response :success
 
-    assert_equal 'text/csv', @response.content_type
+    assert_equal 'text/csv', @response.media_type
     assert_match /\A#,/, response.body
     lines = response.body.chomp.split("\n")
     assert_equal IssueQuery.new.available_inline_columns.size, lines[0].split(',').size
@@ -733,7 +732,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           :subject => str_utf8,
           :format => 'csv'
         }
-      assert_equal 'text/csv', @response.content_type
+      assert_equal 'text/csv', @response.media_type
       lines = @response.body.chomp.split("\n")
       header = lines[0]
       status = "\xaa\xac\xbaA".force_encoding('Big5')
@@ -755,7 +754,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           :format => 'csv',
           :set_filter => 1
         }
-      assert_equal 'text/csv', @response.content_type
+      assert_equal 'text/csv', @response.media_type
       lines = @response.body.chomp.split("\n")
       header = lines[0]
       issue_line = lines.find {|l| l =~ /^#{issue.id},/}
@@ -779,7 +778,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           :format => 'csv',
           :set_filter => 1
         }
-      assert_equal 'text/csv', @response.content_type
+      assert_equal 'text/csv', @response.media_type
       lines = @response.body.chomp.split("\n")
       assert_include "#{issue.id},1234.50,#{str1}", lines
     end
@@ -797,7 +796,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           :format => 'csv',
           :set_filter => 1
         }
-      assert_equal 'text/csv', @response.content_type
+      assert_equal 'text/csv', @response.media_type
       lines = @response.body.chomp.split("\n")
       assert_include "#{issue.id};1234,50;#{str1}", lines
     end
@@ -1263,7 +1262,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         :format => 'csv'
       }
     assert_response :success
-    assert_equal 'text/csv', response.content_type
+    assert_equal 'text/csv', response.media_type
     lines = response.body.chomp.split("\n")
     assert_include '1,"Related to #7, Related to #8, Blocks #11"', lines
     assert_include '2,Blocked by #12', lines
@@ -5671,6 +5670,8 @@ class IssuesControllerTest < Redmine::ControllerTest
           }
         }
       assert_response 302
+      # 4 emails for 2 members and 2 issues
+      # 1 email for a watcher of issue #2
       assert_equal 5, ActionMailer::Base.deliveries.size
     end
   end
@@ -6274,7 +6275,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
   end
 
-  def test_bulk_copy_should_allow_copying_the_subtasks
+  test "bulk copy should allow copying the subtasks" do
     issue = Issue.generate_with_descendants!
     count = issue.descendants.count
     @request.session[:user_id] = 2
@@ -6294,10 +6295,9 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_equal count, copy.descendants.count
   end
 
-  def test_bulk_copy_should_allow_copying_the_subtasks
+  test "issue bulk copy copy watcher" do
     Watcher.create!(:watchable => Issue.find(1), :user => User.find(3))
     @request.session[:user_id] = 2
-
     assert_difference 'Issue.count' do
       post :bulk_update, :params => {
           :ids => [1],
@@ -6305,7 +6305,6 @@ class IssuesControllerTest < Redmine::ControllerTest
           :copy_watchers => '1',
           :issue => {
             :project_id => ''
-
           }
         }
     end
