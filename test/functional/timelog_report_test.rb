@@ -234,7 +234,7 @@ class TimelogReportTest < Redmine::ControllerTest
       :format => "csv"
     }
     assert_response :success
-    assert_equal 'text/csv', @response.content_type
+    assert_equal 'text/csv', @response.media_type
     lines = @response.body.chomp.split("\n")
     # Headers
     #assert_equal 'Project,User,Activity,2007-3,2007-4,Total time', lines.first
@@ -249,15 +249,15 @@ class TimelogReportTest < Redmine::ControllerTest
       :columns => 'month',
       :from => "2007-01-01",
       :to => "2007-06-30",
-      :criteria => ["project", "user", "activity"],
+      :criteria => ["project", "user", "cf_10"],
       :format => "csv"
     }
     assert_response :success
-    assert_equal 'text/csv', @response.content_type
+    assert_equal 'text/csv', @response.media_type
     lines = @response.body.chomp.split("\n")
     # Headers
-    #assert_equal 'Project,User,Activity,2007-3,2007-4,Total time', lines.first
-    assert_equal "#{I18n.t(:field_project)},User,Activity,2007-3,2007-4,Total time", lines.first
+    #assert_equal 'Project,User,Overtime,2007-3,2007-4,Total time', lines.first
+    assert_equal "#{I18n.t(:field_project)},User,Overtime,2007-3,2007-4,Total time", lines.first
     # Total row
     assert_equal 'Total time,"","",154.25,8.65,162.90', lines.last
   end
@@ -293,7 +293,7 @@ class TimelogReportTest < Redmine::ControllerTest
       }
     end
     assert_response :success
-    assert_equal 'text/csv', @response.content_type
+    assert_equal 'text/csv', @response.media_type
     lines = @response.body.chomp.split("\n")
     # Headers
     s1 = "\xa5\xce\xa4\xe1,2011-11-11,\xa4u\xae\xc9\xc1`\xadp".force_encoding('Big5')
@@ -340,7 +340,7 @@ class TimelogReportTest < Redmine::ControllerTest
       }
     end
     assert_response :success
-    assert_equal 'text/csv', @response.content_type
+    assert_equal 'text/csv', @response.media_type
     lines = @response.body.chomp.split("\n")
     # Headers
     s1 = "\xa5\xce\xa4\xe1,2011-11-11,\xa4u\xae\xc9\xc1`\xadp".force_encoding('Big5')
@@ -375,7 +375,7 @@ class TimelogReportTest < Redmine::ControllerTest
         :format => "csv"
       }
       assert_response :success
-      assert_equal 'text/csv', @response.content_type
+      assert_equal 'text/csv', @response.media_type
       lines = @response.body.chomp.split("\n")
       # Headers
       s1 = "Utilisateur;2011-11-11;Temps total".force_encoding('ISO-8859-1')
