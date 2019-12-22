@@ -45,6 +45,8 @@ The plugin repository comes with a tag for each supported Redmine core version.
 ## Supported plugins
 
 - [redmine_translation_terms](https://github.com/maxrossello/redmine_translation_terms) : allows to customize specific terms in Redmine translations (e.g. issue -> work item, project -> workspace) in order to better adapt the issue tracker to a specific task
+- [redmine_base_deface](https://github.com/jbbarth/redmine_base_deface) : manage view modifications in plugins
+- [redmine_better_overview](https://github.com/maxrossello/redmine_better_overview) : provides a better projects overview
 
 ## How to support further plugins
 
@@ -53,7 +55,7 @@ The plugin repository comes with a tag for each supported Redmine core version.
 - Edit failing tests: duplicate the offending line(s) and keep the original ones commented.
 The change shall encompass all cases of expected behaviors depending on whether all or a part of the supported plugins are installed or not. The presence of a plugin can be checked with:
 
-	    if Plugin.installed? :my_plugin
+	    if Redmine::Plugin.installed? :my_plugin
 	        <expected behavior with my_plugin installed>
 	    else
 	        <expected behavior without my_plugin installed>

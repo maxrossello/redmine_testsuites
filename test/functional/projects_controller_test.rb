@@ -481,7 +481,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
       }
     assert_response :success
 
-    assert_select 'li[class=?]', 'cf_3', :text => /Development status/
+    if Redmine::Plugin.installed? :redmine_better_overview
+      assert_select 'h3[class=?]', 'cf_3', :text => /Development status/
+    else
+      assert_select 'li[class=?]', 'cf_3', :text => /Development status/
+    end
   end
 
   def test_show_should_not_display_hidden_custom_fields
@@ -505,7 +509,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select 'li', :text => /#{f1.name}/, :count => 0
-    assert_select 'li', :text => /#{f2.name}/
+    if Redmine::Plugin.installed? :redmine_better_overview
+      assert_select 'h3', :text => /#{f2.name}/
+    else
+      assert_select 'li', :text => /#{f2.name}/
+    end
   end
 
   def test_show_should_not_display_blank_text_custom_fields
