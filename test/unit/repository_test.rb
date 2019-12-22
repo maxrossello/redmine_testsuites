@@ -38,8 +38,9 @@ class RepositoryTest < ActiveSupport::TestCase
   include Redmine::I18n
 
   def setup
+    User.current = nil
     @repository = Project.find(1).repository
-    set_language_if_valid 'en'
+    set_language_if_valid 'en'  # redmine_testsuites
   end
 
   def test_blank_log_encoding_error_message

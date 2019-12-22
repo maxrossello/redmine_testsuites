@@ -25,6 +25,10 @@ class IssueSubtaskingTest < ActiveSupport::TestCase
            :enabled_modules,
            :workflows
 
+  def setup
+    User.current = nil
+  end
+
   def test_leaf_planning_fields_should_be_editable
     issue = Issue.generate!
     user = User.find(1)
@@ -321,13 +325,16 @@ class IssueSubtaskingTest < ActiveSupport::TestCase
     end
   end
 
-  def test_parent_total_estimated_hours_should_be_sum_of_descendants
+  def test_parent_total_estimated_hours_should_be_sum_of_visible_descendants
     parent = Issue.generate!
     parent.generate_child!(:estimated_hours => nil)
     assert_equal 0, parent.reload.total_estimated_hours
     parent.generate_child!(:estimated_hours => 5)
     assert_equal 5, parent.reload.total_estimated_hours
     parent.generate_child!(:estimated_hours => 7)
+    assert_equal 12, parent.reload.total_estimated_hours
+
+    parent.generate_child!(:estimated_hours => 9, :is_private => true)
     assert_equal 12, parent.reload.total_estimated_hours
   end
 

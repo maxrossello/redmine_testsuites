@@ -239,7 +239,7 @@ class Redmine::I18nTest < ActiveSupport::TestCase
     assert_equal "Pas de traduction", l(:untranslated)
     
     # missing reload harms later lookups
-    ::I18n.backend.reload!
+    ::I18n.backend.reload!   # redmine_testsuites
   end
 
   def test_utf8

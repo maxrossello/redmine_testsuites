@@ -35,7 +35,7 @@ class MailerTest < ActiveSupport::TestCase
     ActionMailer::Base.deliveries.clear
     Setting.plain_text_mail = '0'
     Setting.default_language = 'en'
-    set_language_if_valid 'en'
+    set_language_if_valid 'en' # testsuite
     User.current = nil
   end
 

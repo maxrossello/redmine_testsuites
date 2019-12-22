@@ -17,7 +17,7 @@
 
 if ENV["COVERAGE"]
   require 'simplecov'
-  require File.expand_path(File.dirname(__FILE__) + "/../../coverage/html_formatter")
+  require File.expand_path(File.dirname(__FILE__) + "/coverage/html_formatter")
   SimpleCov.formatter = Redmine::Coverage::HtmlFormatter
   SimpleCov.start 'rails'
 end
@@ -33,7 +33,7 @@ require File.expand_path(File.dirname(__FILE__) + '/object_helpers')
 include ObjectHelpers
 
 require 'net/ldap'
-require 'mocha/setup'
+require 'mocha/minitest'
 require 'fileutils'
 
 Redmine::SudoMode.disable!
