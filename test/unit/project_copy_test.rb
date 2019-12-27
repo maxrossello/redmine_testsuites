@@ -36,7 +36,8 @@ class ProjectCopyTest < ActiveSupport::TestCase
            :boards, :messages,
            :repositories,
            :news, :comments,
-           :documents
+           :documents,
+           :attachments   #redmine_testsuites
 
   def setup
     User.current = nil
