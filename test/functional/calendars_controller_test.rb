@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -30,9 +32,14 @@ class CalendarsControllerTest < Redmine::ControllerTest
            :issue_relations,
            :issue_categories,
            :enumerations,
-           :queries
+           :queries,
+           :users, :email_addresses
 
   def test_show
+    # Ensure that an issue to which a user is assigned is in the current
+    # month's calendar in order to test Gravatar
+    travel_to issues(:issues_002).start_date
+
     with_settings :gravatar_enabled => '1' do
       get :show, :params => {
           :project_id => 1
@@ -129,8 +136,24 @@ class CalendarsControllerTest < Redmine::ControllerTest
     get :show, :params => {
         :query_id => 6
       }
-      
+
     assert_response :success
     assert_select 'h2', :text => 'Open issues grouped by tracker'
+  end
+
+  def test_show_calendar_day_css_classes
+    get :show, :params => {
+        :month => '12',
+        :year => '2016'
+      }
+    assert_response :success
+
+    assert_select 'tr:nth-child(2)' do
+      assert_select 'td.week-number', :text => '49'
+      # non working days should have "nwday" CSS class
+      assert_select 'td.nwday', 2
+      assert_select 'td.nwday', :text => '4'
+      assert_select 'td.nwday', :text => '10'
+    end
   end
 end

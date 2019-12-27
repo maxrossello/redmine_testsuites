@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -89,7 +91,7 @@ class Redmine::ApiTest::SearchTest < Redmine::ApiTest::Base
     assert_equal 4, json['limit']
     assert_equal issue[8..10], json['results'].map {|r| r['id']}
   end
- 
+
   test "GET /search.xml should not quick jump to the issue with given id" do
     get '/search.xml', :params => {:q => '3'}
     assert_response :success

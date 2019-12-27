@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +19,7 @@
 
 require File.expand_path('../../application_system_test_case', __FILE__)
 
-class SudoModeTest < ApplicationSystemTestCase
+class SudoModeSystemTest < ApplicationSystemTestCase
   fixtures :users, :email_addresses
 
   def setup
@@ -33,7 +35,7 @@ class SudoModeTest < ApplicationSystemTestCase
   def test_add_user
     log_user('admin', 'admin')
     expire_sudo_mode!
-    
+
     visit '/users/new'
 
     assert_difference 'User.count' do

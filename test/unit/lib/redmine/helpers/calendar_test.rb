@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -45,7 +47,7 @@ class CalendarTest < ActiveSupport::TestCase
     [1, 6, 7].each do |day|
       with_settings :start_of_week => day do
         c = Redmine::Helpers::Calendar.new(Date.today, :en, :month)
-        assert_equal day , c.startdt.cwday
+        assert_equal day, c.startdt.cwday
         assert_equal (day + 5) % 7 + 1, c.enddt.cwday
       end
     end

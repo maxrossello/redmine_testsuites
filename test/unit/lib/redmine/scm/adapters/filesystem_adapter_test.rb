@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -35,8 +37,9 @@ class FilesystemAdapterTest < ActiveSupport::TestCase
       end
       # If y try to use "..", the path is ignored
       ["/../","dir/../", "..", "../", "/..", "dir/.."].each do |path|
-        assert_equal ["dir", "japanese", "test"], @adapter.entries(path).collect(&:name),
-             ".. must be ignored in path argument"
+        assert_equal(
+          ["dir", "japanese", "test"], @adapter.entries(path).collect(&:name),
+          ".. must be ignored in path argument")
       end
     end
 

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,9 +30,10 @@ class AttachmentsTest < Redmine::IntegrationTest
   def test_upload_should_set_default_content_type
     log_user('jsmith', 'jsmith')
     assert_difference 'Attachment.count' do
-      post "/uploads.js?attachment_id=1&filename=foo.txt",
+      post(
+        "/uploads.js?attachment_id=1&filename=foo.txt",
         :params => "File content",
-        :headers => {"CONTENT_TYPE" => 'application/octet-stream'}
+        :headers => {"CONTENT_TYPE" => 'application/octet-stream'})
       assert_response :success
     end
     attachment = Attachment.order(:id => :desc).first
@@ -40,9 +43,10 @@ class AttachmentsTest < Redmine::IntegrationTest
   def test_upload_should_accept_content_type_param
     log_user('jsmith', 'jsmith')
     assert_difference 'Attachment.count' do
-      post "/uploads.js?attachment_id=1&filename=foo&content_type=image/jpeg",
+      post(
+        "/uploads.js?attachment_id=1&filename=foo&content_type=image/jpeg",
         :params => "File content",
-        :headers => {"CONTENT_TYPE" => 'application/octet-stream'}
+        :headers => {"CONTENT_TYPE" => 'application/octet-stream'})
       assert_response :success
     end
     attachment = Attachment.order(:id => :desc).first
@@ -150,7 +154,6 @@ class AttachmentsTest < Redmine::IntegrationTest
     get "/attachments/download/4"
     assert_response :success
     assert_not_nil response.headers["X-Sendfile"]
-
   ensure
     set_tmp_attachments_directory
   end
@@ -159,9 +162,10 @@ class AttachmentsTest < Redmine::IntegrationTest
 
   def ajax_upload(filename, content, attachment_id=1)
     assert_difference 'Attachment.count' do
-      post "/uploads.js?attachment_id=#{attachment_id}&filename=#{filename}",
+      post(
+        "/uploads.js?attachment_id=#{attachment_id}&filename=#{filename}",
         :params => content,
-        :headers => {"CONTENT_TYPE" => 'application/octet-stream'}
+        :headers => {"CONTENT_TYPE" => 'application/octet-stream'})
       assert_response :success
       assert_equal 'text/javascript', response.content_type
     end

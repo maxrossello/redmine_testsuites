@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@ class Redmine::SyntaxHighlighting::RougeTest < ActiveSupport::TestCase
     to_test = {
       'application.js' => true,
       'Gemfile' => true,
-      'AUTOEXEC.BAT' => false,  # Rouge does not support BAT files
+      'HELLO.CBL' => false,  # Rouge does not support COBOL
       'HELLO.C' => true
     }
     to_test.each do |filename, expected|
@@ -33,22 +33,22 @@ class Redmine::SyntaxHighlighting::RougeTest < ActiveSupport::TestCase
   end
 
   def test_highlight_by_filename_should_distinguish_perl_and_prolog
-    raw_perl = <<'RAW_PERL'
-#!/usr/bin/perl
-print "Hello, world!\n";
-RAW_PERL
-    expected_perl = <<'EXPECTED_PERL'
-<span class="c1">#!/usr/bin/perl</span>
-<span class="k">print</span> <span class="s">"Hello, world!\n"</span><span class="p">;</span>
-EXPECTED_PERL
-    raw_prolog = <<'RAW_PROLOG'
-#!/usr/bin/swipl
-:- writeln('Hello, world!'),halt.
-RAW_PROLOG
-    expected_prolog = <<'EXPECTED_PROLOG'
-<span class="c1">#!/usr/bin/swipl</span>
-<span class="p">:-</span> <span class="ss">writeln</span><span class="p">(</span><span class="ss">'Hello, world!'</span><span class="p">),</span><span class="ss">halt</span><span class="p">.</span>
-EXPECTED_PROLOG
+    raw_perl = <<~'RAW_PERL'
+      #!/usr/bin/perl
+      print "Hello, world!\n";
+    RAW_PERL
+    expected_perl = <<~'EXPECTED_PERL'
+      <span class="c1">#!/usr/bin/perl</span>
+      <span class="k">print</span> <span class="p">"</span><span class="s2">Hello, world!</span><span class="se">\n</span><span class="p">";</span>
+    EXPECTED_PERL
+    raw_prolog = <<~'RAW_PROLOG'
+      #!/usr/bin/swipl
+      :- writeln('Hello, world!'),halt.
+    RAW_PROLOG
+    expected_prolog = <<~'EXPECTED_PROLOG'
+      <span class="c1">#!/usr/bin/swipl</span>
+      <span class="p">:-</span> <span class="ss">writeln</span><span class="p">(</span><span class="ss">'Hello, world!'</span><span class="p">),</span><span class="ss">halt</span><span class="p">.</span>
+    EXPECTED_PROLOG
 
     filename = 'hello.pl'
 

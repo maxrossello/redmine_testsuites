@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,11 +20,14 @@
 require File.expand_path('../../../../../test_helper', __FILE__)
 
 class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
-  fixtures :projects, :trackers, :issue_statuses,
+  fixtures :projects, :trackers, :projects_trackers, :issue_statuses,
            :enumerations, :users, :issue_categories
 
   include ProjectsHelper
   include IssuesHelper
+  include QueriesHelper
+  include AvatarsHelper
+
   include ERB::Util
   include Rails.application.routes.url_helpers
 
@@ -152,7 +157,8 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     setup_subjects
     @output_buffer = @gantt.subjects
     assert_select "div.issue-subject", /#{@issue.subject}/
-    assert_select 'div.issue-subject[style*="left:44px"]'
+    # subject 56px: 44px + 12px(collapse/expand icon's width)
+    assert_select 'div.issue-subject[style*="left:56px"]'
   end
 
   test "#subjects issue assigned to a shared version of another project should be rendered" do
@@ -200,9 +206,10 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     assert_select 'div.issue-subject[style*="left:44px"]', /#{@issue.subject}/
     # children 64px
     assert_select 'div.issue-subject[style*="left:64px"]', /child1/
-    assert_select 'div.issue-subject[style*="left:64px"]', /child2/
-    # grandchild 84px
-    assert_select 'div.issue-subject[style*="left:84px"]', /grandchild/, @output_buffer
+    # children 76px: 64px + 12px(collapse/expand icon's width)
+    assert_select 'div.issue-subject[style*="left:76px"]', /child2/
+    # grandchild 96px: 84px + 12px(collapse/expand icon's width)
+    assert_select 'div.issue-subject[style*="left:96px"]', /grandchild/, @output_buffer
   end
 
   test "#lines" do
@@ -235,6 +242,17 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     assert_select "div.task_todo"
     assert_select "div.task.label", /#{@issue.done_ratio}/
     assert_select "div.tooltip", /#{@issue.subject}/
+  end
+
+  test "#selected_column_content" do
+    create_gantt
+    issue = Issue.generate!
+    @gantt.query.column_names = [:assigned_to]
+    issue.update(:assigned_to_id => issue.assignable_users.first.id)
+    @project.issues << issue
+    # :column => assigned_to
+    @output_buffer = @gantt.selected_column_content({ :column => @gantt.query.columns.last })
+    assert_select "div.issue_assigned_to#assigned_to_issue_#{issue.id}"
   end
 
   test "#subject_for_project" do
@@ -298,7 +316,8 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
   test "#subject should use the indent option to move the div to the right" do
     create_gantt
     @output_buffer = @gantt.subject('subject', :format => :html, :indent => 40)
-    assert_select 'div[style*="left:40"]'
+    # subject 52px: 40px(indent) + 12px(collapse/expand icon's width)
+    assert_select 'div[style*="left:52px"]'
   end
 
   test "#line_for_project" do
@@ -432,6 +451,20 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     assert_select "div.label", :text => 'line'
   end
 
+  test "#column_content_for_issue" do
+    create_gantt
+    @gantt.query.column_names = [:assigned_to]
+    issue = Issue.generate!
+    issue.update(:assigned_to_id => issue.assignable_users.first.id)
+    @project.issues << issue
+    # :column => assigned_to
+    options = { :column => @gantt.query.columns.last, :top => 64, :format => :html }
+    @output_buffer = @gantt.column_content_for_issue(issue, options)
+
+    assert_select "div.issue_assigned_to#assigned_to_issue_#{issue.id}"
+    assert_includes @output_buffer, column_content(options[:column], issue)
+  end
+
   def test_sort_issues_no_date
     project = Project.generate!
     issue1 = Issue.generate!(:subject => "test", :project => project)
@@ -449,7 +482,7 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     issues = [child3, child2, child1, issue2, issue1]
     Redmine::Helpers::Gantt.sort_issues!(issues)
     assert_equal [issue1.id, child1.id, child3.id, child2.id, issue2.id],
-                  issues.map{|v| v.id}
+                 issues.map{|v| v.id}
   end
 
   def test_sort_issues_root_only
@@ -463,7 +496,7 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     issues = [issue4, issue3, issue2, issue1]
     Redmine::Helpers::Gantt.sort_issues!(issues)
     assert_equal [issue1.id, issue2.id, issue4.id, issue3.id],
-                  issues.map{|v| v.id}
+                 issues.map{|v| v.id}
   end
 
   def test_sort_issues_tree
@@ -472,17 +505,17 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     issue2 = Issue.generate!(:subject => "test", :project => project,
                              :start_date => (today - 2))
     issue1_child1 =
-             Issue.generate!(:parent_issue_id => issue1.id, :subject => 'child',
-                             :project => project)
+      Issue.generate!(:parent_issue_id => issue1.id, :subject => 'child',
+                      :project => project)
     issue1_child2 =
-             Issue.generate!(:parent_issue_id => issue1.id, :subject => 'child',
-                             :project => project, :start_date => (today - 10))
+      Issue.generate!(:parent_issue_id => issue1.id, :subject => 'child',
+                      :project => project, :start_date => (today - 10))
     issue1_child1_child1 =
-             Issue.generate!(:parent_issue_id => issue1_child1.id, :subject => 'child',
-                             :project => project, :start_date => (today - 8))
+      Issue.generate!(:parent_issue_id => issue1_child1.id, :subject => 'child',
+                      :project => project, :start_date => (today - 8))
     issue1_child1_child2 =
-             Issue.generate!(:parent_issue_id => issue1_child1.id, :subject => 'child',
-                             :project => project, :start_date => (today - 9))
+      Issue.generate!(:parent_issue_id => issue1_child1.id, :subject => 'child',
+                      :project => project, :start_date => (today - 9))
     issue1_child1_child1_logic = Redmine::Helpers::Gantt.sort_issue_logic(issue1_child1_child1)
     assert_equal [[today - 10, issue1.id], [today - 9, issue1_child1.id],
                   [today - 8, issue1_child1_child1.id]],

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,8 +29,10 @@ class Redmine::MenuManager::MenuHelperTest < Redmine::HelperTest
   def setup
     setup_with_controller
     # Stub the current menu item in the controller
-    def current_menu_item
-      :index
+    self.class_eval do
+      def current_menu_item
+         :index
+      end
     end
   end
 
@@ -90,20 +94,21 @@ class Redmine::MenuManager::MenuHelperTest < Redmine::HelperTest
 
   def test_render_menu_node_with_children
     User.current = User.find(2)
-
-    parent_node = Redmine::MenuManager::MenuItem.new(:parent_node,
-                                                     '/test',
-                                                     {
-                                                       :children => Proc.new {|p|
-                                                         children = []
-                                                         3.times do |time|
-                                                           children << Redmine::MenuManager::MenuItem.new("test_child_#{time}",
-                                                                                                             {:controller => 'issues', :action => 'index'},
-                                                                                                             {})
-                                                         end
-                                                         children
-                                                       }
-                                                     })
+    parent_node = Redmine::MenuManager::MenuItem.new(
+                    :parent_node,
+                    '/test',
+                    {
+                      :children => Proc.new {|p|
+                        children = []
+                        3.times do |time|
+                          children << Redmine::MenuManager::MenuItem.new(
+                            "test_child_#{time}",
+                            {:controller => 'issues', :action => 'index'},
+                            {})
+                        end
+                        children
+                      }
+                    })
     @output_buffer = render_menu_node(parent_node, Project.find(1))
 
     assert_select("li") do
@@ -131,18 +136,20 @@ class Redmine::MenuManager::MenuHelperTest < Redmine::HelperTest
                                                        }
                                                      })
 
-    parent_node << Redmine::MenuManager::MenuItem.new(:child_node,
-                                                     {:controller => 'issues', :action => 'index'},
-                                                     {
-                                                       :children => Proc.new {|p|
-                                                         children = []
-                                                         6.times do |time|
-                                                            children << Redmine::MenuManager::MenuItem.new("test_dynamic_child_#{time}", {:controller => 'issues', :action => 'index'}, {})
-                                                         end
-                                                         children
-                                                       }
-                                                     })
-
+    parent_node << Redmine::MenuManager::MenuItem.new(
+                     :child_node,
+                     {:controller => 'issues', :action => 'index'},
+                     {
+                       :children =>
+                         Proc.new {|p|
+                           children = []
+                           6.times do |time|
+                             children << Redmine::MenuManager::MenuItem.new(
+                               "test_dynamic_child_#{time}", {:controller => 'issues', :action => 'index'}, {})
+                           end
+                           children
+                         }
+                     })
     @output_buffer = render_menu_node(parent_node, Project.find(1))
 
     assert_select("li") do
@@ -209,9 +216,8 @@ class Redmine::MenuManager::MenuHelperTest < Redmine::HelperTest
       end
     end
   end
- 
-  def test_render_empty_virtual_menu_node_with_children
 
+  def test_render_empty_virtual_menu_node_with_children
     # only empty item with no click target
     Redmine::MenuManager.map :menu1 do |menu|
       menu.push(:parent_node, nil, { })
@@ -219,9 +225,12 @@ class Redmine::MenuManager::MenuHelperTest < Redmine::HelperTest
 
     # parent with unallowed unattached child
     Redmine::MenuManager.map :menu2 do |menu|
-      menu.push(:parent_node, nil, {:children => Proc.new {|p|
-         [Redmine::MenuManager::MenuItem.new("test_child_unallowed", {:controller => 'issues', :action => 'new'}, {})]
-       } })
+      menu.push(:parent_node, nil,
+                {:children => Proc.new {|p|
+                                [Redmine::MenuManager::MenuItem.new("test_child_unallowed",
+                                                                    {:controller => 'issues',
+                                                                     :action => 'new'}, {})]
+                              }})
     end
 
     # parent with unallowed standard child

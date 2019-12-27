@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -47,6 +49,9 @@ class TrackersControllerTest < Redmine::ControllerTest
     get :new
     assert_response :success
     assert_select 'input[name=?]', 'tracker[name]'
+    assert_select 'select[name=?]', 'tracker[default_status_id]' do
+      assert_select 'option[value=?][selected=selected]', IssueStatus.sorted.first.id.to_s
+    end
   end
 
   def test_create

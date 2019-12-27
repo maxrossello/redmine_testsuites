@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,12 +26,12 @@ class TimelogHelperTest < Redmine::HelperTest
   include ERB::Util
 
   fixtures :projects, :roles, :enabled_modules, :users,
-                      :repositories, :changesets,
-                      :trackers, :issue_statuses, :issues, :versions, :documents,
-                      :wikis, :wiki_pages, :wiki_contents,
-                      :boards, :messages,
-                      :attachments,
-                      :enumerations
+           :repositories, :changesets,
+           :trackers, :issue_statuses, :issues, :versions, :documents,
+           :wikis, :wiki_pages, :wiki_contents,
+           :boards, :messages,
+           :attachments,
+           :enumerations
 
   def test_activities_collection_for_select_options_should_return_array_of_activity_names_and_ids
     activities = activity_collection_for_select_options

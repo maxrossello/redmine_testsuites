@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -184,7 +186,6 @@ class EmailAddressesControllerTest < Redmine::ControllerTest
     # The changed address should be notified for security purposes
     assert [mail.bcc, mail.cc].flatten.include?('another@somenet.foo')
   end
-
 
   def test_destroy
     @request.session[:user_id] = 2

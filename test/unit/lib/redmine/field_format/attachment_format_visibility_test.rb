@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -23,6 +25,7 @@ class AttachmentFormatVisibilityTest < ActionView::TestCase
            :roles, :members, :member_roles,
            :users, :email_addresses,
            :trackers, :issue_statuses, :enumerations, :issue_categories,
+           :custom_fields, :custom_fields_trackers,
            :versions, :issues
 
   def setup

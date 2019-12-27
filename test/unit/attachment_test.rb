@@ -1,7 +1,7 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,6 +24,7 @@ class AttachmentTest < ActiveSupport::TestCase
            :enabled_modules, :issues, :trackers, :attachments
 
   def setup
+    User.current = nil
     set_tmp_attachments_directory
   end
 
@@ -295,7 +296,8 @@ class AttachmentTest < ActiveSupport::TestCase
   test "Attachmnet.attach_files should attach the file" do
     issue = Issue.first
     assert_difference 'Attachment.count' do
-      Attachment.attach_files(issue,
+      Attachment.attach_files(
+        issue,
         '1' => {
           'file' => uploaded_test_file('testfile.txt', 'text/plain'),
           'description' => 'test'
@@ -343,6 +345,8 @@ class AttachmentTest < ActiveSupport::TestCase
     assert attachment.readable?
     attachment.update_digest_to_sha256!
     assert_equal 'ac5c6e99a21ae74b2e3f5b8e5b568be1b9107cd7153d139e822b9fe5caf50938', attachment.digest
+  ensure
+    set_tmp_attachments_directory
   end
 
   def test_update_attachments
@@ -402,12 +406,12 @@ class AttachmentTest < ActiveSupport::TestCase
     assert_equal 17, la1.id
     la2 = Attachment.latest_attach([a1, a2], "Testfile.PNG")
     assert_equal 17, la2.id
-
+  ensure
     set_tmp_attachments_directory
   end
 
   def test_latest_attach_should_not_error_with_string_with_invalid_encoding
-    string = "width:50\xFE-Image.jpg".force_encoding('UTF-8')
+    string = "width:50\xFE-Image.jpg"
     assert_equal false, string.valid_encoding?
 
     Attachment.latest_attach(Attachment.limit(2).to_a, string)
@@ -417,21 +421,78 @@ class AttachmentTest < ActiveSupport::TestCase
     assert_equal true, Attachment.new(:filename => 'test.jpg').thumbnailable?
   end
 
-  def test_thumbnailable_should_be_true_for_non_images
+  def test_thumbnailable_should_be_false_for_images_if_convert_is_unavailable
+    Redmine::Thumbnail.stubs(:convert_available?).returns(false)
+    assert_equal false, Attachment.new(:filename => 'test.jpg').thumbnailable?
+  end
+
+  def test_thumbnailable_should_be_false_for_non_images
     assert_equal false, Attachment.new(:filename => 'test.txt').thumbnailable?
   end
 
   if convert_installed?
     def test_thumbnail_should_generate_the_thumbnail
       set_fixtures_attachments_directory
-      attachment = Attachment.find(16)
+      Attachment.clear_thumbnails
+      to_test = []
+      # image/png
+      to_test << Attachment.find(16)
+      # application/pdf
+      if Redmine::Thumbnail.gs_available?
+        to_test << Attachment.find(23)
+      else
+        puts '(Ghostscript not available)'
+      end
+
+      assert_difference "Dir.glob(File.join(Attachment.thumbnails_storage_path, '*.thumb')).size", to_test.size do
+        to_test.each do |attachment|
+          thumbnail = attachment.thumbnail
+          thumbnail_name = "#{attachment.digest}_#{attachment.filesize}_#{Setting.thumbnails_size}.thumb"
+          assert_equal thumbnail_name, File.basename(thumbnail)
+          assert File.exist?(thumbnail)
+        end
+      end
+    ensure
+      set_tmp_attachments_directory
+    end
+
+    def test_should_reuse_thumbnail
       Attachment.clear_thumbnails
 
+      a = Attachment.create!(
+        :container => Issue.find(1),
+        :file => uploaded_test_file("2010/11/101123161450_testfile_1.png", "image/png"),
+        :author => User.find(1)
+      )
+      a_thumb = b_thumb = nil
       assert_difference "Dir.glob(File.join(Attachment.thumbnails_storage_path, '*.thumb')).size" do
-        thumbnail = attachment.thumbnail
-        assert_equal "16_8e0294de2441577c529f170b6fb8f638_100.thumb", File.basename(thumbnail)
-        assert File.exists?(thumbnail)
+        a_thumb = a.thumbnail
       end
+
+      b = Attachment.create!(
+        :container => Issue.find(2),
+        :file => uploaded_test_file("2010/11/101123161450_testfile_1.png", "image/png"),
+        :author => User.find(1)
+      )
+      assert_no_difference "Dir.glob(File.join(Attachment.thumbnails_storage_path, '*.thumb')).size" do
+        b_thumb = b.thumbnail
+      end
+      assert_equal a_thumb, b_thumb
+    end
+
+    def test_destroy_should_destroy_thumbnails
+      a = Attachment.create!(
+        :container => Issue.find(1),
+        :file => uploaded_test_file("2010/11/101123161450_testfile_1.png", "image/png"),
+        :author => User.find(1)
+      )
+      diskfile  = a.diskfile
+      thumbnail = a.thumbnail
+      assert File.exist?(diskfile)
+      assert File.exist?(thumbnail)
+      assert a.destroy
+      refute File.exist?(diskfile)
+      refute File.exist?(thumbnail)
     end
 
     def test_thumbnail_should_return_nil_if_generation_fails
@@ -439,6 +500,29 @@ class AttachmentTest < ActiveSupport::TestCase
       set_fixtures_attachments_directory
       attachment = Attachment.find(16)
       assert_nil attachment.thumbnail
+    ensure
+      set_tmp_attachments_directory
+    end
+
+    def test_thumbnail_should_be_at_least_of_requested_size
+      set_fixtures_attachments_directory
+      attachment = Attachment.find(16)
+      Attachment.clear_thumbnails
+      [
+        [0, 100],
+        [49, 50],
+        [50, 50],
+        [51, 100],
+        [100, 100],
+        [101, 150],
+      ].each do |size, generated_size|
+        thumbnail = attachment.thumbnail(size: size)
+        assert_equal(
+          "8e0294de2441577c529f170b6fb8f638_2654_#{generated_size}.thumb",
+          File.basename(thumbnail))
+      end
+    ensure
+      set_tmp_attachments_directory
     end
   else
     puts '(ImageMagick convert not available)'

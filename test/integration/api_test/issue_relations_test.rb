@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -77,7 +79,7 @@ class Redmine::ApiTest::IssueRelationsTest < Redmine::ApiTest::Base
       delete '/relations/2.xml', :headers => credentials('jsmith')
     end
 
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
     assert_nil IssueRelation.find_by_id(2)
   end

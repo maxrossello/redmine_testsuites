@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,6 +26,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
            :enabled_modules, :enumerations, :boards, :messages,
            :attachments, :custom_fields, :custom_values, :time_entries,
            :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions
+
+  include Redmine::I18n
 
   def setup
     @request.session[:user_id] = nil
@@ -53,6 +57,157 @@ class ProjectsControllerTest < Redmine::ControllerTest
     #assert_select 'feed>title', :text => 'Redmine: Latest projects'
     assert_select 'feed>title', :text => "Redmine: #{I18n.t(:label_project_latest)}"
     assert_select 'feed>entry', :count => Project.visible(User.current).count
+  end
+
+  def test_index_with_project_filter_is_my_projects
+    @request.session[:user_id] = 2
+
+    get :index, :params => {
+      :f => ['id'],
+      :op => {'id' => '='},
+      :v => {'id' => ['mine']}
+    }
+
+    assert_response :success
+
+    assert_select 'div#projects-index ul' do
+      assert_select 'a.project',  3
+      assert_select 'a', :text => 'eCookbook'
+      assert_select 'a', :text => 'OnlineStore'
+      assert_select 'a', :text => 'Private child of eCookbook'
+    end
+  end
+
+  def test_index_with_subproject_filter
+    @request.session[:user_id] = 1
+
+    get :index, :params => {
+      :f => ['parent_id'],
+      :op => {'parent_id' => '='},
+      :v => {'parent_id' => ['1']}
+    }
+
+    assert_response :success
+
+    assert_select 'div#projects-index ul' do
+      assert_select 'a.project',  3
+      assert_select 'a', :text => 'eCookbook Subproject 1'
+      assert_select 'a', :text => 'eCookbook Subproject 2'
+      assert_select 'a', :text => 'Private child of eCookbook'
+    end
+  end
+
+  def test_index_as_list_should_format_column_value
+    get :index, :params => {
+      :c => ['name', 'status', 'short_description', 'homepage', 'parent_id', 'identifier', 'is_public', 'created_on', 'project.cf_3'],
+      :display_type => 'list'
+    }
+    assert_response :success
+
+    project = Project.find(1)
+    assert_select 'table.projects' do
+      assert_select 'tr[id=?]', 'project-1' do
+        assert_select 'td.name a[href=?]', '/projects/ecookbook', :text => 'eCookbook'
+        assert_select 'td.status', :text => 'active'
+        assert_select 'td.short_description', :text => 'Recipes management application'
+        assert_select 'td.homepage a.external', :text => 'http://ecookbook.somenet.foo/'
+        assert_select 'td.identifier', :text => 'ecookbook'
+        assert_select 'td.is_public', :text => 'Yes'
+        assert_select 'td.created_on', :text => format_time(project.created_on)
+        assert_select 'td.project_cf_3.list', :text => 'Stable'
+      end
+      assert_select 'tr[id=?]', 'project-4' do
+        assert_select 'td.parent_id a[href=?]', '/projects/ecookbook', :text => 'eCookbook'
+      end
+    end
+  end
+
+  def test_index_as_list_should_show_my_favourite_projects
+    @request.session[:user_id] = 1
+    get :index, :params => {
+      :display_type => 'list'
+    }
+
+    assert_response :success
+    assert_select 'tr[id=?] td.name span[class=?]', 'project-5', 'icon icon-user my-project'
+  end
+
+  def test_index_as_list_should_indent_projects
+    @request.session[:user_id] = 1
+    get :index, :params => {
+      :c => ['name', 'short_description'],
+      :sort => 'parent_id:desc,lft:desc',
+      :display_type => 'list'
+    }
+    assert_response :success
+
+    child_level1 = css_select('tr#project-5').map {|e| e.attr('class')}.first.split(' ')
+    child_level2 = css_select('tr#project-6').map {|e| e.attr('class')}.first.split(' ')
+
+    assert_include 'idnt', child_level1
+    assert_include 'idnt-1', child_level1
+
+    assert_include 'idnt', child_level2
+    assert_include 'idnt-2', child_level2
+  end
+
+  def test_index_with_default_query_setting
+    with_settings :project_list_defaults => {'column_names' => %w(name short_description status)} do
+      get :index, :params => {
+        :display_type => 'list'
+      }
+      assert_response :success
+    end
+    assert_equal ['Name', 'Description', 'Status'], columns_in_list
+  end
+
+  def test_index_as_board_should_not_include_csv_export
+    @request.session[:user_id] = 1
+
+    get :index
+
+    assert_response :success
+    assert_select 'p.other-formats a.csv', 0
+    assert_select '#csv-export-options', 0
+  end
+
+  def test_index_as_list_should_include_csv_export
+    @request.session[:user_id] = 1
+
+    get :index, :params => {
+      :display_type => 'list',
+      :f => ['parent_id'],
+      :op => {'parent_id' => '='},
+      :v => {'parent_id' => ['1']}
+    }
+    assert_response :success
+
+    # Assert CSV export link
+    assert_select 'p.other-formats a.csv'
+
+    # Assert export modal
+    assert_select '#csv-export-options' do
+      assert_select 'form[action=?][method=get]', '/projects.csv' do
+        # filter
+        assert_select 'input[name=?][value=?]', 'f[]', 'parent_id'
+        assert_select 'input[name=?][value=?]', 'op[parent_id]', '='
+        assert_select 'input[name=?][value=?]', 'v[parent_id][]', '1'
+        # columns
+        assert_select 'input[name=?][type=hidden][value=?]', 'c[]', 'name'
+        assert_select 'input[name=?][type=hidden][value=?]', 'c[]', 'identifier'
+        assert_select 'input[name=?][type=hidden][value=?]', 'c[]', 'short_description'
+        assert_select 'input[name=?][type=hidden]', 'c[]', 3
+        assert_select 'input[name=?][value=?]', 'c[]', 'all_inline'
+      end
+    end
+  end
+
+  def test_index_csv
+    with_settings :date_format => '%m/%d/%Y' do
+      get :index, :params => {:format => 'csv'}
+      assert_response :success
+      assert_equal 'text/csv', response.media_type
+    end
   end
 
   def test_autocomplete_js
@@ -172,8 +327,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :identifier => "blog",
           :is_public => 1,
           :custom_field_values => {
-            '3' => 'Beta' 
-          },    
+            '3' => 'Beta'
+          },
           :tracker_ids => ['1', '3'],
           # an issue custom field that is not for all project
           :issue_custom_field_ids => ['9'],
@@ -206,10 +361,10 @@ class ProjectsControllerTest < Redmine::ControllerTest
             :identifier => "blog",
             :is_public => 1,
             :custom_field_values => {
-              '3' => 'Beta' 
-            },    
+              '3' => 'Beta'
+            },
             :parent_id => 1
-            
+
           }
         }
       assert_redirected_to '/projects/blog/settings'
@@ -228,7 +383,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :project => {
             :name => "blog",
             :identifier => "blog"
-          },  
+          },
           :continue => 'Create and continue'
         }
     end
@@ -246,11 +401,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :identifier => "blog",
           :is_public => 1,
           :custom_field_values => {
-            '3' => 'Beta' 
-          },    
+            '3' => 'Beta'
+          },
           :tracker_ids => ['1', '3'],
           :enabled_module_names => ['issue_tracking', 'news', 'repository']
-          
+
         }
       }
 
@@ -281,10 +436,10 @@ class ProjectsControllerTest < Redmine::ControllerTest
             :identifier => "blog",
             :is_public => 1,
             :custom_field_values => {
-              '3' => 'Beta' 
-            },    
+              '3' => 'Beta'
+            },
             :parent_id => 1
-            
+
           }
         }
     end
@@ -305,10 +460,10 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :identifier => "blog",
           :is_public => 1,
           :custom_field_values => {
-            '3' => 'Beta' 
-          },    
+            '3' => 'Beta'
+          },
           :parent_id => 1
-          
+
         }
       }
     assert_redirected_to '/projects/blog/settings'
@@ -329,9 +484,9 @@ class ProjectsControllerTest < Redmine::ControllerTest
             :identifier => "blog",
             :is_public => 1,
             :custom_field_values => {
-              '3' => 'Beta' 
-            }    
-            
+              '3' => 'Beta'
+            }
+
           }
         }
     end
@@ -354,10 +509,10 @@ class ProjectsControllerTest < Redmine::ControllerTest
             :identifier => "blog",
             :is_public => 1,
             :custom_field_values => {
-              '3' => 'Beta' 
-            },    
+              '3' => 'Beta'
+            },
             :parent_id => 6
-            
+
           }
         }
     end
@@ -379,7 +534,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
               :name => "blog1",
               :identifier => "blog1",
               :enabled_module_names => ["issue_tracking", "repository"]
-              
+
             }
           }
       end
@@ -392,7 +547,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
               :name => "blog2",
               :identifier => "blog2",
               :enabled_module_names => ["issue_tracking", "repository"]
-              
+
             }
           }
       end
@@ -412,7 +567,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
             :identifier => 'inherited',
             :parent_id => parent.id,
             :inherit_members => '1'
-            
+
           }
         }
       assert_response 302
@@ -434,7 +589,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
               :name => "blog",
               :identifier => "",
               :enabled_module_names => %w(issue_tracking news)
-              
+
             }
           }
       end
@@ -552,7 +707,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 1
     project = Project.find_by_identifier('ecookbook')
     project.archive
-  
+
     get :show, :params => {
         :id => 'ecookbook'
       }
@@ -585,6 +740,18 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response :success
     # Make sure there's a > 0 issue count
     assert_select 'table.issue-report td.total a', :text => %r{\A[1-9]\d*\z}
+  end
+
+  def test_show_should_spent_and_estimated_time
+    @request.session[:user_id] = 1
+    get :show, :params => {
+        :id => 'ecookbook'
+      }
+
+    assert_select 'div.spent_time.box>ul' do
+      assert_select '>li:nth-child(1)', :text => 'Estimated time: 203.50 hours'
+      assert_select '>li:nth-child(2)', :text => 'Spent time: 162.90 hours'
+    end
   end
 
   def test_settings
@@ -724,6 +891,18 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_select 'a#tab-activities'
   end
 
+  def test_settings_should_not_display_custom_fields_not_visible_for_user
+    @request.session[:user_id] = 2
+
+    ProjectCustomField.find_by_name('Development status').update_attribute :visible, false
+    get :settings, :params => {
+        :id => 'ecookbook'
+      }
+    assert_response :success
+
+    assert_select 'select#project_custom_field_values_3', :count => 0
+  end
+
   def test_update
     @request.session[:user_id] = 2 # manager
     post :update, :params => {
@@ -821,6 +1000,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
   end
 
   def test_destroy_without_confirmation_should_show_confirmation_with_subprojects
+    set_tmp_attachments_directory
     @request.session[:user_id] = 1 # admin
 
     assert_no_difference 'Project.count' do
@@ -836,6 +1016,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
   end
 
   def test_destroy_with_confirmation_should_destroy_the_project_and_subprojects
+    set_tmp_attachments_directory
     @request.session[:user_id] = 1 # admin
 
     assert_difference 'Project.count', -5 do
@@ -960,8 +1141,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
             :identifier => 'unique-copy',
             :tracker_ids => ['1', '2', '3', ''],
             :enabled_module_names => %w(issue_tracking time_tracking)
-            
-          },  
+
+          },
           :only => %w(issues versions)
         }
     end
@@ -1000,21 +1181,42 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_select_error /Identifier cannot be blank/
   end
 
-  def test_jump_without_project_id_should_redirect_to_active_tab
+  def test_bookmark_should_create_bookmark
+    @request.session[:user_id] = 3
+    post :bookmark, params: { id: 'ecookbook' }
+    assert_redirected_to controller: 'projects', action: 'show', id: 'ecookbook'
+    jb = Redmine::ProjectJumpBox.new(User.find(3))
+    assert jb.bookmark?(Project.find('ecookbook'))
+    refute jb.bookmark?(Project.find('onlinestore'))
+  end
+
+  def test_bookmark_should_delete_bookmark
+    @request.session[:user_id] = 3
+    jb = Redmine::ProjectJumpBox.new(User.find(3))
+    project = Project.find('ecookbook')
+    jb.bookmark_project project
+    delete :bookmark, params: { id: 'ecookbook' }
+    assert_redirected_to controller: 'projects', action: 'show', id: 'ecookbook'
+
+    jb = Redmine::ProjectJumpBox.new(User.find(3))
+    refute jb.bookmark?(Project.find('ecookbook'))
+  end
+
+  def test_index_jump_without_project_id_should_redirect_to_active_tab
     get :index, :params => {
         :jump => 'issues'
       }
     assert_redirected_to '/issues'
   end
 
-  def test_jump_should_not_redirect_to_unknown_tab
+  def test_index_jump_should_not_redirect_to_unknown_tab
     get :index, :params => {
         :jump => 'foobar'
       }
     assert_response :success
   end
 
-  def test_jump_should_redirect_to_active_tab
+  def test_show_jump_should_redirect_to_active_tab
     get :show, :params => {
         :id => 1,
         :jump => 'issues'
@@ -1022,7 +1224,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_redirected_to '/projects/ecookbook/issues'
   end
 
-  def test_jump_should_not_redirect_to_inactive_tab
+  def test_show_jump_should_not_redirect_to_inactive_tab
     get :show, :params => {
         :id => 3,
         :jump => 'documents'
@@ -1030,7 +1232,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response :success
   end
 
-  def test_jump_should_not_redirect_to_unknown_tab
+  def test_show_jump_should_not_redirect_to_unknown_tab
     get :show, :params => {
         :id => 3,
         :jump => 'foobar'

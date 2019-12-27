@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -114,7 +116,7 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
           :membership => {
             :project_ids => [3],
             :role_ids => [2]
-          },  
+          },
           :format => 'js'
         },
         :xhr => true
@@ -134,7 +136,7 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
           :user_id => 7,
           :membership => {
             :project_ids => [3]
-          },  
+          },
           :format => 'js'
         },
         :xhr => true
@@ -184,7 +186,7 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
           :id => 1,
           :membership => {
             :role_ids => [2]
-          },  
+          },
           :format => 'js'
         },
         :xhr => true

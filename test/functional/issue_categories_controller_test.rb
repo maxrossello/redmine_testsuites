@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -123,7 +125,7 @@ class IssueCategoriesControllerTest < Redmine::ControllerTest
       put :update, :params => {
           :id => 2,
           :issue_category => {
-            :name => 'Testing' 
+            :name => 'Testing'
           }
         }
     end
@@ -135,7 +137,7 @@ class IssueCategoriesControllerTest < Redmine::ControllerTest
     put :update, :params => {
         :id => 2,
         :issue_category => {
-          :name => '' 
+          :name => ''
         }
       }
     assert_response :success
@@ -146,7 +148,7 @@ class IssueCategoriesControllerTest < Redmine::ControllerTest
     put :update, :params => {
         :id => 97,
         :issue_category => {
-          :name => 'Testing' 
+          :name => 'Testing'
         }
       }
     assert_response 404

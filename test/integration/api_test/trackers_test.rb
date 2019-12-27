@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,6 +30,7 @@ class Redmine::ApiTest::TrackersTest < Redmine::ApiTest::Base
 
     assert_select 'trackers[type=array] tracker id', :text => '2' do
       assert_select '~ name', :text => 'Feature request'
+      assert_select '~ description', :text => 'Description for Feature request tracker'
     end
   end
 end

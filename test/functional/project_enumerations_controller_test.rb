@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -107,7 +109,6 @@ class ProjectEnumerationsControllerTest < Redmine::ControllerTest
                                                  })
     assert project_activity_two.save
 
-
     put :update, :params => {
         :project_id => 1,
         :enumerations => {
@@ -143,8 +144,8 @@ class ProjectEnumerationsControllerTest < Redmine::ControllerTest
         :enumerations => {
           "9"=> {
             "parent_id"=>"9", "custom_field_values"=> {
-            "7" => "1"}, "active"=>"0"} # Design, De-activate      
-            
+            "7" => "1"}, "active"=>"0"} # Design, De-activate
+
           }
       }
     assert_response :redirect
@@ -163,10 +164,11 @@ class ProjectEnumerationsControllerTest < Redmine::ControllerTest
     # TODO: Need to cause an exception on create but these tests
     # aren't setup for mocking.  Just create a record now so the
     # second one is a dupicate
+    user = User.find(1)
     parent = TimeEntryActivity.find(9)
     TimeEntryActivity.create!({:name => parent.name, :project_id => 1,
                                :position => parent.position, :active => true, :parent_id => 9})
-    TimeEntry.create!({:project_id => 1, :hours => 1.0, :user => User.find(1),
+    TimeEntry.create!({:project_id => 1, :hours => 1.0, :user => user, :author => user,
                        :issue_id => 3, :activity_id => 10, :spent_on => '2009-01-01'})
     assert_equal 3, TimeEntry.where(:activity_id => 9, :project_id => 1).count
     assert_equal 1, TimeEntry.where(:activity_id => 10, :project_id => 1).count

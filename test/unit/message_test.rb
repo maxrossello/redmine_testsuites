@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -97,7 +99,7 @@ class MessageTest < ActiveSupport::TestCase
           # New board
           assert_difference 'Board.find(2).topics_count' do
             assert_difference 'Board.find(2).messages_count', (1 + message.replies_count) do
-              message.update_attributes(:board_id => 2)
+              message.update(:board_id => 2)
             end
           end
         end
@@ -106,6 +108,7 @@ class MessageTest < ActiveSupport::TestCase
   end
 
   def test_destroy_topic
+    set_tmp_attachments_directory
     message = Message.find(1)
     board = message.board
     topics_count, messages_count = board.topics_count, board.messages_count

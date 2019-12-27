@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,7 +20,7 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class IssueStatusesControllerTest < Redmine::ControllerTest
-  fixtures :issue_statuses, :issues, :users, :trackers
+  fixtures :issue_statuses, :issues, :users, :trackers, :workflows
 
   def setup
     User.current = nil
@@ -30,17 +32,32 @@ class IssueStatusesControllerTest < Redmine::ControllerTest
     assert_response :success
     assert_select 'table.issue_statuses'
   end
-  
+
   def test_index_by_anonymous_should_redirect_to_login_form
     @request.session[:user_id] = nil
     get :index
     assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Fissue_statuses'
   end
-  
+
   def test_index_by_user_should_respond_with_406
     @request.session[:user_id] = 2
     get :index
     assert_response 406
+  end
+
+  def test_index_should_show_warning_when_no_workflow_is_defined
+    status = IssueStatus.new :name => "No workflow"
+    status.save!
+    get :index
+    assert_response :success
+    assert_select 'table.issue_statuses tbody' do
+      assert_select 'tr:not(:last-of-type) span.icon-warning', :count => 0
+      assert_select 'tr:last-of-type' do
+        assert_select 'td.name', :text => status.name
+        assert_select 'td:nth-of-type(3) span.icon-warning',
+                      :text => /#{I18n.t(:text_status_no_workflow)}/
+      end
+    end
   end
 
   def test_new

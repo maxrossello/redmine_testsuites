@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -86,8 +88,8 @@ class MemberTest < ActiveSupport::TestCase
     member = Member.new(:project_id => 1, :user_id => user.id, :role_ids => [])
     assert !member.save
     assert_include I18n.translate('activerecord.errors.messages.empty'), member.errors[:role]
-    assert_equal "R\xc3\xb4le doit \xc3\xaatre renseign\xc3\xa9(e)".force_encoding('UTF-8'),
-      [member.errors.full_messages].flatten.join
+    assert_equal 'Rôle doit être renseigné(e)',
+                 [member.errors.full_messages].flatten.join
   end
 
   def test_validate_member_role

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -157,7 +159,7 @@ class Redmine::ApiTest::GroupsTest < Redmine::ApiTest::Base
     put "/groups/#{group.id}.xml",
       :params => {:group => {:name => 'New name', :user_ids => [2, 3]}},
       :headers => credentials('admin')
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
 
     assert_equal 'New name', group.reload.name
@@ -181,7 +183,7 @@ class Redmine::ApiTest::GroupsTest < Redmine::ApiTest::Base
     group = Group.generate!
     assert_difference 'Group.count', -1 do
       delete "/groups/#{group.id}.xml", :headers => credentials('admin')
-      assert_response :ok
+      assert_response :no_content
       assert_equal '', @response.body
     end
   end
@@ -192,7 +194,7 @@ class Redmine::ApiTest::GroupsTest < Redmine::ApiTest::Base
       post "/groups/#{group.id}/users.xml",
         :params => {:user_id => 5},
         :headers => credentials('admin')
-      assert_response :ok
+      assert_response :no_content
       assert_equal '', @response.body
     end
     assert_include User.find(5), group.reload.users
@@ -220,7 +222,7 @@ class Redmine::ApiTest::GroupsTest < Redmine::ApiTest::Base
 
     assert_difference 'group.reload.users.count', -1 do
       delete "/groups/#{group.id}/users/8.xml", :headers => credentials('admin')
-      assert_response :ok
+      assert_response :no_content
       assert_equal '', @response.body
     end
     assert_not_include User.find(8), group.reload.users

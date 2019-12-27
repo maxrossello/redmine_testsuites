@@ -28,10 +28,10 @@ if ENV["RAILS_ENV"] == "test"
     name 'Redmine Test Suites plugin'
     author 'Massimo Rossello'
     description 'Allows to run the Redmine test suite along with plugin tests, considering the different behaviors introduced by supported plugins over the Redmine default behavior.'
-    version '4.0.6'
+    version '4.1.0'
     url 'https://github.com/maxrossello/redmine_testsuites.git'
     author_url 'https://github.com/maxrossello'
-    requires_redmine :version => '4.0.6'
+    requires_redmine :version => '4.1.0'
   end 
 
   #Rails.application.config.active_support.test_order = :sorted

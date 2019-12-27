@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -62,12 +64,12 @@ class IssuesControllerTransactionTest < Redmine::ControllerTest
               :fixed_version_id => 4,
               :notes => 'My notes',
               :lock_version => (issue.lock_version - 1)
-              
-            },  
+
+            },
             :time_entry => {
               :hours => '2.5',
               :comments => '',
-              :activity_id => TimeEntryActivity.first.id 
+              :activity_id => TimeEntryActivity.first.id
             }
           }
       end
@@ -98,16 +100,16 @@ class IssuesControllerTransactionTest < Redmine::ControllerTest
                 :fixed_version_id => 4,
                 :notes => 'My notes',
                 :lock_version => (issue.lock_version - 1)
-                
-              },  
+
+              },
               :attachments => {
                 '1' => {
-                'file' => uploaded_test_file('testfile.txt', 'text/plain')}    
-              },  
+                'file' => uploaded_test_file('testfile.txt', 'text/plain')}
+              },
               :time_entry => {
                 :hours => '2.5',
                 :comments => '',
-                :activity_id => TimeEntryActivity.first.id 
+                :activity_id => TimeEntryActivity.first.id
               }
             }
         end
@@ -131,7 +133,7 @@ class IssuesControllerTransactionTest < Redmine::ControllerTest
           :fixed_version_id => 4,
           :notes => '',
           :lock_version => (issue.lock_version - 1)
-          
+
         }
       }
     assert_response :success
@@ -151,8 +153,8 @@ class IssuesControllerTransactionTest < Redmine::ControllerTest
           :fixed_version_id => 4,
           :notes => '',
           :lock_version => 2
-          
-        },  
+
+        },
         :last_journal_id => 1
       }
     assert_response :success
@@ -170,8 +172,8 @@ class IssuesControllerTransactionTest < Redmine::ControllerTest
           :fixed_version_id => 4,
           :notes => '',
           :lock_version => 2
-          
-        },  
+
+        },
         :last_journal_id => ''
       }
     assert_response :success
@@ -190,7 +192,7 @@ class IssuesControllerTransactionTest < Redmine::ControllerTest
         :issue => {
           :fixed_version_id => 4,
           :lock_version => 2
-        },  
+        },
         :last_journal_id => ''
       }
     assert_response :success
@@ -202,7 +204,7 @@ class IssuesControllerTransactionTest < Redmine::ControllerTest
         :issue => {
           :fixed_version_id => 4,
           :lock_version => 2
-        },  
+        },
         :last_journal_id => ''
       }
     assert_response :success
@@ -219,8 +221,8 @@ class IssuesControllerTransactionTest < Redmine::ControllerTest
             :fixed_version_id => 4,
             :notes => 'overwrite_conflict_resolution',
             :lock_version => 2
-            
-          },  
+
+          },
           :conflict_resolution => 'overwrite'
         }
     end
@@ -243,8 +245,8 @@ class IssuesControllerTransactionTest < Redmine::ControllerTest
             :fixed_version_id => 4,
             :notes => 'add_notes_conflict_resolution',
             :lock_version => 2
-            
-          },  
+
+          },
           :conflict_resolution => 'add_notes'
         }
     end
@@ -269,8 +271,8 @@ class IssuesControllerTransactionTest < Redmine::ControllerTest
             :notes => 'add_privates_notes_conflict_resolution',
             :private_notes => '1',
             :lock_version => 2
-            
-          },  
+
+          },
           :conflict_resolution => 'add_notes'
         }
     end
@@ -291,8 +293,8 @@ class IssuesControllerTransactionTest < Redmine::ControllerTest
             :fixed_version_id => 4,
             :notes => 'add_notes_conflict_resolution',
             :lock_version => 2
-            
-          },  
+
+          },
           :conflict_resolution => 'cancel'
         }
     end
@@ -309,12 +311,12 @@ class IssuesControllerTransactionTest < Redmine::ControllerTest
       put :update, :params => {
           :id => 1,
           :issue => {
-            :subject => '' 
-          },  
+            :subject => ''
+          },
           :time_entry => {
             :hours => '2.5',
             :comments => 'should not be added',
-            :activity_id => TimeEntryActivity.first.id 
+            :activity_id => TimeEntryActivity.first.id
           }
         }
       assert_response :success

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,7 +30,7 @@ module Redmine
         end
         result.source_files.each do |source_file|
           File.open(File.join(output_path, source_file_result(source_file)), "w") do |file|
-            file.puts template('source').result(binding)
+            file.puts template('source').result(binding).force_encoding('utf-8')
           end
         end
       end

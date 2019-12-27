@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -26,21 +28,11 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
   REPOSITORY_PATH = Rails.root.join('tmp/test/git_repository').to_s
   REPOSITORY_PATH.gsub!(/\//, "\\") if Redmine::Platform.mswin?
   PRJ_ID     = 3
-  CHAR_1_HEX = "\xc3\x9c".force_encoding('UTF-8')
-  FELIX_HEX  = "Felix Sch\xC3\xA4fer".force_encoding('UTF-8')
   NUM_REV = 28
-
-  ## Git, Mercurial and CVS path encodings are binary.
-  ## Subversion supports URL encoding for path.
-  ## Redmine Mercurial adapter and extension use URL encoding.
-  ## Git accepts only binary path in command line parameter.
-  ## So, there is no way to use binary command line parameter in JRuby.
-  JRUBY_SKIP     = (RUBY_PLATFORM == 'java')
-  JRUBY_SKIP_STR = "TODO: This test fails in JRuby"
 
   def setup
     super
-    @ruby19_non_utf8_pass = Encoding.default_external.to_s != 'UTF-8'
+    @not_utf8_external = Encoding.default_external.to_s != 'UTF-8'
 
     User.current = nil
     @project    = Project.find(PRJ_ID)
@@ -63,7 +55,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
             :is_default => '0',
             :identifier => 'test-create',
             :report_last_commit => '1',
-                                 
+
           }
         }
     end
@@ -77,7 +69,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
         :id => repository.id,
         :repository => {
           :report_last_commit => '0'
-          
+
         }
       }
     assert_response 302
@@ -168,10 +160,10 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
       @repository.fetch_changesets
       @project.reload
       assert_equal NUM_REV, @repository.changesets.count
-       [
+      [
         "tag00.lightweight",
         "tag01.annotated",
-       ].each do |t1|
+      ].each do |t1|
         get :show, :params => {
             :id => PRJ_ID,
             :repository_id => @repository.id,
@@ -255,23 +247,21 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
     end
 
     def test_entry_show_latin_1
-      if @ruby19_non_utf8_pass
-        puts_ruby19_non_utf8_pass()
+      if @not_utf8_external
+        puts_pass_on_not_utf8
       elsif WINDOWS_PASS
         puts WINDOWS_SKIP_STR
-      elsif JRUBY_SKIP
-        puts JRUBY_SKIP_STR
       else
         with_settings :repositories_encodings => 'UTF-8,ISO-8859-1' do
           ['57ca437c', '57ca437c0acbbcb749821fdf3726a1367056d364'].each do |r1|
             get :entry, :params => {
                 :id => PRJ_ID,
                 :repository_id => @repository.id,
-              :path => repository_path_hash(['latin-1-dir', "test-#{CHAR_1_HEX}.txt"])[:param],
+              :path => repository_path_hash(['latin-1-dir', "test-Ü.txt"])[:param],
               :rev => r1
               }
             assert_response :success
-            assert_select 'tr#L1 td.line-code', :text => /test-#{CHAR_1_HEX}.txt/
+            assert_select 'tr#L1 td.line-code', :text => /test-Ü.txt/
           end
         end
       end
@@ -299,7 +289,6 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
       assert_select 'h2 a', :text => 'sources'
       assert_select 'table.entries tbody'
       assert_select 'div.contextual > a.icon-download', false
-
     end
 
     def test_diff
@@ -424,8 +413,8 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
     end
 
     def test_diff_latin_1
-      if @ruby19_non_utf8_pass
-        puts_ruby19_non_utf8_pass()
+      if @not_utf8_external
+        puts_pass_on_not_utf8
       else
         with_settings :repositories_encodings => 'UTF-8,ISO-8859-1' do
           ['57ca437c', '57ca437c0acbbcb749821fdf3726a1367056d364'].each do |r1|
@@ -438,8 +427,8 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
                 }
               assert_response :success
               assert_select 'table' do
-                assert_select 'thead th.filename', :text => /latin-1-dir\/test-#{CHAR_1_HEX}.txt/
-                assert_select 'tbody td.diff_in', :text => /test-#{CHAR_1_HEX}.txt/
+                assert_select 'thead th.filename', :text => /latin-1-dir\/test-Ü.txt/
+                assert_select 'tbody td.diff_in', :text => /test-Ü.txt/
               end
             end
           end
@@ -554,19 +543,17 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
     end
 
     def test_annotate_latin_1
-      if @ruby19_non_utf8_pass
-        puts_ruby19_non_utf8_pass()
+      if @not_utf8_external
+        puts_pass_on_not_utf8
       elsif WINDOWS_PASS
         puts WINDOWS_SKIP_STR
-      elsif JRUBY_SKIP
-        puts JRUBY_SKIP_STR
       else
         with_settings :repositories_encodings => 'UTF-8,ISO-8859-1' do
           ['57ca437c', '57ca437c0acbbcb749821fdf3726a1367056d364'].each do |r1|
             get :annotate, :params => {
                 :id => PRJ_ID,
               :repository_id => @repository.id,
-              :path => repository_path_hash(['latin-1-dir', "test-#{CHAR_1_HEX}.txt"])[:param],
+              :path => repository_path_hash(['latin-1-dir', "test-Ü.txt"])[:param],
               :rev => r1
               }
             assert_select "th.line-num", :text => '1' do
@@ -574,7 +561,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
                 assert_select "a", :text => '57ca437c'
                 assert_select "+ td.author", :text => "jsmith" do
                   assert_select "+ td",
-                                :text => "test-#{CHAR_1_HEX}.txt"
+                                :text => "test-Ü.txt"
                 end
               end
             end
@@ -594,7 +581,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
         assert_select "th.line-num", :text => '1' do
           assert_select "+ td.revision" do
             assert_select "a", :text => '83ca5fd5'
-            assert_select "+ td.author", :text => FELIX_HEX do
+            assert_select "+ td.author", :text => "Felix Schäfer" do
               assert_select "+ td",
                             :text => "And this is a file with a leading and trailing space..."
             end
@@ -687,7 +674,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
 
     private
 
-    def puts_ruby19_non_utf8_pass
+    def puts_pass_on_not_utf8
       puts "TODO: This test fails " +
            "when Encoding.default_external is not UTF-8. " +
            "Current value is '#{Encoding.default_external.to_s}'"
@@ -698,10 +685,11 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
   end
 
   private
+
   def with_cache(&block)
     before = ActionController::Base.perform_caching
     ActionController::Base.perform_caching = true
-    block.call
+    yield
     ActionController::Base.perform_caching = before
   end
 end

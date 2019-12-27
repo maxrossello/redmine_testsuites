@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -64,14 +66,15 @@ DIFF
 <p>link: <a class="external" href="https://www.redmine.org">https://www.redmine.org</a><br />
 <a class="external" href="http://www.redmine.org">http://www.redmine.org</a></p>
 EXPECTED
-    
+
+    assert_equal expected.gsub(%r{[\r\n\t]}, ''), Redmine::WikiFormatting::NullFormatter::Formatter.new(raw).to_html.gsub(%r{[\r\n\t]}, '')
   end
 
   def test_supports_section_edit
     with_settings :text_formatting => 'textile' do
       assert_equal true, Redmine::WikiFormatting.supports_section_edit?
     end
-    
+
     with_settings :text_formatting => '' do
       assert_equal false, Redmine::WikiFormatting.supports_section_edit?
     end

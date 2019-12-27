@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,11 +19,12 @@
 
 require File.expand_path('../../application_system_test_case', __FILE__)
 
-class IssuesTest < ApplicationSystemTestCase
+class IssuesSystemTest < ApplicationSystemTestCase
   fixtures :projects, :users, :email_addresses, :roles, :members, :member_roles,
            :trackers, :projects_trackers, :enabled_modules, :issue_statuses, :issues,
            :enumerations, :custom_fields, :custom_values, :custom_fields_trackers,
-           :watchers, :journals, :journal_details, :versions
+           :watchers, :journals, :journal_details, :versions,
+           :workflows
 
   def test_create_issue
     log_user('jsmith', 'jsmith')
@@ -48,7 +51,7 @@ class IssuesTest < ApplicationSystemTestCase
     # check issue attributes
     assert_equal 'jsmith', issue.author.login
     assert_equal 1, issue.project.id
-    assert_equal IssueStatus.find_by_name('New'), issue.status 
+    assert_equal IssueStatus.find_by_name('New'), issue.status
     assert_equal Tracker.find_by_name('Bug'), issue.tracker
     assert_equal IssuePriority.find_by_name('Low'), issue.priority
     assert_equal 'Value for field 2', issue.custom_field_value(CustomField.find_by_name('Searchable field'))
@@ -147,8 +150,6 @@ class IssuesTest < ApplicationSystemTestCase
     end
     assert_equal 1, issue.attachments.count
     assert_equal 'Some description', issue.attachments.first.description
-  ensure
-    set_fixtures_attachments_directory
   end
 
   def test_create_issue_with_new_target_version
@@ -189,7 +190,7 @@ class IssuesTest < ApplicationSystemTestCase
     assert_equal 'new issue description', issue.description
   end
 
-  def test_update_issue_with_form_update
+  test "update issue with form update" do
     field = IssueCustomField.create!(
       :field_format => 'string',
       :name => 'Form update CF',
@@ -205,17 +206,40 @@ class IssuesTest < ApplicationSystemTestCase
     assert page.has_no_content?('Form update CF')
 
     page.first(:link, 'Edit').click
+    assert page.has_no_select?("issue_status_id")
     # the custom field should show up when changing tracker
     select 'Feature request', :from => 'Tracker'
     assert page.has_content?('Form update CF')
 
-    fill_in 'Form update', :with => 'CF value'
+    fill_in 'Form update CF', :with => 'CF value'
     assert_no_difference 'Issue.count' do
       page.first(:button, 'Submit').click
     end
-
+    assert page.has_css?('#flash_notice')
     issue = Issue.find(1)
     assert_equal 'CF value', issue.custom_field_value(field)
+  end
+
+  test "update issue status" do
+    issue = Issue.generate!
+    log_user('jsmith', 'jsmith')
+    visit "/issues/#{issue.id}"
+    page.first(:link, 'Edit').click
+    assert page.has_select?("issue_status_id", {:selected => "New"})
+    page.find("#issue_status_id").select("Closed")
+    assert_no_difference 'Issue.count' do
+      page.first(:button, 'Submit').click
+    end
+    assert page.has_css?('#flash_notice')
+    assert_equal 5, issue.reload.status.id
+  end
+
+  test "removing issue shows confirm dialog" do
+    log_user('jsmith', 'jsmith')
+    visit '/issues/1'
+    page.accept_confirm /Are you sure/ do
+      page.first('#content a.icon-del').click
+    end
   end
 
   def test_remove_issue_watcher_from_sidebar
@@ -289,9 +313,9 @@ class IssuesTest < ApplicationSystemTestCase
       # Check that the page shows the Estimated hours total
       assert page.has_css?('p.query-totals')
       assert page.has_css?('span.total-for-estimated-hours')
-      # Open the Options of the form (necessary for having the totalable columns options clickable) 
+      # Open the Options of the form (necessary for having the totalable columns options clickable)
       page.all('legend')[1].click
-      # Deselect the default totalable column (none should be left) 
+      # Deselect the default totalable column (none should be left)
       page.first('input[name="t[]"][value="estimated_hours"]').click
       within('#query_form') do
         click_link 'Apply'
@@ -320,7 +344,7 @@ class IssuesTest < ApplicationSystemTestCase
     # Save
     click_on 'Save'
 
-    sleep 1
+    sleep 0.2
     assert_equal 'Updated notes', Journal.find(2).notes
   end
 
@@ -333,9 +357,27 @@ class IssuesTest < ApplicationSystemTestCase
     click_on 'CSV'
     click_on 'Export'
 
-    csv = CSV.read(downloaded_file)
+    # https://github.com/SeleniumHQ/selenium/issues/5292
+    # if issues.csv exists, Chrome creates issues (1).csv, issues (2).csv ...
+    csv = CSV.read(downloaded_file("issues*.csv"))
     subject_index = csv.shift.index('Subject')
     subjects = csv.map {|row| row[subject_index]}
     assert_equal subjects.sort, subjects
+  end
+
+  def test_issue_trackers_description_should_select_tracker
+    log_user('admin', 'admin')
+
+    visit '/issues/1'
+    page.driver.execute_script('$.fx.off = true;')
+    page.first(:link, 'Edit').click
+    page.click_link('View all trackers description')
+    assert page.has_css?('#trackers_description')
+    within('#trackers_description') do
+      click_link('Feature')
+    end
+
+    assert !page.has_css?('#trackers_description')
+    assert_equal "2", page.find('select#issue_tracker_id').value
   end
 end

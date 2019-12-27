@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,7 +27,9 @@ class Redmine::ApiTest::VersionsTest < Redmine::ApiTest::Base
            :member_roles,
            :members,
            :enabled_modules,
-           :versions
+           :versions,
+           :wikis, :wiki_pages,
+           :time_entries
 
   test "GET /projects/:project_id/versions.xml should return project versions" do
     get '/projects/1/versions.xml'
@@ -40,11 +44,11 @@ class Redmine::ApiTest::VersionsTest < Redmine::ApiTest::Base
 
   test "POST /projects/:project_id/versions.xml should create the version" do
     assert_difference 'Version.count' do
-      post '/projects/1/versions.xml',
+      post(
+        '/projects/1/versions.xml',
         :params => {:version => {:name => 'API test'}},
-        :headers => credentials('jsmith')
+        :headers => credentials('jsmith'))
     end
-
     version = Version.order('id DESC').first
     assert_equal 'API test', version.name
 
@@ -55,11 +59,11 @@ class Redmine::ApiTest::VersionsTest < Redmine::ApiTest::Base
 
   test "POST /projects/:project_id/versions.xml should create the version with due date" do
     assert_difference 'Version.count' do
-      post '/projects/1/versions.xml',
+      post(
+        '/projects/1/versions.xml',
         :params => {:version => {:name => 'API test', :due_date => '2012-01-24'}},
-        :headers => credentials('jsmith')
+        :headers => credentials('jsmith'))
     end
-
     version = Version.order('id DESC').first
     assert_equal 'API test', version.name
     assert_equal Date.parse('2012-01-24'), version.due_date
@@ -69,11 +73,27 @@ class Redmine::ApiTest::VersionsTest < Redmine::ApiTest::Base
     assert_select 'version id', :text => version.id.to_s
   end
 
+  test "POST /projects/:project_id/versions.xml should create the version with wiki page title" do
+    assert_difference 'Version.count' do
+      post(
+        '/projects/1/versions.xml',
+        :params => {:version => {:name => 'API test', :wiki_page_title => WikiPage.first.title}},
+        :headers => credentials('jsmith'))
+    end
+    version = Version.order('id DESC').first
+    assert_equal 'API test', version.name
+    assert_equal WikiPage.first, version.wiki_page
+
+    assert_response :created
+    assert_equal 'application/xml', @response.content_type
+    assert_select 'version id', :text => version.id.to_s
+  end
+
   test "POST /projects/:project_id/versions.xml should create the version with custom fields" do
     field = VersionCustomField.generate!
-
     assert_difference 'Version.count' do
-      post '/projects/1/versions.xml',
+      post(
+        '/projects/1/versions.xml',
         :params => {
           :version => {
             :name => 'API test',
@@ -82,9 +102,8 @@ class Redmine::ApiTest::VersionsTest < Redmine::ApiTest::Base
             ]
           }
         },
-        :headers => credentials('jsmith')
+        :headers => credentials('jsmith'))
     end
-
     version = Version.order('id DESC').first
     assert_equal 'API test', version.name
     assert_equal 'Some value', version.custom_field_value(field)
@@ -96,16 +115,20 @@ class Redmine::ApiTest::VersionsTest < Redmine::ApiTest::Base
 
   test "POST /projects/:project_id/versions.xml with failure should return the errors" do
     assert_no_difference('Version.count') do
-      post '/projects/1/versions.xml',
+      post(
+        '/projects/1/versions.xml',
         :params => {:version => {:name => ''}},
-        :headers => credentials('jsmith')
+        :headers => credentials('jsmith'))
     end
-
     assert_response :unprocessable_entity
     assert_select 'errors error', :text => "Name cannot be blank"
   end
 
   test "GET /versions/:id.xml should return the version" do
+    assert_equal [2, 12], Version.find(2).visible_fixed_issues.pluck(:id).sort
+    TimeEntry.generate!(:issue_id => 2, :hours => 1.0)
+    TimeEntry.generate!(:issue_id => 12, :hours => 1.5)
+
     get '/versions/2.xml'
 
     assert_response :success
@@ -114,17 +137,21 @@ class Redmine::ApiTest::VersionsTest < Redmine::ApiTest::Base
       assert_select 'id', :text => '2'
       assert_select 'name', :text => '1.0'
       assert_select 'sharing', :text => 'none'
+      assert_select 'wiki_page_title', :text => 'ECookBookV1'
+      assert_select 'estimated_hours', :text => '0.5'
+      assert_select 'spent_hours', :text => '2.5'
     end
   end
 
   test "PUT /versions/:id.xml should update the version" do
-    put '/versions/2.xml',
-      :params => {:version => {:name => 'API update'}},
-      :headers => credentials('jsmith')
-
-    assert_response :ok
+    put(
+      '/versions/2.xml',
+      :params => {:version => {:name => 'API update', :wiki_page_title => WikiPage.first.title}},
+      :headers => credentials('jsmith'))
+    assert_response :no_content
     assert_equal '', @response.body
     assert_equal 'API update', Version.find(2).name
+    assert_equal WikiPage.first, Version.find(2).wiki_page
   end
 
   test "DELETE /versions/:id.xml should destroy the version" do
@@ -132,7 +159,7 @@ class Redmine::ApiTest::VersionsTest < Redmine::ApiTest::Base
       delete '/versions/3.xml', :headers => credentials('jsmith')
     end
 
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
     assert_nil Version.find_by_id(3)
   end

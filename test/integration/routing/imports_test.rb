@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,7 +21,8 @@ require File.expand_path('../../../test_helper', __FILE__)
 
 class RoutingImportsTest < Redmine::RoutingTest
   def test_imports
-    should_route 'GET /issues/imports/new' => 'imports#new'
+    should_route 'GET /issues/imports/new' => 'imports#new', :type => 'IssueImport'
+
     should_route 'POST /imports' => 'imports#create'
 
     should_route 'GET /imports/4ae6bc' => 'imports#show', :id => '4ae6bc'

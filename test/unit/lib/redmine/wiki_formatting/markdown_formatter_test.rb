@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -59,23 +61,23 @@ class Redmine::WikiFormatting::MarkdownFormatterTest < ActionView::TestCase
   end
 
   def test_should_support_syntax_highlight
-    text = <<-STR
-~~~ruby
-def foo
-end
-~~~
-STR
+    text = <<~STR
+      ~~~ruby
+      def foo
+      end
+      ~~~
+    STR
     assert_select_in @formatter.new(text).to_html, 'pre code.ruby.syntaxhl' do
       assert_select 'span.k', :text => 'def'
     end
   end
 
   def test_should_not_allow_invalid_language_for_code_blocks
-    text = <<-STR
-~~~foo
-test
-~~~
-STR
+    text = <<~STR
+      ~~~foo
+      test
+      ~~~
+    STR
     assert_equal "<pre>test\n</pre>", @formatter.new(text).to_html
   end
 
@@ -90,66 +92,76 @@ STR
   end
 
   def test_markdown_should_not_require_surrounded_empty_line
-    text = <<-STR
-This is a list:
-* One
-* Two
-STR
+    text = <<~STR
+      This is a list:
+      * One
+      * Two
+    STR
     assert_equal "<p>This is a list:</p>\n\n<ul>\n<li>One</li>\n<li>Two</li>\n</ul>", @formatter.new(text).to_html.strip
   end
 
   def test_footnotes
-    text = <<-STR
-This is some text[^1].
+    text = <<~STR
+      This is some text[^1].
 
-[^1]: This is the foot note
-STR
+      [^1]: This is the foot note
+    STR
+    expected = <<~EXPECTED
+      <p>This is some text<sup id="fnref1"><a href="#fn1">1</a></sup>.</p>
+      <div class="footnotes">
+      <hr>
+      <ol>
 
-    expected = <<-EXPECTED
-<p>This is some text<sup id="fnref1"><a href="#fn1" rel="footnote">1</a></sup>.</p>
-<div class="footnotes">
-<hr>
-<ol>
+      <li id="fn1">
+      <p>This is the foot note&nbsp;<a href="#fnref1">&#8617;</a></p>
+      </li>
 
-<li id="fn1">
-<p>This is the foot note&nbsp;<a href="#fnref1" rev="footnote">&#8617;</a></p>
-</li>
-
-</ol>
-</div>
-EXPECTED
-
+      </ol>
+      </div>
+    EXPECTED
     assert_equal expected.gsub(%r{[\r\n\t]}, ''), @formatter.new(text).to_html.gsub(%r{[\r\n\t]}, '')
   end
 
   STR_WITH_PRE = [
-  # 0
-"# Title
+    # 0
+    <<~STR.chomp,
+      # Title
 
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas sed libero.",
-  # 1
-"## Heading 2
+      Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas sed libero.
+    STR
+    # 1
+    <<~STR.chomp,
+      ## Heading 2
 
-~~~ruby
-  def foo
-  end
-~~~
+      ~~~ruby
+        def foo
+        end
+      ~~~
 
-Morbi facilisis accumsan orci non pharetra.
+      Morbi facilisis accumsan orci non pharetra.
 
-```
-Pre Content:
+      ~~~ ruby
+      def foo
+      end
+      ~~~
 
-## Inside pre
+      ```
+      Pre Content:
 
-<tag> inside pre block
+      ## Inside pre
 
-Morbi facilisis accumsan orci non pharetra.
-```",
-  # 2
-"### Heading 3
+      <tag> inside pre block
 
-Nulla nunc nisi, egestas in ornare vel, posuere ac libero."]
+      Morbi facilisis accumsan orci non pharetra.
+      ```
+    STR
+    # 2
+    <<~STR.chomp,
+      ### Heading 3
+
+      Nulla nunc nisi, egestas in ornare vel, posuere ac libero.
+    STR
+  ]
 
   def test_get_section_should_ignore_pre_content
     text = STR_WITH_PRE.join("\n\n")
@@ -166,6 +178,11 @@ Nulla nunc nisi, egestas in ornare vel, posuere ac libero."]
       @formatter.new(text).update_section(3, replacement)
   end
 
+  def test_should_support_underlined_text
+    text = 'This _text_ should be underlined'
+    assert_equal '<p>This <u>text</u> should be underlined</p>', @formatter.new(text).to_html.strip
+  end
+
   private
 
   def assert_section_with_hash(expected, text, index)
@@ -175,11 +192,6 @@ Nulla nunc nisi, egestas in ornare vel, posuere ac libero."]
     assert_equal 2, result.size
     assert_equal expected, result.first, "section content did not match"
     assert_equal Digest::MD5.hexdigest(expected), result.last, "section hash did not match"
-  end
-
-  def test_should_support_underlined_text
-    text = 'This _text_ should be underlined'
-    assert_equal '<p>This <u>text</u> should be underlined</p>', @formatter.new(text).to_html.strip
   end
   end
 end

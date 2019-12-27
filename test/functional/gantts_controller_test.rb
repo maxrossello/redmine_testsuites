@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,7 +27,8 @@ class GanttsControllerTest < Redmine::ControllerTest
            :member_roles,
            :members,
            :enabled_modules,
-           :versions
+           :versions,
+           :email_addresses
 
   def test_gantt_should_work
     i2 = Issue.find(2)
@@ -44,7 +47,11 @@ class GanttsControllerTest < Redmine::ControllerTest
           assert_select 'fieldset#filters.collapsible'
           assert_select 'fieldset#options'
         end
-        assert_select 'p.contextual'
+        assert_select 'p.contextual' do
+          prev_month, next_month = User.current.today.prev_month, User.current.today.next_month
+          assert_select 'a[accesskey="p"][href=?]', project_gantt_path(:project_id => 1, :month => prev_month.month, :year => prev_month.year)
+          assert_select 'a[accesskey="n"][href=?]', project_gantt_path(:project_id => 1, :month => next_month.month, :year => next_month.year)
+        end
         assert_select 'p.buttons'
       end
     end
@@ -148,7 +155,7 @@ class GanttsControllerTest < Redmine::ControllerTest
     assert @response.body.starts_with?('%PDF')
   end
 
-  if Object.const_defined?(:Magick)
+  if Object.const_defined?(:MiniMagick)
     def test_gantt_should_export_to_png
       get :show, :params => {
           :project_id => 1,
@@ -156,6 +163,30 @@ class GanttsControllerTest < Redmine::ControllerTest
         }
       assert_response :success
       assert_equal 'image/png', @response.content_type
+    end
+  end
+
+  def test_gantt_should_respect_gantt_months_limit_setting
+    with_settings :gantt_months_limit => '40' do
+      # `months` parameter can be less than or equal to
+      # `Setting.gantt_months_limit`
+      get :show, :params => {
+        :project_id => 1,
+        :zoom => 4,
+        :months => 40
+      }
+      assert_response :success
+      assert_select 'div.gantt_hdr>a', :text => /^[\d-]+$/, :count => 40
+
+      # Displays 6 months (the default value for `months`) if `months` exceeds
+      # gant_months_limit
+      get :show, :params => {
+        :project_id => 1,
+        :zoom => 4,
+        :months => 41
+      }
+      assert_response :success
+      assert_select 'div.gantt_hdr>a', :text => /^[\d-]+$/, :count => 6
     end
   end
 end

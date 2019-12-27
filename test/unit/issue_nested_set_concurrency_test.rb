@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -82,7 +84,7 @@ class IssueNestedSetConcurrencyTest < ActiveSupport::TestCase
           ActiveRecord::Base.connection_pool.with_connection do
             begin
               yield
-            rescue Exception => e
+            rescue => e
               Thread.current[:exception] = e.message
             end
           end

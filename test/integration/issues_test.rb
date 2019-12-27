@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -101,23 +103,23 @@ class IssuesTest < Redmine::IntegrationTest
   def test_issue_attachments
     log_user('jsmith', 'jsmith')
     set_tmp_attachments_directory
-
     attachment = new_record(Attachment) do
       put '/issues/1', :params => {
           :issue => {:notes => 'Some notes'},
-          :attachments => {'1' => {'file' => uploaded_test_file('testfile.txt', 'text/plain'), 'description' => 'This is an attachment'}}
+          :attachments => {
+            '1' => {'file' => uploaded_test_file('testfile.txt', 'text/plain'),
+                    'description' => 'This is an attachment'}
+          }
         }
       assert_redirected_to "/issues/1"
     end
-
     assert_equal Issue.find(1), attachment.container
     assert_equal 'testfile.txt', attachment.filename
     assert_equal 'This is an attachment', attachment.description
     # verify the size of the attachment stored in db
-    #assert_equal file_data_1.length, attachment.filesize
+    assert_equal 59, attachment.filesize
     # verify that the attachment was written to disk
     assert File.exist?(attachment.diskfile)
-
     # remove the attachments
     Issue.find(1).attachments.each(&:destroy)
     assert_equal 0, Issue.find(1).attachments.length
@@ -128,7 +130,7 @@ class IssuesTest < Redmine::IntegrationTest
       get '/projects/ecookbook/issues?set_filter=1&group_by=fixed_version&sort=priority:desc,fixed_version,id'
       assert_response :success
       assert_select 'td.id', :text => '5'
-  
+
       get '/issues/5'
       assert_response :success
       assert_select '.next-prev-links .position', :text => '5 of 6'
@@ -140,7 +142,7 @@ class IssuesTest < Redmine::IntegrationTest
       get '/projects/ecookbook/issues?set_filter=1&tracker_id=1'
       assert_response :success
       assert_select 'td.id', :text => '5'
-  
+
       get '/issues/5'
       assert_response :success
       assert_select '.next-prev-links .position', :text => '3 of 5'
@@ -158,7 +160,7 @@ class IssuesTest < Redmine::IntegrationTest
       get "/projects/ecookbook/issues?set_filter=1&query_id=#{query.id}"
       assert_response :success
       assert_select 'td.id', :text => '5'
-  
+
       get '/issues/5'
       assert_response :success
       assert_select '.next-prev-links .position', :text => '6 of 8'

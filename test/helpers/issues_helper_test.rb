@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -234,7 +236,7 @@ class IssuesHelperTest < Redmine::HelperTest
     assert_equal "Precedes Bug #1: Cannot print recipes added", show_detail(detail, true)
     str = link_to("Bug #1", "/issues/1", :class => Issue.find(1).css_classes)
     assert_equal "<strong>Precedes</strong> <i>#{str}: Cannot print recipes</i> added",
-                  show_detail(detail, false)
+                 show_detail(detail, false)
   end
 
   def test_show_detail_relation_added_with_inexistant_issue
@@ -336,5 +338,26 @@ class IssuesHelperTest < Redmine::HelperTest
 
   def test_find_name_by_reflection_should_return_nil_for_missing_record
     assert_nil find_name_by_reflection('status', 99)
+  end
+
+  def test_issue_due_date_details
+    travel_to Time.parse('2019-06-01 23:00:00 UTC') do
+      User.current = User.first
+      User.current.pref.update_attribute :time_zone, 'UTC'
+      issue = Issue.generate!
+
+      # due date is not set
+      assert_nil issue_due_date_details(issue)
+
+      # due date is set
+      issue.due_date = User.current.today + 5
+      issue.save!
+      assert_equal '06/06/2019 (Due in 5 days)', issue_due_date_details(issue)
+
+      # Don't show "Due in X days" if the issue is closed
+      issue.status = IssueStatus.find_by_is_closed(true)
+      issue.save!
+      assert_equal '06/06/2019', issue_due_date_details(issue)
+    end
   end
 end

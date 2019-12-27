@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,13 +30,20 @@ class Redmine::ApiTest::ProjectsTest < Redmine::ApiTest::Base
   end
 
   test "GET /projects.xml should return projects" do
+    project = Project.find(1)
+    project.inherit_members = '1'
+    project.save!
+
     get '/projects.xml'
     assert_response :success
     assert_equal 'application/xml', @response.content_type
 
-    assert_select 'projects>project>id', :text => '1'
-    assert_select 'projects>project>status', :text => '1'
-    assert_select 'projects>project>is_public', :text => 'true'
+    assert_select 'projects>project:first-child' do
+      assert_select '>id', :text => '1'
+      assert_select '>status', :text => '1'
+      assert_select '>is_public', :text => 'true'
+      assert_select '>inherit_members', :text => 'true'
+    end
   end
 
   test "GET /projects.json should return projects" do
@@ -47,6 +56,7 @@ class Redmine::ApiTest::ProjectsTest < Redmine::ApiTest::Base
     assert_kind_of Array, json['projects']
     assert_kind_of Hash, json['projects'].first
     assert json['projects'].first.has_key?('id')
+    assert json['projects'].first.has_key?('inherit_members')
   end
 
   test "GET /projects.xml with include=issue_categories should return categories" do
@@ -74,6 +84,8 @@ class Redmine::ApiTest::ProjectsTest < Redmine::ApiTest::Base
   end
 
   test "GET /projects/:id.xml should return the project" do
+    Project.find(1).update!(:inherit_members => '1')
+
     get '/projects/1.xml'
     assert_response :success
     assert_equal 'application/xml', @response.content_type
@@ -81,6 +93,7 @@ class Redmine::ApiTest::ProjectsTest < Redmine::ApiTest::Base
     assert_select 'project>id', :text => '1'
     assert_select 'project>status', :text => '1'
     assert_select 'project>is_public', :text => 'true'
+    assert_select 'project>inherit_members', :text => 'true'
     assert_select 'custom_field[name="Development status"]', :text => 'Stable'
 
     assert_select 'trackers', 0
@@ -94,6 +107,7 @@ class Redmine::ApiTest::ProjectsTest < Redmine::ApiTest::Base
     assert_kind_of Hash, json
     assert_kind_of Hash, json['project']
     assert_equal 1, json['project']['id']
+    assert_equal false, json['project']['inherit_members']
   end
 
   test "GET /projects/:id.xml with hidden custom fields should not display hidden custom fields" do
@@ -198,9 +212,9 @@ class Redmine::ApiTest::ProjectsTest < Redmine::ApiTest::Base
         :params => {:project => {:name => 'API update'}},
         :headers => credentials('jsmith')
     end
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
-    assert_equal 'application/xml', @response.content_type
+    assert_nil @response.content_type
     project = Project.find(2)
     assert_equal 'API update', project.name
   end
@@ -211,7 +225,7 @@ class Redmine::ApiTest::ProjectsTest < Redmine::ApiTest::Base
         :params => {:project => {:name => 'API update', :enabled_module_names => ['issue_tracking', 'news', 'time_tracking']}},
         :headers => credentials('admin')
     end
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
     project = Project.find(2)
     assert_equal ['issue_tracking', 'news', 'time_tracking'], project.enabled_module_names.sort
@@ -223,7 +237,7 @@ class Redmine::ApiTest::ProjectsTest < Redmine::ApiTest::Base
         :params => {:project => {:name => 'API update', :tracker_ids => [1, 3]}},
         :headers => credentials('admin')
     end
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
     project = Project.find(2)
     assert_equal [1, 3], project.trackers.map(&:id).sort
@@ -245,7 +259,7 @@ class Redmine::ApiTest::ProjectsTest < Redmine::ApiTest::Base
     assert_difference('Project.count',-1) do
       delete '/projects/2.xml', :headers => credentials('admin')
     end
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
     assert_nil Project.find_by_id(2)
   end

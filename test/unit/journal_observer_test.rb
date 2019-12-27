@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,12 +22,12 @@ require File.expand_path('../../test_helper', __FILE__)
 class JournalObserverTest < ActiveSupport::TestCase
   fixtures :issues, :issue_statuses, :journals, :journal_details, :projects,
            :projects_trackers, :trackers, :enabled_modules, :enumerations,
-           :users, :email_addresses, :roles
+           :users, :user_preferences, :email_addresses, :roles, :members, :member_roles,
+           :versions
 
   def setup
     User.current = nil
     ActionMailer::Base.deliveries.clear
-    @journal = Journal.find 1
   end
 
   # context: issue_updated notified_events
@@ -171,5 +173,29 @@ class JournalObserverTest < ActiveSupport::TestCase
       assert issue.save
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
+  end
+
+  def test_create_should_send_email_notification_with_issue_fixed_version_updated
+    with_settings :notified_events => %w(issue_fixed_version_updated) do
+      user = User.find_by_login('jsmith')
+      issue = issues(:issues_001)
+      issue.init_journal(user)
+      issue.fixed_version = versions(:versions_003)
+
+      assert issue.save
+      assert_equal 2, ActionMailer::Base.deliveries.size
+    end
+  end
+
+  def test_create_should_not_send_email_notification_without_issue_fixed_version_updated
+    with_settings :notified_events => [] do
+      user = User.find_by_login('jsmith')
+      issue = issues(:issues_001)
+      issue.init_journal(user)
+      issue.fixed_version = versions(:versions_003)
+
+      assert issue.save
+      assert_equal 0, ActionMailer::Base.deliveries.size
+    end
   end
 end
