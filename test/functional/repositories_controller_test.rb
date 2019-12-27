@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -54,7 +56,7 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
       assert_select 'option[value=Git]:not([selected])'
     end
   end
- 
+
   def test_get_new_with_type
     @request.session[:user_id] = 1
     get :new, :params => {
@@ -180,23 +182,25 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
     end
   end
 
-  def test_show_should_show_diff_button_depending_on_browse_repository_permission
-    @request.session[:user_id] = 2
-    role = Role.find(1)
+  if repository_configured?('subversion')
+    def test_show_should_show_diff_button_depending_on_browse_repository_permission
+      @request.session[:user_id] = 2
+      role = Role.find(1)
 
-    role.add_permission! :browse_repository
-    get :show, :params => {
-      :id => 1
-    }
-    assert_response :success
-    assert_select 'input[value="View differences"]'
+      role.add_permission! :browse_repository
+      get :show, :params => {
+        :id => 1
+      }
+      assert_response :success
+      assert_select 'input[value="View differences"]'
 
-    role.remove_permission! :browse_repository
-    get :show, :params => {
-      :id => 1
-    }
-    assert_response :success
-    assert_select 'input[value="View differences"]', :count => 0
+      role.remove_permission! :browse_repository
+      get :show, :params => {
+        :id => 1
+      }
+      assert_response :success
+      assert_select 'input[value="View differences"]', :count => 0
+    end
   end
 
   def test_revisions

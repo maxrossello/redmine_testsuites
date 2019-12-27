@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,9 +21,6 @@ require File.expand_path('../../../../../../test_helper', __FILE__)
 
 class GitAdapterTest < ActiveSupport::TestCase
   REPOSITORY_PATH = Rails.root.join('tmp/test/git_repository').to_s
-
-  FELIX_HEX  = "Felix Sch\xC3\xA4fer"
-  CHAR_1_HEX = "\xc3\x9c"
 
   ## Git, Mercurial and CVS path encodings are binary.
   ## Subversion supports URL encoding for path.
@@ -58,8 +57,8 @@ class GitAdapterTest < ActiveSupport::TestCase
                     'ISO-8859-1'
                  )
       assert @adapter
-      @char_1 = CHAR_1_HEX.dup.force_encoding('UTF-8')
-      @str_felix_hex  = FELIX_HEX.dup.force_encoding('ASCII-8BIT')
+      @char_1 = 'Ü'
+      @str_felix_hex  = "Felix Sch\xC3\xA4fer".b
     end
 
     def test_scm_version
@@ -76,23 +75,33 @@ class GitAdapterTest < ActiveSupport::TestCase
       @adapter.branches.each do |b|
         brs << b
       end
-      assert_equal 6, brs.length
+      assert_equal 8, brs.length
       br_issue_8857 = brs[0]
-      assert_equal 'issue-8857', br_issue_8857.to_s 
+      assert_equal 'issue-8857', br_issue_8857.to_s
       assert_equal '2a682156a3b6e77a8bf9cd4590e8db757f3c6c78', br_issue_8857.revision
       assert_equal br_issue_8857.scmid, br_issue_8857.revision
       assert_equal false, br_issue_8857.is_default
-      br_latin_1_path = brs[1]
-      assert_equal 'latin-1-path-encoding', br_latin_1_path.to_s 
+      br_latin_1_branch1 = brs[1]
+      assert_equal "latin-1-branch-#{@char_1}-01", br_latin_1_branch1.to_s
+      assert_equal '4fc55c43bf3d3dc2efb66145365ddc17639ce81e', br_latin_1_branch1.revision
+      assert_equal br_latin_1_branch1.scmid, br_latin_1_branch1.revision
+      assert_equal false, br_latin_1_branch1.is_default
+      br_latin_1_branch2 = brs[2]
+      assert_equal "latin-1-branch-#{@char_1}-02", br_latin_1_branch2.to_s
+      assert_equal '1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127', br_latin_1_branch2.revision
+      assert_equal br_latin_1_branch2.scmid, br_latin_1_branch2.revision
+      assert_equal false, br_latin_1_branch2.is_default
+      br_latin_1_path = brs[3]
+      assert_equal 'latin-1-path-encoding', br_latin_1_path.to_s
       assert_equal '1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127', br_latin_1_path.revision
       assert_equal br_latin_1_path.scmid, br_latin_1_path.revision
       assert_equal false, br_latin_1_path.is_default
-      br_master = brs[2]
+      br_master = brs[4]
       assert_equal 'master', br_master.to_s
       assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', br_master.revision
       assert_equal br_master.scmid, br_master.revision
       assert_equal false, br_master.is_default
-      br_master_20120212 = brs[3]
+      br_master_20120212 = brs[5]
       assert_equal 'master-20120212', br_master_20120212.to_s
       assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', br_master_20120212.revision
       assert_equal br_master_20120212.scmid, br_master_20120212.revision
@@ -114,9 +123,10 @@ class GitAdapterTest < ActiveSupport::TestCase
     end
 
     def test_tags
-      assert_equal  [
+      assert_equal [
             "tag00.lightweight",
             "tag01.annotated",
+            "tag02.lightweight.#{@char_1}.01",
           ], @adapter.tags
     end
 
@@ -126,7 +136,7 @@ class GitAdapterTest < ActiveSupport::TestCase
         revs1 << rev
       end
       assert_equal 15, revs1.length
-      assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', revs1[ 0].identifier
+      assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', revs1[0].identifier
       assert_equal '7234cb2750b63f47bff735edc50a1c0a433c2518', revs1[-1].identifier
 
       revs2 = []
@@ -136,7 +146,7 @@ class GitAdapterTest < ActiveSupport::TestCase
       end
       assert_equal 15, revs2.length
       assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', revs2[-1].identifier
-      assert_equal '7234cb2750b63f47bff735edc50a1c0a433c2518', revs2[ 0].identifier
+      assert_equal '7234cb2750b63f47bff735edc50a1c0a433c2518', revs2[0].identifier
     end
 
     def test_revisions_master_merged_rev
@@ -148,12 +158,12 @@ class GitAdapterTest < ActiveSupport::TestCase
         revs1 << rev
       end
       assert_equal 8, revs1.length
-      assert_equal 'fba357b886984ee71185ad2065e65fc0417d9b92', revs1[ 0].identifier
-      assert_equal '7e61ac704deecde634b51e59daa8110435dcb3da', revs1[ 1].identifier
+      assert_equal 'fba357b886984ee71185ad2065e65fc0417d9b92', revs1[0].identifier
+      assert_equal '7e61ac704deecde634b51e59daa8110435dcb3da', revs1[1].identifier
       # 4a07fe31b is not a child of 713f49446
-      assert_equal '4a07fe31bffcf2888791f3e6cbc9c4545cefe3e8', revs1[ 2].identifier
+      assert_equal '4a07fe31bffcf2888791f3e6cbc9c4545cefe3e8', revs1[2].identifier
       # Merged revision
-      assert_equal '32ae898b720c2f7eec2723d5bdd558b4cb2d3ddf', revs1[ 3].identifier
+      assert_equal '32ae898b720c2f7eec2723d5bdd558b4cb2d3ddf', revs1[3].identifier
       assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', revs1[-1].identifier
 
       revs2 = []
@@ -164,11 +174,11 @@ class GitAdapterTest < ActiveSupport::TestCase
         revs2 << rev
       end
       assert_equal 7, revs2.length
-      assert_equal '7e61ac704deecde634b51e59daa8110435dcb3da', revs2[ 0].identifier
+      assert_equal '7e61ac704deecde634b51e59daa8110435dcb3da', revs2[0].identifier
       # 4a07fe31b is not a child of fba357b8869
-      assert_equal '4a07fe31bffcf2888791f3e6cbc9c4545cefe3e8', revs2[ 1].identifier
+      assert_equal '4a07fe31bffcf2888791f3e6cbc9c4545cefe3e8', revs2[1].identifier
       # Merged revision
-      assert_equal '32ae898b720c2f7eec2723d5bdd558b4cb2d3ddf', revs2[ 2].identifier
+      assert_equal '32ae898b720c2f7eec2723d5bdd558b4cb2d3ddf', revs2[2].identifier
       assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', revs2[-1].identifier
     end
 
@@ -178,7 +188,7 @@ class GitAdapterTest < ActiveSupport::TestCase
         revs1 << rev
       end
       assert_equal 8, revs1.length
-      assert_equal '1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127', revs1[ 0].identifier
+      assert_equal '1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127', revs1[0].identifier
       assert_equal '7234cb2750b63f47bff735edc50a1c0a433c2518', revs1[-1].identifier
 
       revs2 = []
@@ -188,7 +198,7 @@ class GitAdapterTest < ActiveSupport::TestCase
       end
       assert_equal 8, revs2.length
       assert_equal '1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127', revs2[-1].identifier
-      assert_equal '7234cb2750b63f47bff735edc50a1c0a433c2518', revs2[ 0].identifier
+      assert_equal '7234cb2750b63f47bff735edc50a1c0a433c2518', revs2[0].identifier
     end
 
     def test_revisions_branch_latin_1_path_encoding_with_rev
@@ -200,7 +210,7 @@ class GitAdapterTest < ActiveSupport::TestCase
         revs1 << rev
       end
       assert_equal 7, revs1.length
-      assert_equal '899a15dba03a3b350b89c3f537e4bbe02a03cdc9', revs1[ 0].identifier
+      assert_equal '899a15dba03a3b350b89c3f537e4bbe02a03cdc9', revs1[0].identifier
       assert_equal '1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127', revs1[-1].identifier
 
       revs2 = []
@@ -211,15 +221,36 @@ class GitAdapterTest < ActiveSupport::TestCase
         revs2 << rev
       end
       assert_equal 3, revs2.length
-      assert_equal '4fc55c43bf3d3dc2efb66145365ddc17639ce81e', revs2[ 0].identifier
+      assert_equal '4fc55c43bf3d3dc2efb66145365ddc17639ce81e', revs2[0].identifier
       assert_equal '1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127', revs2[-1].identifier
+    end
+
+    def test_revisions_latin_1_identifier
+      if WINDOWS_PASS
+        puts WINDOWS_SKIP_STR
+      elsif JRUBY_SKIP
+        puts JRUBY_SKIP_STR
+      else
+        revs1 = []
+        @adapter.revisions(
+                         '',
+                         "latin-1-branch-#{@char_1}-01",
+                         "latin-1-branch-#{@char_1}-02",
+                         {:reverse => true}) do |rev|
+          revs1 << rev
+        end
+      end
+      assert_equal 2, revs1.length
+      assert_equal '64f1f3e89ad1cb57976ff0ad99a107012ba3481d', revs1[0].identifier
+      assert_equal '1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127', revs1[1].identifier
     end
 
     def test_revisions_invalid_rev
       assert_equal [], @adapter.revisions('', '1234abcd', "master")
       assert_raise Redmine::Scm::Adapters::CommandFailed do
         revs1 = []
-        @adapter.revisions('',
+        @adapter.revisions(
+                         '',
                          '1234abcd',
                          "master",
                          {:reverse => true}) do |rev|
@@ -237,7 +268,7 @@ class GitAdapterTest < ActiveSupport::TestCase
         revs1 << rev
       end
       assert_equal 2, revs1.length
-      assert_equal 'ed5bb786bbda2dee66a2d50faf51429dbc043a7b', revs1[ 0].identifier
+      assert_equal 'ed5bb786bbda2dee66a2d50faf51429dbc043a7b', revs1[0].identifier
       assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', revs1[-1].identifier
     end
 
@@ -250,8 +281,8 @@ class GitAdapterTest < ActiveSupport::TestCase
         revs1 << rev
       end
       assert_equal 2, revs1.length
-      assert_equal '7234cb2750b63f47bff735edc50a1c0a433c2518', revs1[ 0].identifier
-      assert_equal '899a15dba03a3b350b89c3f537e4bbe02a03cdc9', revs1[ 1].identifier
+      assert_equal '7234cb2750b63f47bff735edc50a1c0a433c2518', revs1[0].identifier
+      assert_equal '899a15dba03a3b350b89c3f537e4bbe02a03cdc9', revs1[1].identifier
     end
 
     def test_revisions_includes_merged_revs
@@ -263,9 +294,9 @@ class GitAdapterTest < ActiveSupport::TestCase
         revs1 << rev
       end
       assert_equal 7, revs1.length
-      assert_equal '7e61ac704deecde634b51e59daa8110435dcb3da', revs1[ 0].identifier
-      assert_equal '4a07fe31bffcf2888791f3e6cbc9c4545cefe3e8', revs1[ 1].identifier
-      assert_equal '32ae898b720c2f7eec2723d5bdd558b4cb2d3ddf', revs1[ 2].identifier
+      assert_equal '7e61ac704deecde634b51e59daa8110435dcb3da', revs1[0].identifier
+      assert_equal '4a07fe31bffcf2888791f3e6cbc9c4545cefe3e8', revs1[1].identifier
+      assert_equal '32ae898b720c2f7eec2723d5bdd558b4cb2d3ddf', revs1[2].identifier
       assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', revs1[-1].identifier
     end
 
@@ -280,8 +311,8 @@ class GitAdapterTest < ActiveSupport::TestCase
         revs1 << rev
       end
       assert_equal 4, revs1.length
-      assert_equal 'ed5bb786bbda2dee66a2d50faf51429dbc043a7b', revs1[ 0].identifier
-      assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', revs1[ 1].identifier
+      assert_equal 'ed5bb786bbda2dee66a2d50faf51429dbc043a7b', revs1[0].identifier
+      assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', revs1[1].identifier
       assert_equal '64f1f3e89ad1cb57976ff0ad99a107012ba3481d', revs1[-2].identifier
       assert_equal '1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127', revs1[-1].identifier
     end
@@ -297,8 +328,8 @@ class GitAdapterTest < ActiveSupport::TestCase
         revs1 << rev
       end
       assert_equal 4, revs1.length
-      assert_equal 'ed5bb786bbda2dee66a2d50faf51429dbc043a7b', revs1[ 0].identifier
-      assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', revs1[ 1].identifier
+      assert_equal 'ed5bb786bbda2dee66a2d50faf51429dbc043a7b', revs1[0].identifier
+      assert_equal '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c', revs1[1].identifier
       assert_equal 'bc201c95999c4f10d018b0aa03b541cd6a2ff0ee', revs1[-2].identifier
       assert_equal '92397af84d22f27389c822848ecd5b463c181583', revs1[-1].identifier
     end
@@ -352,15 +383,18 @@ class GitAdapterTest < ActiveSupport::TestCase
     end
 
     def test_getting_revisions_with_leading_and_trailing_spaces_in_filename
-      assert_equal " filename with a leading space.txt ",
+      assert_equal(
+         " filename with a leading space.txt ",
          @adapter.revisions(" filename with a leading space.txt ",
-                             nil, "master")[0].paths[0][:path]
+                            nil, "master")[0].paths[0][:path])
     end
 
     def test_getting_entries_with_leading_and_trailing_spaces_in_filename
-      assert_equal " filename with a leading space.txt ",
-         @adapter.entries('',
-                 '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c')[3].name
+      assert_equal(
+         " filename with a leading space.txt ",
+         @adapter.entries(
+                 '',
+                 '83ca5fd546063a3c7dc2e568ba3355661a9e2b2c')[3].name)
     end
 
     def test_annotate
@@ -370,8 +404,25 @@ class GitAdapterTest < ActiveSupport::TestCase
       assert_equal "# This program is free software; you can redistribute it and/or",
                    annotate.lines[4].strip
       assert_equal "7234cb2750b63f47bff735edc50a1c0a433c2518",
-                    annotate.revisions[4].identifier
+                   annotate.revisions[4].identifier
       assert_equal "jsmith", annotate.revisions[4].author
+    end
+
+    def test_annotate_latin_1_identifier
+      if WINDOWS_PASS
+        puts WINDOWS_SKIP_STR
+      elsif JRUBY_SKIP
+        puts JRUBY_SKIP_STR
+      else
+        annotate = @adapter.annotate('sources/watchers_controller.rb',
+                                     "latin-1-branch-#{@char_1}-02")
+        assert_equal 40, annotate.lines.size
+        assert_equal "# This program is free software; you can redistribute it and/or",
+                     annotate.lines[3].strip
+        assert_equal "7234cb2750b63f47bff735edc50a1c0a433c2518",
+                     annotate.revisions[3].identifier
+        assert_equal "jsmith", annotate.revisions[3].author
+      end
     end
 
     def test_annotate_moved_file
@@ -392,11 +443,10 @@ class GitAdapterTest < ActiveSupport::TestCase
     def test_last_rev_with_spaces_in_filename
       last_rev = @adapter.lastrev("filemane with spaces.txt",
                                   "ed5bb786bbda2dee66a2d50faf51429dbc043a7b")
-      last_rev_author = last_rev.author
       assert_equal "ed5bb786bbda2dee66a2d50faf51429dbc043a7b", last_rev.scmid
       assert_equal "ed5bb786bbda2dee66a2d50faf51429dbc043a7b", last_rev.identifier
       assert_equal "#{@str_felix_hex} <felix@fachschaften.org>",
-                     last_rev.author
+                   last_rev.author
       assert_equal Time.gm(2010, 9, 18, 19, 59, 46), last_rev.time
     end
 
@@ -509,6 +559,23 @@ class GitAdapterTest < ActiveSupport::TestCase
       end
     end
 
+    def test_entries_latin_1_identifier
+      if WINDOWS_PASS
+        puts WINDOWS_SKIP_STR
+      elsif JRUBY_SKIP
+        puts JRUBY_SKIP_STR
+      else
+        entries1 = @adapter.entries(nil,
+                                    "latin-1-branch-#{@char_1}-02")
+        assert entries1
+        assert_equal 4, entries1.size
+        f1 = entries1[0]
+        assert_equal "images", f1.name
+        assert_equal "images", f1.path
+        assert_equal 'dir', f1.kind
+      end
+    end
+
     def test_entry
       entry = @adapter.entry()
       assert_equal "", entry.path
@@ -553,6 +620,17 @@ class GitAdapterTest < ActiveSupport::TestCase
                                 ""
                               )
       assert_equal "UTF-8", adpt2.path_encoding
+    end
+
+    def test_cat_latin_1_identifier
+      if WINDOWS_PASS
+        puts WINDOWS_SKIP_STR
+      elsif JRUBY_SKIP
+        puts JRUBY_SKIP_STR
+      else
+        assert @adapter.cat('sources/watchers_controller.rb',
+                            "latin-1-branch-#{@char_1}-02")
+      end
     end
 
     def test_cat_path_invalid

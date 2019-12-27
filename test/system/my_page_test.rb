@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -63,7 +65,7 @@ class MyPageTest < ApplicationSystemTestCase
 
     assert page.has_css?('#block-issueswatched')
     assert_equal({'top' => ['issueswatched', 'issuesassignedtome']},
-      preferences.reload.my_page_layout)
+                 preferences.reload.my_page_layout)
   end
 
   def test_add_issue_query_block

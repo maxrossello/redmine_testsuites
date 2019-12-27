@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -465,6 +467,7 @@ class ProjectTest < ActiveSupport::TestCase
     parent = Project.find(1)
     parent.trackers = Tracker.find([1,2])
     child = parent.children.find(3)
+    child.trackers = Tracker.find([2,3])
 
     assert_equal [1, 2], parent.tracker_ids
     assert_equal [2, 3], child.trackers.collect(&:id)
@@ -519,7 +522,7 @@ class ProjectTest < ActiveSupport::TestCase
     parent_version_1 = Version.generate!(:project => project)
     parent_version_2 = Version.generate!(:project => project)
     assert_equal [parent_version_1, parent_version_2].sort,
-      project.rolled_up_versions.sort
+                 project.rolled_up_versions.sort
   end
 
   test "#rolled_up_versions should include versions for a subproject" do
@@ -530,7 +533,7 @@ class ProjectTest < ActiveSupport::TestCase
     subproject_version = Version.generate!(:project => subproject)
 
     assert_equal [parent_version_1, parent_version_2, subproject_version].sort,
-      project.rolled_up_versions.sort
+                 project.rolled_up_versions.sort
   end
 
   test "#rolled_up_versions should include versions for a sub-subproject" do
@@ -543,7 +546,7 @@ class ProjectTest < ActiveSupport::TestCase
     project.reload
 
     assert_equal [parent_version_1, parent_version_2, sub_subproject_version].sort,
-      project.rolled_up_versions.sort
+                 project.rolled_up_versions.sort
   end
 
   test "#rolled_up_versions should only check active projects" do
@@ -557,7 +560,7 @@ class ProjectTest < ActiveSupport::TestCase
 
     assert !subproject.active?
     assert_equal [parent_version_1, parent_version_2].sort,
-      project.rolled_up_versions.sort
+                 project.rolled_up_versions.sort
   end
 
   def test_shared_versions_none_sharing
@@ -708,28 +711,28 @@ class ProjectTest < ActiveSupport::TestCase
     @project.enabled_module_names = []
     @project.reload
     assert_equal [], @project.enabled_module_names
-    #with string
+    # with string
     @project.enable_module!("issue_tracking")
     assert_equal ["issue_tracking"], @project.enabled_module_names
-    #with symbol
+    # with symbol
     @project.enable_module!(:gantt)
     assert_equal ["issue_tracking", "gantt"], @project.enabled_module_names
-    #don't add a module twice
+    # don't add a module twice
     @project.enable_module!("issue_tracking")
     assert_equal ["issue_tracking", "gantt"], @project.enabled_module_names
   end
 
   test "enabled_modules should disable a module" do
     @project = Project.find(1)
-    #with string
+    # with string
     assert @project.enabled_module_names.include?("issue_tracking")
     @project.disable_module!("issue_tracking")
     assert ! @project.reload.enabled_module_names.include?("issue_tracking")
-    #with symbol
+    # with symbol
     assert @project.enabled_module_names.include?("gantt")
     @project.disable_module!(:gantt)
     assert ! @project.reload.enabled_module_names.include?("gantt")
-    #with EnabledModule object
+    # with EnabledModule object
     first_module = @project.enabled_modules.first
     @project.disable_module!(first_module)
     assert ! @project.reload.enabled_module_names.include?(first_module.name)
@@ -786,7 +789,6 @@ class ProjectTest < ActiveSupport::TestCase
     assert_kind_of ActiveRecord::Relation, project.activities
   end
 
-
   def test_activities_should_use_the_project_specific_activities
     project = Project.find(1)
     overridden_activity = TimeEntryActivity.new({:name => "Project", :project => project})
@@ -798,9 +800,11 @@ class ProjectTest < ActiveSupport::TestCase
 
   def test_activities_should_not_include_the_inactive_project_specific_activities
     project = Project.find(1)
-    overridden_activity = TimeEntryActivity.new({:name => "Project", :project => project, :parent => TimeEntryActivity.first, :active => false})
+    overridden_activity = TimeEntryActivity.new({:name => "Project",
+                                                 :project => project,
+                                                 :parent => TimeEntryActivity.first,
+                                                 :active => false})
     assert overridden_activity.save!
-
     assert !project.activities.include?(overridden_activity), "Inactive Project specific Activity found"
   end
 
@@ -1039,5 +1043,29 @@ class ProjectTest < ActiveSupport::TestCase
     assert_nothing_raised do
       Project.distinct.visible.to_a
     end
+  end
+
+  def test_safe_attributes_should_include_only_custom_fields_visible_to_user
+    cf1 = ProjectCustomField.create!(:name => 'Visible field',
+                                   :field_format => 'string',
+                                   :visible => false, :role_ids => [1])
+    cf2 = ProjectCustomField.create!(:name => 'Non visible field',
+                                   :field_format => 'string',
+                                   :visible => false, :role_ids => [3])
+    user = User.find(2)
+    project = Project.find(1)
+
+    project.send :safe_attributes=, {'custom_field_values' => {
+                                       cf1.id.to_s => 'value1', cf2.id.to_s => 'value2'
+                                     }}, user
+    assert_equal 'value1', project.custom_field_value(cf1)
+    assert_nil project.custom_field_value(cf2)
+
+    project.send :safe_attributes=, {'custom_fields' => [
+                                      {'id' => cf1.id.to_s, 'value' => 'valuea'},
+                                      {'id' => cf2.id.to_s, 'value' => 'valueb'}
+                                    ]}, user
+    assert_equal 'valuea', project.custom_field_value(cf1)
+    assert_nil project.custom_field_value(cf2)
   end
 end

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +22,7 @@ require File.expand_path('../../test_helper', __FILE__)
 class CustomFieldTest < ActiveSupport::TestCase
   fixtures :custom_fields, :roles, :projects,
            :trackers, :issue_statuses,
-           :issues
+           :issues, :users
 
   def setup
     User.current = nil
@@ -105,7 +107,7 @@ class CustomFieldTest < ActiveSupport::TestCase
 
   def test_possible_values_should_return_utf8_encoded_strings
     field = CustomField.new
-    s = "Value".force_encoding('BINARY')
+    s = "Value".b
     field.possible_values = s
     assert_equal [s], field.possible_values
     assert_equal 'UTF-8', field.possible_values.first.encoding.name
@@ -361,5 +363,13 @@ class CustomFieldTest < ActiveSupport::TestCase
     with_current_user(User.find(2)) do
       refute_includes Project.where(project_field.visibility_by_project_condition), project
     end
+  end
+
+  def test_full_text_formatting?
+    field = IssueCustomField.create!(:name => 'Long text', :field_format => 'text', :text_formatting => 'full')
+    assert field.full_text_formatting?
+
+    field2 = IssueCustomField.create!(:name => 'Another long text', :field_format => 'text')
+    assert !field2.full_text_formatting?
   end
 end

@@ -1,7 +1,7 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -46,7 +46,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
       assert_select 'th.filename', :text => /issues_controller.rb\t\(révision 1484\)/
       assert_select 'td.line-code', :text => /Demande créée avec succès/
     end
-    set_tmp_attachments_directory
   end
 
   def test_show_diff_replace_cannot_convert_content
@@ -64,7 +63,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
         assert_select 'td.line-code', :text => /Demande cr\?\?e avec succ\?s/
       end
     end
-    set_tmp_attachments_directory
   end
 
   def test_show_diff_latin_1
@@ -82,7 +80,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
         assert_select 'td.line-code', :text => /Demande créée avec succès/
       end
     end
-    set_tmp_attachments_directory
   end
 
   def test_show_should_save_diff_type_as_user_preference
@@ -132,7 +129,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
       }
     assert_response :success
     assert_equal 'text/html', @response.content_type
-    set_tmp_attachments_directory
   end
 
   def test_show_text_file_utf_8
@@ -143,8 +139,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
     assert a.save
     assert_equal 'japanese-utf-8.txt', a.filename
 
-    str_japanese = "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e".force_encoding('UTF-8')
-
     get :show, :params => {
         :id => a.id
       }
@@ -152,7 +146,7 @@ class AttachmentsControllerTest < Redmine::ControllerTest
     assert_equal 'text/html', @response.content_type
     assert_select 'tr#L1' do
       assert_select 'th.line-num', :text => '1'
-      assert_select 'td', :text => /#{str_japanese}/
+      assert_select 'td', :text => /日本語/
     end
   end
 
@@ -209,7 +203,38 @@ class AttachmentsControllerTest < Redmine::ControllerTest
       assert_equal 'text/html', @response.content_type
       assert_select '.nodata', :text => 'No preview available. Download the file instead.'
     end
+  end
+
+  def test_show_text_file_formated_markdown
     set_tmp_attachments_directory
+    a = Attachment.new(:container => Issue.find(1),
+                       :file => uploaded_test_file('testfile.md', 'text/plain'),
+                       :author => User.find(1))
+    assert a.save
+    assert_equal 'testfile.md', a.filename
+
+    get :show, :params => {
+        :id => a.id
+      }
+    assert_response :success
+    assert_equal 'text/html', @response.content_type
+    assert_select 'div.wiki', :html => "<h1>Header 1</h1>\n\n<h2>Header 2</h2>\n\n<h3>Header 3</h3>"
+  end
+
+  def test_show_text_file_fromated_textile
+    set_tmp_attachments_directory
+    a = Attachment.new(:container => Issue.find(1),
+                       :file => uploaded_test_file('testfile.textile', 'text/plain'),
+                       :author => User.find(1))
+    assert a.save
+    assert_equal 'testfile.textile', a.filename
+
+    get :show, :params => {
+        :id => a.id
+      }
+    assert_response :success
+    assert_equal 'text/html', @response.content_type
+    assert_select 'div.wiki', :html => "<h1>Header 1</h1>\n\n\n\t<h2>Header 2</h2>\n\n\n\t<h3>Header 3</h3>"
   end
 
   def test_show_image
@@ -229,7 +254,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
       }
     assert_equal 'text/html', @response.content_type
     assert_select '.nodata', :text => 'No preview available. Download the file instead.'
-    set_tmp_attachments_directory
   end
 
   def test_show_file_from_private_issue_without_permission
@@ -237,7 +261,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
         :id => 15
       }
     assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Fattachments%2F15'
-    set_tmp_attachments_directory
   end
 
   def test_show_file_from_private_issue_with_permission
@@ -247,7 +270,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
       }
     assert_response :success
     assert_select 'h2', :text => /private.diff/
-    set_tmp_attachments_directory
   end
 
   def test_show_file_without_container_should_be_allowed_to_author
@@ -293,8 +315,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
 
     assert_select 'ul.pages li.next', :text => /next/i
     assert_select 'ul.pages li.previous', :text => /previous/i
-
-    set_tmp_attachments_directory
   end
 
   def test_download_text_file
@@ -311,8 +331,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
         :id => 4
       }
     assert_response 304
-
-    set_tmp_attachments_directory
   end
 
   def test_download_js_file
@@ -346,7 +364,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
       }
     assert_response :success
     assert_equal 'text/x-ruby', @response.content_type
-    set_tmp_attachments_directory
   end
 
   def test_download_should_assign_better_content_type_than_application_octet_stream
@@ -357,7 +374,15 @@ class AttachmentsControllerTest < Redmine::ControllerTest
       }
     assert_response :success
     assert_equal 'text/x-ruby', @response.content_type
-    set_tmp_attachments_directory
+  end
+
+  def test_download_should_assign_application_octet_stream_if_content_type_is_not_determined
+    get :download, :params => {
+        :id => 22
+      }
+    assert_response :success
+    assert_nil Redmine::MimeType.of(attachments(:attachments_022).filename)
+    assert_equal 'application/octet-stream', @response.content_type
   end
 
   def test_download_should_assign_application_octet_stream_if_content_type_is_not_determined
@@ -375,7 +400,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
         :id => 2
       }
     assert_response 404
-    set_tmp_attachments_directory
   end
 
   def test_download_should_be_denied_without_permission
@@ -383,7 +407,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
         :id => 7
       }
     assert_redirected_to '/login?back_url=http%3A%2F%2Ftest.host%2Fattachments%2Fdownload%2F7'
-    set_tmp_attachments_directory
   end
 
   if convert_installed?
@@ -417,7 +440,7 @@ class AttachmentsControllerTest < Redmine::ControllerTest
     end
 
     def test_thumbnail_should_round_size
-      Redmine::Thumbnail.expects(:generate).with {|source, target, size| size == 250}
+      Redmine::Thumbnail.expects(:generate).with {|source, target, size| size == 300}
 
       @request.session[:user_id] = 2
       get :thumbnail, :params => {
@@ -455,6 +478,22 @@ class AttachmentsControllerTest < Redmine::ControllerTest
     puts '(ImageMagick convert not available)'
   end
 
+  if gs_installed?
+    def test_thumbnail_for_pdf_should_be_png
+      skip unless convert_installed?
+
+      Attachment.clear_thumbnails
+      @request.session[:user_id] = 2
+      get :thumbnail, :params => {
+          :id => 23   # ecookbook-gantt.pdf
+        }
+      assert_response :success
+      assert_equal 'image/png', response.content_type
+    end
+  else
+    puts '(GhostScript convert not available)'
+  end
+
   def test_edit_all
     @request.session[:user_id] = 2
     get :edit_all, :params => {
@@ -473,6 +512,9 @@ class AttachmentsControllerTest < Redmine::ControllerTest
         assert_select 'input[name=?][value=?]', 'attachments[4][description]', 'This is a Ruby source file'
       end
     end
+
+    # Link to the container in heading
+    assert_select 'h2 a', :text => "Feature request #2"
   end
 
   def test_edit_all_with_invalid_container_class_should_return_404
@@ -508,12 +550,12 @@ class AttachmentsControllerTest < Redmine::ControllerTest
           '1' => {
             :filename => 'newname.text',
             :description => ''
-          },    
+          },
                   '4' => {
             :filename => 'newname.rb',
             :description => 'Renamed'
-          },    
-                
+          },
+
         }
       }
 
@@ -532,12 +574,12 @@ class AttachmentsControllerTest < Redmine::ControllerTest
           '1' => {
             :filename => '',
             :description => ''
-          },    
+          },
                   '4' => {
             :filename => 'newname.rb',
             :description => 'Renamed'
-          },    
-                
+          },
+
         }
       }
 

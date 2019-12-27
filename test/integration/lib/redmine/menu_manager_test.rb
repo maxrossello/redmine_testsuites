@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -30,7 +32,7 @@ class MenuManagerTest < Redmine::IntegrationTest
 
   def test_project_menu_with_specific_locale
     get '/projects/ecookbook/issues',
-      :headers => {'HTTP_ACCEPT_LANGUAGE' => 'fr,fr-fr;q=0.8,en-us;q=0.5,en;q=0.3'}
+        :headers => {'HTTP_ACCEPT_LANGUAGE' => 'fr,fr-fr;q=0.8,en-us;q=0.5,en;q=0.3'}
 
     assert_select 'div#main-menu' do
       assert_select 'li a.activity[href=?]', '/projects/ecookbook/activity', :text => ll('fr', :label_activity)
@@ -83,5 +85,31 @@ class MenuManagerTest < Redmine::IntegrationTest
     assert_select 'body.has-main-menu'
     get '/'
     assert_select 'body.has-main-menu', 0
+  end
+
+  def test_cross_project_menu_should_hide_item_if_module_is_not_enabled_for_any_project
+    user = User.find_by_login('dlopper')
+    assert_equal [1, 3, 4, 6], Project.visible(user).ids
+
+    # gantt and news are not enabled for any visible project
+    Project.find(1).enabled_module_names = %w(issue_tracking calendar)
+    Project.find(3).enabled_module_names = %w(time_tracking)
+    EnabledModule.where(:project_id => [4, 6]).delete_all
+
+    log_user('dlopper', 'foo')
+    get '/projects'
+    assert_select '#main-menu' do
+      assert_select 'a.projects',     :count => 1
+      assert_select 'a.activity',     :count => 1
+
+      assert_select 'a.issues',       :count => 1 # issue_tracking
+      assert_select 'a.time-entries', :count => 1 # time_tracking
+      assert_select 'a.gantt',        :count => 0 # gantt
+      assert_select 'a.calendar',     :count => 1 # calendar
+      assert_select 'a.news',         :count => 0 # news
+    end
+    assert_select '#projects-index' do
+      assert_select 'a.project',      :count => 4
+    end
   end
 end

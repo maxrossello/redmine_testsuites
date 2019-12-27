@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,14 +21,15 @@ require File.expand_path('../../test_helper', __FILE__)
 
 class UserTest < ActiveSupport::TestCase
   fixtures :users, :email_addresses, :members, :projects, :roles, :member_roles, :auth_sources,
-            :trackers, :issue_statuses,
-            :projects_trackers,
-            :watchers,
-            :issue_categories, :enumerations, :issues,
-            :journals, :journal_details,
-            :groups_users,
-            :enabled_modules,
-            :tokens
+           :trackers, :issue_statuses,
+           :projects_trackers,
+           :watchers,
+           :issue_categories, :enumerations, :issues,
+           :journals, :journal_details,
+           :groups_users,
+           :enabled_modules,
+           :tokens,
+           :user_preferences
 
   include Redmine::I18n
 
@@ -260,6 +263,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_destroy_should_update_attachments
+    set_tmp_attachments_directory
     attachment = Attachment.create!(:container => Project.find(1),
       :file => uploaded_test_file("testfile.txt", "text/plain"),
       :author_id => 2)
@@ -537,6 +541,18 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
+  def test_validate_password_format
+    Setting::PASSWORD_CHAR_CLASSES.each do |key, regexp|
+      with_settings :password_required_char_classes => key do
+        user = User.new(:firstname => "new", :lastname => "user", :login => "random", :mail => "random@somnet.foo")
+        p = 'PASSWDpasswd01234!@#$%'.gsub(regexp, '')
+        user.password, user.password_confirmation = p, p
+        assert !user.save
+        assert_equal 1, user.errors.count
+      end
+    end
+  end
+
   def test_name_format
     assert_equal 'John S.', @jsmith.name(:firstname_lastinitial)
     assert_equal 'Smith, John', @jsmith.name(:lastname_comma_firstname)
@@ -584,7 +600,23 @@ class UserTest < ActiveSupport::TestCase
     assert_equal '2012-05-15', User.find(1).time_to_date(time).to_s
 
     preference.update_attribute :time_zone, ''
-    assert_equal '2012-05-15', User.find(1).time_to_date(time).to_s
+    assert_equal time.localtime.to_date.to_s, User.find(1).time_to_date(time).to_s
+  end
+
+  def test_convert_time_to_user_timezone_should_return_the_time_according_to_user_time_zone
+    preference = User.find(1).pref
+    time = Time.gm(2012, 05, 15, 23, 30).utc # 2012-05-15 23:30 UTC
+    time_not_utc = Time.new(2012, 05, 15, 23, 30)
+
+    preference.update_attribute :time_zone, 'Baku' # UTC+5
+    assert_equal '2012-05-16 04:30:00 +0500', User.find(1).convert_time_to_user_timezone(time).to_s
+
+    preference.update_attribute :time_zone, 'La Paz' # UTC-4
+    assert_equal '2012-05-15 19:30:00 -0400', User.find(1).convert_time_to_user_timezone(time).to_s
+
+    preference.update_attribute :time_zone, ''
+    assert_equal time.localtime.to_s, User.find(1).convert_time_to_user_timezone(time).to_s
+    assert_equal time_not_utc, User.find(1).convert_time_to_user_timezone(time_not_utc)
   end
 
   def test_fields_for_order_statement_should_return_fields_according_user_format_setting
@@ -1040,6 +1072,14 @@ class UserTest < ActiveSupport::TestCase
     assert !u.password_confirmation.blank?
   end
 
+  def test_random_password_include_required_characters
+    with_settings :password_required_char_classes => Setting::PASSWORD_CHAR_CLASSES do
+      u = User.new(:firstname => "new", :lastname => "user", :login => "random", :mail => "random@somnet.foo")
+      u.random_password
+      assert u.valid?
+    end
+  end
+
   test "#change_password_allowed? should be allowed if no auth source is set" do
     user = User.generate!
     assert user.change_password_allowed?
@@ -1125,8 +1165,10 @@ class UserTest < ActiveSupport::TestCase
 
   test "#allowed_to? for normal users" do
     project = Project.find(1)
-    assert_equal true, @jsmith.allowed_to?(:delete_messages, project)    #Manager
-    assert_equal false, @dlopper.allowed_to?(:delete_messages, project) #Developer
+    # Manager
+    assert_equal true, @jsmith.allowed_to?(:delete_messages, project)
+    # Developer
+    assert_equal false, @dlopper.allowed_to?(:delete_messages, project)
   end
 
   test "#allowed_to? with empty array should return false" do
@@ -1135,13 +1177,17 @@ class UserTest < ActiveSupport::TestCase
 
   test "#allowed_to? with multiple projects" do
     assert_equal true, @admin.allowed_to?(:view_project, Project.all.to_a)
-    assert_equal false, @dlopper.allowed_to?(:view_project, Project.all.to_a) #cannot see Project(2)
-    assert_equal true, @jsmith.allowed_to?(:edit_issues, @jsmith.projects.to_a) #Manager or Developer everywhere
-    assert_equal false, @jsmith.allowed_to?(:delete_issue_watchers, @jsmith.projects.to_a) #Dev cannot delete_issue_watchers
+    # cannot see Project(2)
+    assert_equal false, @dlopper.allowed_to?(:view_project, Project.all.to_a)
+    # Manager or Developer everywhere
+    assert_equal true, @jsmith.allowed_to?(:edit_issues, @jsmith.projects.to_a)
+    # Dev cannot delete_issue_watchers
+    assert_equal false, @jsmith.allowed_to?(:delete_issue_watchers, @jsmith.projects.to_a)
   end
 
   test "#allowed_to? with with options[:global] should return true if user has one role with the permission" do
-    @dlopper2 = User.find(5) #only Developer on a project, not Manager anywhere
+    # only Developer on a project, not Manager anywhere
+    @dlopper2 = User.find(5)
     @anonymous = User.find(6)
     assert_equal true, @jsmith.allowed_to?(:delete_issue_watchers, nil, :global => true)
     assert_equal false, @dlopper2.allowed_to?(:delete_issue_watchers, nil, :global => true)
@@ -1152,7 +1198,8 @@ class UserTest < ActiveSupport::TestCase
 
   # this is just a proxy method, the test only calls it to ensure it doesn't break trivially
   test "#allowed_to_globally?" do
-    @dlopper2 = User.find(5) #only Developer on a project, not Manager anywhere
+    # only Developer on a project, not Manager anywhere
+    @dlopper2 = User.find(5)
     @anonymous = User.find(6)
     assert_equal true, @jsmith.allowed_to_globally?(:delete_issue_watchers)
     assert_equal false, @dlopper2.allowed_to_globally?(:delete_issue_watchers)
@@ -1232,6 +1279,13 @@ class UserTest < ActiveSupport::TestCase
     # Password still valid
     assert user.check_password?("unsalted")
     assert_equal user, User.try_to_login(user.login, "unsalted")
+  end
+
+  def test_bookmarked_project_ids
+    # User with bookmarked projects
+    assert_equal [1, 5], User.find(1).bookmarked_project_ids
+    # User without bookmarked projects
+    assert_equal [], User.find(2).bookmarked_project_ids
   end
 
   if Object.const_defined?(:OpenID)

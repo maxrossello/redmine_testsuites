@@ -268,6 +268,19 @@ attachments_020:
   filename: root_attachment.txt
   filesize: 54
   author_id: 2
+attachments_021:
+  created_on: 2007-03-05 15:08:27 +01:00
+  container_type: Document
+  container_id: 3
+  downloads: 0
+  disk_filename: 060719210727_archive.zip
+  disk_directory: "2006/07"
+  digest: b91e08d0cf966d5c6ff411bd8c4cc3a2
+  id: 21
+  filesize: 157
+  filename: archive.zip
+  author_id: 1
+  content_type: application/zip
 attachments_022:
   created_on: 2019-04-30 09:23:44 +09:00
   container_type: Project
@@ -282,3 +295,17 @@ attachments_022:
   author_id: 1
   description: unknown type
   content_type:
+attachments_023:
+  created_on: 2019-05-11 14:18:19 +09:00
+  content_type: application/pdf
+  container_type: WikiPage
+  container_id: 1
+  downloads: 0
+  disk_filename: 190511141819_ecookbook-gantt.pdf
+  disk_directory: "2019/05"
+  digest: da9c52e79d9eee7d47b9ee5db477985c542ea683e9f23ed32db55e35ef99c479
+  id: 23
+  filesize: 31620
+  filename: ecookbook-gantt.pdf
+  author_id: 2
+  description: Gantt chart as of May 11

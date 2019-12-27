@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +22,12 @@ require File.expand_path('../../test_helper', __FILE__)
 class VersionTest < ActiveSupport::TestCase
   fixtures :projects, :users, :issues, :issue_statuses, :trackers,
            :enumerations, :versions, :projects_trackers,
-           :custom_fields, :custom_fields_trackers, :custom_fields_projects
+           :custom_fields, :custom_fields_trackers, :custom_fields_projects,
+           :members, :member_roles, :roles
+
+  def setup
+    User.current = nil
+  end
 
   def setup
     User.current = nil
@@ -249,12 +256,12 @@ class VersionTest < ActiveSupport::TestCase
     # Project 1 now out of the shared scope
     project_1_issue.reload
     assert_nil project_1_issue.fixed_version,
-                "Fixed version is still set after changing the Version's sharing"
+               "Fixed version is still set after changing the Version's sharing"
 
     # Project 5 now out of the shared scope
     project_5_issue.reload
     assert_nil project_5_issue.fixed_version,
-                "Fixed version is still set after changing the Version's sharing"
+               "Fixed version is still set after changing the Version's sharing"
 
     # Project 2 issue remains
     project_2_issue.reload
@@ -295,6 +302,29 @@ class VersionTest < ActiveSupport::TestCase
     assert_includes Version.like('VERSION FOR LIKE SCOPE TEST'), version
     assert_includes Version.like('version for like scope test'), version
     assert_includes Version.like('like scope'), version
+  end
+
+  def test_safe_attributes_should_include_only_custom_fields_visible_to_user
+    cf1 = VersionCustomField.create!(:name => 'Visible field',
+                                  :field_format => 'string',
+                                  :visible => false, :role_ids => [1])
+    cf2 = VersionCustomField.create!(:name => 'Non visible field',
+                                  :field_format => 'string',
+                                  :visible => false, :role_ids => [3])
+    user = User.find(2)
+    version = Version.new(:project_id => 1, :name => 'v4')
+
+    version.send :safe_attributes=, {'custom_field_values' => {
+                                      cf1.id.to_s => 'value1', cf2.id.to_s => 'value2'
+                                    }}, user
+    assert_equal 'value1', version.custom_field_value(cf1)
+    assert_nil version.custom_field_value(cf2)
+    version.send :safe_attributes=, {'custom_fields' => [
+                                     {'id' => cf1.id.to_s, 'value' => 'valuea'},
+                                     {'id' => cf2.id.to_s, 'value' => 'valueb'}
+                                   ]}, user
+    assert_equal 'valuea', version.custom_field_value(cf1)
+    assert_nil version.custom_field_value(cf2)
   end
 
   private

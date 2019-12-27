@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,9 +27,6 @@ class RepositoryMercurialTest < ActiveSupport::TestCase
   REPOSITORY_PATH = Rails.root.join('tmp/test/mercurial_repository').to_s
   NUM_REV = 34
 
-  CHAR_1_HEX = "\xc3\x9c".force_encoding('UTF-8')
-  BRANCH_CHAR_1 = "branch-#{CHAR_1_HEX}-01".force_encoding('UTF-8')
-
   def setup
     User.current = nil
     @project    = Project.find(3)
@@ -52,7 +51,6 @@ class RepositoryMercurialTest < ActiveSupport::TestCase
 
   def test_blank_path_to_repository_error_message_fr
     set_language_if_valid 'fr'
-    str = "Chemin du d\xc3\xa9p\xc3\xb4t doit \xc3\xaatre renseign\xc3\xa9(e)".force_encoding('UTF-8')
     repo = Repository::Mercurial.new(
                           :project      => @project,
                           :url          => "",
@@ -60,7 +58,7 @@ class RepositoryMercurialTest < ActiveSupport::TestCase
                           :path_encoding => ''
                         )
     assert !repo.save
-    assert_include str, repo.errors.full_messages
+    assert_include 'Chemin du dépôt doit être renseigné(e)', repo.errors.full_messages
   end
 
   if File.directory?(REPOSITORY_PATH)
@@ -176,7 +174,7 @@ class RepositoryMercurialTest < ActiveSupport::TestCase
       assert_equal "0885933ad4f68d77c2649cd11f8311276e7ef7ce", rev0.scmid
       first_rev = @repository.changesets.first
       last_rev  = @repository.changesets.last
-      assert_equal "#{NUM_REV - 1}", first_rev.revision
+      assert_equal (NUM_REV - 1).to_s, first_rev.revision
       assert_equal "0", last_rev.revision
     end
 
@@ -255,7 +253,7 @@ class RepositoryMercurialTest < ActiveSupport::TestCase
 
       # with_limit
       changesets = @repository.latest_changesets('', nil, 2)
-      assert_equal ["#{NUM_REV - 1}", "#{NUM_REV - 2}"], changesets.collect(&:revision)
+      assert_equal [(NUM_REV - 1).to_s, (NUM_REV - 2).to_s], changesets.collect(&:revision)
 
       # with_filepath
       changesets = @repository.latest_changesets(
@@ -354,11 +352,11 @@ class RepositoryMercurialTest < ActiveSupport::TestCase
       assert_equal NUM_REV, @repository.changesets.count
 
       if @repository.scm.class.client_version_above?([1, 6])
-        changesets = @repository.latest_changesets('', BRANCH_CHAR_1)
+        changesets = @repository.latest_changesets('', 'branch-Ü-01')
         assert_equal %w|27 26|, changesets.collect(&:revision)
       end
 
-      changesets = @repository.latest_changesets("latin-1-dir/test-#{CHAR_1_HEX}-subdir", BRANCH_CHAR_1)
+      changesets = @repository.latest_changesets('latin-1-dir/test-Ü-subdir', 'branch-Ü-01')
       assert_equal %w|27|, changesets.collect(&:revision)
     end
 
@@ -421,8 +419,8 @@ class RepositoryMercurialTest < ActiveSupport::TestCase
       scmid3 = scmid_for_assert(hex3, is_short_scmid)
       assert_equal 1, c3.size
       assert_equal 'A', c3[0].action
-      assert_equal "/latin-1-dir/test-#{CHAR_1_HEX}-1.txt",  c3[0].path
-      assert_equal "/latin-1-dir/test-#{CHAR_1_HEX}.txt",    c3[0].from_path
+      assert_equal '/latin-1-dir/test-Ü-1.txt',  c3[0].path
+      assert_equal '/latin-1-dir/test-Ü.txt',    c3[0].from_path
       assert_equal scmid3, c3[0].from_revision
     end
     private :assert_copied_files
@@ -592,7 +590,7 @@ class RepositoryMercurialTest < ActiveSupport::TestCase
       @repository.fetch_changesets
       @project.reload
       assert_equal NUM_REV, @repository.changesets.count
-      ["#{NUM_REV - 1}", "2e6d54642923", "2e6d5"].each do |r1|
+      [(NUM_REV - 1).to_s, "2e6d54642923", "2e6d5"].each do |r1|
         changeset = @repository.find_changeset_by_name(r1)
         assert_nil changeset.next
       end

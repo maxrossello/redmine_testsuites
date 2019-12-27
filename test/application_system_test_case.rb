@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -57,21 +59,28 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   end
 
   def clear_downloaded_files
-    FileUtils.rm downloaded_files
+    # https://github.com/SeleniumHQ/selenium/issues/5292
+    FileUtils.rm downloaded_files if Redmine::Platform.mswin?
   end
 
-  def downloaded_files
-    Dir.glob("#{DOWNLOADS_PATH}/*").reject {|f| f=~/\.(tmp|crdownload)$/}
+  def downloaded_files(filename='*')
+    # https://github.com/SeleniumHQ/selenium/issues/5292
+    downloaded_path = Redmine::Platform.mswin? ? DOWNLOADS_PATH : "#{ENV['HOME']}/Downloads"
+    Dir.glob("#{downloaded_path}/#{filename}").
+      reject{|f| f=~/\.(tmp|crdownload)$/}.sort_by{|f| File.mtime(f)}
   end
 
   # Returns the path of the download file
-  def downloaded_file
+  def downloaded_file(filename='*')
+    files = []
     Timeout.timeout(5) do
-      while downloaded_files.empty?
+      loop do
+        files = downloaded_files(filename)
+        break if files.present?
         sleep 0.2
       end
     end
-    downloaded_files.first
+    files.last
   end
 end
 

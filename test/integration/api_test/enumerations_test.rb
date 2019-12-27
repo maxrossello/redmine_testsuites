@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,9 +27,15 @@ class Redmine::ApiTest::EnumerationsTest < Redmine::ApiTest::Base
     assert_response :success
     assert_equal 'application/xml', response.content_type
     assert_select 'issue_priorities[type=array]' do
-      assert_select 'issue_priority' do
+      assert_select 'issue_priority:nth-of-type(3)' do
         assert_select 'id', :text => '6'
         assert_select 'name', :text => 'High'
+        assert_select 'active', :text => 'true'
+      end
+      assert_select 'issue_priority:nth-of-type(6)' do
+        assert_select 'id', :text => '15'
+        assert_select 'name', :text => 'Inactive Priority'
+        assert_select 'active', :text => 'false'
       end
     end
   end

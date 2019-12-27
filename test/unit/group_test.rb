@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -56,10 +58,9 @@ class GroupTest < ActiveSupport::TestCase
 
   def test_blank_name_error_message_fr
     set_language_if_valid 'fr'
-    str = "Nom doit \xc3\xaatre renseign\xc3\xa9(e)".force_encoding('UTF-8')
     g = Group.new
     assert !g.save
-    assert_include str, g.errors.full_messages
+    assert_include 'Nom doit être renseigné(e)', g.errors.full_messages
   end
 
   def test_group_roles_should_be_given_to_added_user

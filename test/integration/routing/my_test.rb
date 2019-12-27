@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +22,7 @@ require File.expand_path('../../../test_helper', __FILE__)
 class RoutingMyTest < Redmine::RoutingTest
   def test_my
     should_route 'GET /my/account' => 'my#account'
-    should_route 'POST /my/account' => 'my#account'
+    should_route 'PUT /my/account' => 'my#account'
 
     should_route 'GET /my/account/destroy' => 'my#destroy'
     should_route 'POST /my/account/destroy' => 'my#destroy'

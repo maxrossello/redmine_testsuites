@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,7 +21,7 @@ require File.expand_path('../../test_helper', __FILE__)
 
 class ImportsControllerTest < Redmine::ControllerTest
   fixtures :projects, :enabled_modules,
-           :users, :email_addresses,
+           :users, :email_addresses, :user_preferences,
            :roles, :members, :member_roles,
            :issues, :issue_statuses,
            :trackers, :projects_trackers,
@@ -42,14 +44,16 @@ class ImportsControllerTest < Redmine::ControllerTest
   end
 
   def test_new_should_display_the_upload_form
-    get :new
+    get :new, :params => { :type => 'IssueImport', :project_id => 'subproject1' }
     assert_response :success
     assert_select 'input[name=?]', 'file'
+    assert_select 'input[name=?][type=?][value=?]', 'project_id', 'hidden', 'subproject1'
   end
 
   def test_create_should_save_the_file
     import = new_record(Import) do
       post :create, :params => {
+          :type => 'IssueImport',
           :file => uploaded_test_file('import_issues.csv', 'text/csv')
         }
       assert_response 302
@@ -172,7 +176,7 @@ class ImportsControllerTest < Redmine::ControllerTest
           :mapping => {
             :project_id => '1',
             :tracker_id => '2',
-          :subject => '0'}    
+          :subject => '0'}
         }
       }
     assert_redirected_to "/imports/#{import.to_param}/run"
@@ -183,7 +187,42 @@ class ImportsControllerTest < Redmine::ControllerTest
     assert_equal '2', mapping['tracker_id']
     assert_equal '0', mapping['subject']
   end
- 
+
+  def test_get_mapping_time_entry
+    Role.find(1).add_permission! :log_time_for_other_users
+    import = generate_time_entry_import
+    import.settings = {'separator' => ";", 'wrapper' => '"', 'encoding' => "ISO-8859-1"}
+    import.save!
+
+    get :mapping, :params => {
+        :id => import.to_param
+      }
+
+    assert_response :success
+
+    # 'user_id' field should be available because User#2 has both
+    # 'import_time_entries' and 'log_time_for_other_users' permissions
+    assert_select 'select[name=?]', 'import_settings[mapping][user_id]' do
+      # Current user should be the default value
+      assert_select 'option[value="value:2"][selected]', :text => User.find(2).name
+      assert_select 'option[value="value:3"]', :text => User.find(3).name
+    end
+  end
+
+  def test_get_mapping_time_entry_for_user_without_log_time_for_other_users_permission
+    import = generate_time_entry_import
+    import.settings = {'separator' => ";", 'wrapper' => '"', 'encoding' => "ISO-8859-1"}
+    import.save!
+
+    get :mapping, :params => {
+        :id => import.to_param
+      }
+
+    assert_response :success
+
+    assert_select 'select[name=?]', 'import_settings[mapping][user_id]', 0
+  end
+
   def test_get_run
     import = generate_import_with_mapping
 
@@ -193,7 +232,7 @@ class ImportsControllerTest < Redmine::ControllerTest
     assert_response :success
     assert_select '#import-progress'
   end
- 
+
   def test_post_run_should_import_the_file
     import = generate_import_with_mapping
 
@@ -232,6 +271,44 @@ class ImportsControllerTest < Redmine::ControllerTest
 
     issues = Issue.order(:id => :desc).limit(3).to_a
     assert_equal ["Child of existing issue", "Child 1", "First"], issues.map(&:subject)
+  end
+
+  def test_post_run_with_notifications
+    import = generate_import
+
+    post :settings, :params => {
+        :id => import,
+        :import_settings => {
+          :separator => ';',
+          :wrapper => '"',
+          :encoding => 'ISO-8859-1',
+          :notifications => '1',
+          :mapping => {
+            :project_id => '1',
+            :tracker => '13',
+            :subject => '1',
+            :assigned_to => '11',
+          },
+        },
+      }
+
+    ActionMailer::Base.deliveries.clear
+    assert_difference 'Issue.count', 3 do
+      post :run, :params => {
+          :id => import,
+        }
+      assert_response :found
+    end
+    actual_email_count = ActionMailer::Base.deliveries.size
+    assert_not_equal 0, actual_email_count
+
+    import.reload
+    issue_ids = import.items.collect(&:obj_id)
+    expected_email_count =
+      Issue.where(:id => issue_ids).inject(0) do |sum, issue|
+        sum + (issue.notified_users | issue.notified_watchers).size
+      end
+    assert_equal expected_email_count, actual_email_count
   end
 
   def test_show_without_errors

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -33,7 +35,9 @@ class RepositoryTest < ActiveSupport::TestCase
            :members,
            :member_roles,
            :roles,
-           :enumerations
+           :enumerations,
+           :user_preferences,
+           :watchers
 
   include Redmine::I18n
 
@@ -56,13 +60,12 @@ class RepositoryTest < ActiveSupport::TestCase
 
   def test_blank_log_encoding_error_message_fr
     set_language_if_valid 'fr'
-    str = "Encodage des messages de commit doit \xc3\xaatre renseign\xc3\xa9(e)".force_encoding('UTF-8')
     repo = Repository::Bazaar.new(
                         :project      => Project.find(3),
                         :url          => "/test"
                       )
     assert !repo.save
-    assert_include str, repo.errors.full_messages
+    assert_include 'Encodage des messages de commit doit être renseigné(e)', repo.errors.full_messages
   end
 
   def test_create
@@ -283,7 +286,7 @@ class RepositoryTest < ActiveSupport::TestCase
                     :url => '/foo/bar/baz' )
     long_whitespace = "                                                "
     expected_comment = "This is a loooooooooooooooooooooooooooong comment"
-    comment = "#{expected_comment}#{long_whitespace}\n"
+    comment = +"#{expected_comment}#{long_whitespace}\n"
     3.times {comment << "#{long_whitespace}\n"}
     changeset = Changeset.new(
       :comments => comment, :commit_date => Time.now,
@@ -306,7 +309,7 @@ class RepositoryTest < ActiveSupport::TestCase
     assert repository.save
     repository.reload
     assert_equal ':pserver:login:password@host:/path/to/the/repository',
-                  repository.url
+                 repository.url
     assert_equal 'foo', repository.root_url
   end
 

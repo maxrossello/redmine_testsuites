@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -73,7 +75,7 @@ class AdminControllerTest < Redmine::ControllerTest
 
   def test_load_default_configuration_data_should_rescue_error
     delete_configuration_data
-    Redmine::DefaultData::Loader.stubs(:load).raises(Exception.new("Something went wrong"))
+    Redmine::DefaultData::Loader.stubs(:load).raises(StandardError.new("Something went wrong"))
     post :default_configuration, :params => {
         :lang => 'fr'
       }
@@ -97,7 +99,7 @@ class AdminControllerTest < Redmine::ControllerTest
   end
 
   def test_test_email_failure_should_display_the_error
-    Mailer.stubs(:test_email).raises(Exception, 'Some error message')
+    Mailer.stubs(:test_email).raises(StandardError, 'Some error message')
     post :test_email
     assert_redirected_to '/settings?tab=notifications'
     assert_match /Some error message/, flash[:error]
@@ -119,8 +121,10 @@ class AdminControllerTest < Redmine::ControllerTest
       description 'This is a test plugin'
       version '0.0.1'
       settings :default => {'sample_setting' => 'value', 'foo'=>'bar'}, :partial => 'foo/settings'
+      directory 'test/fixtures/plugins/foo_plugin'
     end
-    Redmine::Plugin.register :bar do
+    Redmine::Plugin.register :other do
+      directory 'test/fixtures/plugins/other_plugin'
     end
 
     get :plugins
@@ -130,8 +134,8 @@ class AdminControllerTest < Redmine::ControllerTest
       assert_select 'td span.name', :text => 'Foo plugin'
       assert_select 'td.configure a[href="/settings/plugin/foo"]'
     end
-    assert_select 'tr#plugin-bar' do
-      assert_select 'td span.name', :text => 'Bar'
+    assert_select 'tr#plugin-other' do
+      assert_select 'td span.name', :text => 'Other'
       assert_select 'td.configure a', 0
     end
   end

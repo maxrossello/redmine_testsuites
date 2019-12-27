@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -53,7 +55,6 @@ class RepositoryCvsTest < ActiveSupport::TestCase
 
   def test_blank_module_error_message_fr
     set_language_if_valid 'fr'
-    str = "Module doit \xc3\xaatre renseign\xc3\xa9(e)".force_encoding('UTF-8')
     repo = Repository::Cvs.new(
                           :project       => @project,
                           :identifier    => 'test',
@@ -63,7 +64,7 @@ class RepositoryCvsTest < ActiveSupport::TestCase
                           :root_url      => REPOSITORY_PATH
                         )
     assert !repo.save
-    assert_include str, repo.errors.full_messages
+    assert_include 'Module doit être renseigné(e)', repo.errors.full_messages
   end
 
   def test_blank_cvsroot_error_message
@@ -81,7 +82,6 @@ class RepositoryCvsTest < ActiveSupport::TestCase
 
   def test_blank_cvsroot_error_message_fr
     set_language_if_valid 'fr'
-    str = "CVSROOT doit \xc3\xaatre renseign\xc3\xa9(e)".force_encoding('UTF-8')
     repo = Repository::Cvs.new(
                           :project       => @project,
                           :identifier    => 'test',
@@ -91,7 +91,7 @@ class RepositoryCvsTest < ActiveSupport::TestCase
                           :root_url      => ''
                         )
     assert !repo.save
-    assert_include str, repo.errors.full_messages
+    assert_include 'CVSROOT doit être renseigné(e)', repo.errors.full_messages
   end
 
   def test_root_url_should_be_validated_against_regexp_set_in_configuration
@@ -141,7 +141,7 @@ class RepositoryCvsTest < ActiveSupport::TestCase
 
       rev3_commit = @repository.changesets.reorder('committed_on DESC').first
       assert_equal '3', rev3_commit.revision
-       # 2007-12-14 01:27:22 +0900
+      # 2007-12-14 01:27:22 +0900
       rev3_committed_on = Time.gm(2007, 12, 13, 16, 27, 22)
       assert_equal 'HEAD-20071213-162722', rev3_commit.scmid
       assert_equal rev3_committed_on, rev3_commit.committed_on
@@ -155,7 +155,7 @@ class RepositoryCvsTest < ActiveSupport::TestCase
       assert_equal %w|7 6 5 4 3 2 1|, @repository.changesets.collect(&:revision)
       rev5_commit = @repository.changesets.find_by_revision('5')
       assert_equal 'HEAD-20071213-163001', rev5_commit.scmid
-       # 2007-12-14 01:30:01 +0900
+      # 2007-12-14 01:30:01 +0900
       rev5_committed_on = Time.gm(2007, 12, 13, 16, 30, 1)
       assert_equal rev5_committed_on, rev5_commit.committed_on
     end
@@ -261,9 +261,9 @@ class RepositoryCvsTest < ActiveSupport::TestCase
       assert_equal 'LANG', ann.revisions[0].author
       assert_equal 'CVS test repository', ann.lines[0]
 
-     # invalid revision
-     assert_nil @repository.annotate('README', '123')
-   end
+      # invalid revision
+      assert_nil @repository.annotate('README', '123')
+    end
 
   else
     puts "CVS test repository NOT FOUND. Skipping unit tests !!!"

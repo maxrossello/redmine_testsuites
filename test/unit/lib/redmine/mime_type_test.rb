@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -73,7 +75,7 @@ class Redmine::MimeTypeTest < ActiveSupport::TestCase
   end
 
   def test_should_default_to_mime_type_gem
-    assert !Redmine::MimeType::EXTENSIONS.keys.include?("zip")
+    assert !Redmine::MimeType::EXTENSIONS.key?("zip")
     assert_equal "application/zip", Redmine::MimeType.of("file.zip")
   end
 end

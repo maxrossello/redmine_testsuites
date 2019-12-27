@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -310,7 +312,7 @@ class AccountControllerTest < Redmine::ControllerTest
               :firstname => 'John',
               :lastname => 'Doe',
               :mail => 'register@example.com'
-              
+
             }
           }
         assert_redirected_to '/my/account'
@@ -324,7 +326,7 @@ class AccountControllerTest < Redmine::ControllerTest
       assert user.active?
     end
   end
-  
+
   def test_post_register_with_registration_off_should_redirect
     with_settings :self_registration => '0' do
       assert_no_difference 'User.count' do
@@ -336,7 +338,7 @@ class AccountControllerTest < Redmine::ControllerTest
               :firstname => 'John',
               :lastname => 'Doe',
               :mail => 'register@example.com'
-              
+
             }
           }
         assert_redirected_to '/'
@@ -355,11 +357,11 @@ class AccountControllerTest < Redmine::ControllerTest
               :firstname => 'John',
               :lastname => 'Doe',
               :mail => 'register@example.com'
-              
-            },  
+
+            },
             :pref => {
               :hide_mail => '1'
-              
+
             }
           }
       end

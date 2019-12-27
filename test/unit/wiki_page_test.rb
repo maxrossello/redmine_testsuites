@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -141,6 +143,7 @@ class WikiPageTest < ActiveSupport::TestCase
   end
 
   def test_destroy_should_delete_content_and_its_versions
+    set_tmp_attachments_directory
     page = WikiPage.find(1)
     assert_difference 'WikiPage.count', -1 do
       assert_difference 'WikiContent.count', -1 do

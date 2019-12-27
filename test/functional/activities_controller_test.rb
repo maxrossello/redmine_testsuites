@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,7 +30,6 @@ class ActivitiesControllerTest < Redmine::ControllerTest
            :enabled_modules,
            :journals, :journal_details
 
-
   def test_project_index
     get :index, :params => {
         :id => 1,
@@ -48,13 +49,14 @@ class ActivitiesControllerTest < Redmine::ControllerTest
   end
 
   def test_previous_project_index
+    @request.session[:user_id] = 1
     get :index, :params => {
         :id => 1,
         :from => 2.days.ago.to_date
       }
     assert_response :success
 
-    assert_select 'h3', :text => /#{3.days.ago.to_date.day}/
+    assert_select 'h3', :text => /#{User.current.time_to_date(3.days.ago).day}/
     assert_select 'dl dt.issue a', :text => /Cannot print recipes/
   end
 
@@ -141,7 +143,7 @@ class ActivitiesControllerTest < Redmine::ControllerTest
           :show_issues => '1'
         }
       assert_response :success
-  
+
       assert_select 'title', :text => /Issues/
     end
   end

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -32,20 +34,14 @@ class RepositoryBazaarTest < ActiveSupport::TestCase
   # "bzr" command output and command line parameter depend on locale.
   # So, non ASCII path tests cannot run independent locale.
   #
-  # If you want to run Bazaar non ASCII path tests on Linux *Ruby 1.9*,
-  # you need to set locale character set "ISO-8859-1".
-  # E.g. "LANG=en_US.ISO-8859-1".
-  # On Linux other platforms (e.g. Ruby 1.8, JRuby),
-  # you need to set "RUN_LATIN1_OUTPUT_TEST = true" manually.
-  #
   # On Windows, because it is too hard to change system locale,
   # you cannot run Bazaar non ASCII path tests.
   #
   RUN_LATIN1_OUTPUT_TEST = (RUBY_PLATFORM != 'java' &&
                              Encoding.locale_charmap == "ISO-8859-1")
 
-  CHAR_1_UTF8_HEX   = "\xc3\x9c".force_encoding('UTF-8')
-  CHAR_1_LATIN1_HEX = "\xdc".force_encoding('ASCII-8BIT')
+  CHAR_1_UTF8_HEX   = 'Ü'
+  CHAR_1_LATIN1_HEX = "\xdc".b
 
   def setup
     User.current = nil
@@ -70,7 +66,6 @@ class RepositoryBazaarTest < ActiveSupport::TestCase
 
   def test_blank_path_to_repository_error_message_fr
     set_language_if_valid 'fr'
-    str = "Chemin du d\xc3\xa9p\xc3\xb4t doit \xc3\xaatre renseign\xc3\xa9(e)".force_encoding('UTF-8')
     repo = Repository::Bazaar.new(
                           :project      => @project,
                           :url          => "",
@@ -78,7 +73,7 @@ class RepositoryBazaarTest < ActiveSupport::TestCase
                           :log_encoding => 'UTF-8'
                         )
     assert !repo.save
-    assert_include str, repo.errors.full_messages
+    assert_include 'Chemin du dépôt doit être renseigné(e)', repo.errors.full_messages
   end
 
   if File.directory?(REPOSITORY_PATH_TRUNK)
@@ -223,16 +218,14 @@ class RepositoryBazaarTest < ActiveSupport::TestCase
       def test_entry_latin1_path
         latin1_repo = create_latin1_repo
         ["test-#{CHAR_1_UTF8_HEX}-dir",
-          "/test-#{CHAR_1_UTF8_HEX}-dir",
-          "/test-#{CHAR_1_UTF8_HEX}-dir/"
-        ].each do |path|
+         "/test-#{CHAR_1_UTF8_HEX}-dir",
+         "/test-#{CHAR_1_UTF8_HEX}-dir/"].each do |path|
           entry = latin1_repo.entry(path, 2)
           assert_equal "test-#{CHAR_1_UTF8_HEX}-dir", entry.path
           assert_equal "dir", entry.kind
         end
         ["test-#{CHAR_1_UTF8_HEX}-dir/test-#{CHAR_1_UTF8_HEX}-1.txt",
-          "/test-#{CHAR_1_UTF8_HEX}-dir/test-#{CHAR_1_UTF8_HEX}-1.txt"
-        ].each do |path|
+         "/test-#{CHAR_1_UTF8_HEX}-dir/test-#{CHAR_1_UTF8_HEX}-1.txt"].each do |path|
           entry = latin1_repo.entry(path, 2)
           assert_equal "test-#{CHAR_1_UTF8_HEX}-dir/test-#{CHAR_1_UTF8_HEX}-1.txt",
                        entry.path

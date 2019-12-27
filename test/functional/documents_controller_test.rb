@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -29,7 +31,7 @@ class DocumentsControllerTest < Redmine::ControllerTest
   def test_index
     # Sets a default category
     e = Enumeration.find_by_name('Technical documentation')
-    e.update_attributes(:is_default => true)
+    e.update(:is_default => true)
 
     get :index, :params => {
         :project_id => 'ecookbook'
@@ -45,13 +47,32 @@ class DocumentsControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_index_grouped_by_category
+    get :index, :params => {
+        :project_id => 'ecookbook',
+        :sort_by => 'category'
+      }
+    assert_response :success
+    assert_select '#content' do
+      # ascending order of DocumentCategory#id.
+      ['Uncategorized', 'Technical documentation'].each_with_index do |text,idx|
+        assert_select "h3:nth-of-type(#{idx + 1})", :text => text
+      end
+    end
+  end
+
   def test_index_grouped_by_date
     get :index, :params => {
         :project_id => 'ecookbook',
         :sort_by => 'date'
       }
     assert_response :success
-    assert_select 'h3', :text => '2007-02-12'
+    assert_select '#content' do
+      # descending order of date.
+      ['2007-03-05', '2007-02-12'].each_with_index do |text,idx|
+        assert_select "h3:nth-of-type(#{idx + 1})", :text => text
+      end
+    end
   end
 
   def test_index_grouped_by_title
@@ -60,7 +81,12 @@ class DocumentsControllerTest < Redmine::ControllerTest
         :sort_by => 'title'
       }
     assert_response :success
-    assert_select 'h3', :text => 'T'
+    assert_select '#content' do
+      # ascending order of title.
+      ['A', 'T'].each_with_index do |text,idx|
+        assert_select "h3:nth-of-type(#{idx + 1})", :text => text
+      end
+    end
   end
 
   def test_index_grouped_by_author
@@ -69,23 +95,26 @@ class DocumentsControllerTest < Redmine::ControllerTest
         :sort_by => 'author'
       }
     assert_response :success
-    assert_select 'h3', :text => 'John Smith'
+    assert_select '#content' do
+      # ascending order of author.
+      ['John Smith', 'Redmine Admin'].each_with_index do |text,idx|
+        assert_select "h3:nth-of-type(#{idx + 1})", :text => text
+      end
+    end
   end
 
   def test_index_with_long_description
     # adds a long description to the first document
     doc = documents(:documents_001)
-    doc.update_attributes(:description => <<LOREM)
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut egestas, mi vehicula varius varius, ipsum massa fermentum orci, eget tristique ante sem vel mi. Nulla facilisi. Donec enim libero, luctus ac sagittis sit amet, vehicula sagittis magna. Duis ultrices molestie ante, eget scelerisque sem iaculis vitae. Etiam fermentum mauris vitae metus pharetra condimentum fermentum est pretium. Proin sollicitudin elementum quam quis pharetra.  Aenean facilisis nunc quis elit volutpat mollis. Aenean eleifend varius euismod. Ut dolor est, congue eget dapibus eget, elementum eu odio. Integer et lectus neque, nec scelerisque nisi. EndOfLineHere
+    doc.update(:description => <<~LOREM)
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut egestas, mi vehicula varius varius, ipsum massa fermentum orci, eget tristique ante sem vel mi. Nulla facilisi. Donec enim libero, luctus ac sagittis sit amet, vehicula sagittis magna. Duis ultrices molestie ante, eget scelerisque sem iaculis vitae. Etiam fermentum mauris vitae metus pharetra condimentum fermentum est pretium. Proin sollicitudin elementum quam quis pharetra.  Aenean facilisis nunc quis elit volutpat mollis. Aenean eleifend varius euismod. Ut dolor est, congue eget dapibus eget, elementum eu odio. Integer et lectus neque, nec scelerisque nisi. EndOfLineHere
 
-Vestibulum non velit mi. Aliquam scelerisque libero ut nulla fringilla a sollicitudin magna rhoncus.  Praesent a nunc lorem, ac porttitor eros. Sed ac diam nec neque interdum adipiscing quis quis justo. Donec arcu nunc, fringilla eu dictum at, venenatis ac sem. Vestibulum quis elit urna, ac mattis sapien. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-LOREM
-
+      Vestibulum non velit mi. Aliquam scelerisque libero ut nulla fringilla a sollicitudin magna rhoncus.  Praesent a nunc lorem, ac porttitor eros. Sed ac diam nec neque interdum adipiscing quis quis justo. Donec arcu nunc, fringilla eu dictum at, venenatis ac sem. Vestibulum quis elit urna, ac mattis sapien. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+    LOREM
     get :index, :params => {
         :project_id => 'ecookbook'
       }
     assert_response :success
-
     # should only truncate on new lines to avoid breaking wiki formatting
     assert_select '.wiki p', :text => (doc.description.split("\n").first + '...')
     assert_select '.wiki p', :text => Regexp.new(Regexp.escape("EndOfLineHere..."))
@@ -152,7 +181,7 @@ LOREM
   def test_create_non_default_category
     @request.session[:user_id] = 2
     category2 = Enumeration.find_by_name('User documentation')
-    category2.update_attributes(:is_default => true)
+    category2.update(:is_default => true)
     category1 = Enumeration.find_by_name('Uncategorized')
     post :create, :params => {
         :project_id => 'ecookbook',
@@ -203,6 +232,7 @@ LOREM
   end
 
   def test_destroy
+    set_tmp_attachments_directory
     @request.session[:user_id] = 2
     assert_difference 'Document.count', -1 do
       delete :destroy, :params => {
@@ -214,6 +244,7 @@ LOREM
   end
 
   def test_add_attachment
+    set_tmp_attachments_directory
     @request.session[:user_id] = 2
     assert_difference 'Attachment.count' do
       post :add_attachment, :params => {

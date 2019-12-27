@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -26,7 +28,6 @@ class RepositoriesBazaarControllerTest < Redmine::RepositoryControllerTest
   REPOSITORY_PATH = Rails.root.join('tmp/test/bazaar_repository').to_s
   REPOSITORY_PATH_TRUNK = File.join(REPOSITORY_PATH, "trunk")
   PRJ_ID = 3
-  CHAR_1_UTF8_HEX   = "\xc3\x9c".dup.force_encoding('UTF-8')
 
   def setup
     super
@@ -222,7 +223,7 @@ class RepositoriesBazaarControllerTest < Redmine::RepositoryControllerTest
         assert_select "th.line-num", :text => '1' do
           assert_select "+ td.revision" do
             assert_select "a", :text => '2'
-            assert_select "+ td.author", :text => "test #{CHAR_1_UTF8_HEX}" do
+            assert_select "+ td.author", :text => "test Ü" do
               assert_select "+ td",
                             :text => "author non ASCII test"
             end

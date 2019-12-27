@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -93,9 +95,74 @@ class CustomFieldsControllerTest < Redmine::ControllerTest
         assert_select 'option[value=user]', :text => 'User'
         assert_select 'option[value=version]', :text => 'Version'
       end
+
+      # Visibility
+      assert_select 'input[type=radio][name=?]', 'custom_field[visible]', 2
+      assert_select 'input[type=checkbox][name=?]', 'custom_field[role_ids][]', 3
+
       assert_select 'input[type=checkbox][name=?]', 'custom_field[project_ids][]', Project.count
       assert_select 'input[type=hidden][name=?]', 'custom_field[project_ids][]', 1
       assert_select 'input[type=hidden][name=type][value=IssueCustomField]'
+    end
+  end
+
+  def test_new_time_entry_custom_field
+    get :new, :params => {
+        :type => 'TimeEntryCustomField'
+      }
+    assert_response :success
+
+    assert_select 'form#custom_field_form' do
+      assert_select 'select#custom_field_field_format[name=?]', 'custom_field[field_format]' do
+        assert_select 'option[value=user]', :text => 'User'
+        assert_select 'option[value=version]', :text => 'Version'
+      end
+
+      # Visibility
+      assert_select 'input[type=radio][name=?]', 'custom_field[visible]', 2
+      assert_select 'input[type=checkbox][name=?]', 'custom_field[role_ids][]', 3
+
+      assert_select 'input[type=hidden][name=type][value=TimeEntryCustomField]'
+    end
+  end
+
+  def test_new_project_custom_field
+    get :new, :params => {
+        :type => 'ProjectCustomField'
+      }
+    assert_response :success
+
+    assert_select 'form#custom_field_form' do
+      assert_select 'select#custom_field_field_format[name=?]', 'custom_field[field_format]' do
+        assert_select 'option[value=user]', :text => 'User'
+        assert_select 'option[value=version]', :text => 'Version'
+      end
+
+      # Visibility
+      assert_select 'input[type=radio][name=?]', 'custom_field[visible]', 2
+      assert_select 'input[type=checkbox][name=?]', 'custom_field[role_ids][]', 3
+
+      assert_select 'input[type=hidden][name=type][value=ProjectCustomField]'
+    end
+  end
+
+  def test_new_version_custom_field
+    get :new, :params => {
+        :type => 'VersionCustomField'
+    }
+    assert_response :success
+
+    assert_select 'form#custom_field_form' do
+      assert_select 'select#custom_field_field_format[name=?]', 'custom_field[field_format]' do
+        assert_select 'option[value=user]', :text => 'User'
+        assert_select 'option[value=version]', :text => 'Version'
+      end
+
+      # Visibility
+      assert_select 'input[type=radio][name=?]', 'custom_field[visible]', 2
+      assert_select 'input[type=checkbox][name=?]', 'custom_field[role_ids][]', 3
+
+      assert_select 'input[type=hidden][name=type][value=VersionCustomField]'
     end
   end
 
@@ -191,7 +258,7 @@ class CustomFieldsControllerTest < Redmine::ControllerTest
         :type => 'IssueCustomField',
         :custom_field => {
           :field_format => 'list'
-        },  
+        },
         :format => 'js'
       },
       :xhr => true
@@ -245,13 +312,27 @@ class CustomFieldsControllerTest < Redmine::ControllerTest
             :field_format => "string",
             :is_for_all => "0",
             :project_ids => ["1", "3", ""]
-            
+
           }
         }
       assert_response 302
     end
     field = IssueCustomField.order("id desc").first
     assert_equal [1, 3], field.projects.map(&:id).sort
+  end
+
+  def test_create_with_continue_params
+    assert_difference 'CustomField.count' do
+      post :create, :params => {
+          :type => 'IssueCustomField',
+          :continue => 'Create and Continue',
+          :custom_field => {
+            :name => 'foo',
+            :field_format => 'string'
+          }
+        }
+    end
+    assert_redirected_to '/custom_fields/new?type=IssueCustomField'
   end
 
   def test_create_with_failure

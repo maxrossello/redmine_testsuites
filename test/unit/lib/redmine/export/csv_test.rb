@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,13 +21,12 @@ require File.expand_path('../../../../../test_helper', __FILE__)
 
 class CsvTest < ActiveSupport::TestCase
   include Redmine::I18n
-  BOM = "\xEF\xBB\xBF".force_encoding('UTF-8')
 
   def test_should_include_bom_when_utf8_encoded
     with_locale 'sk' do
       string = Redmine::Export::CSV.generate {|csv| csv << %w(Foo Bar)}
       assert_equal 'UTF-8', string.encoding.name
-      assert string.starts_with?(BOM)
+      assert string.starts_with?("\xEF\xBB\xBF")
     end
   end
 

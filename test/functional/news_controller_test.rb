@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +22,7 @@ require File.expand_path('../../test_helper', __FILE__)
 class NewsControllerTest < Redmine::ControllerTest
   fixtures :projects, :users, :email_addresses, :roles, :members, :member_roles,
            :enabled_modules, :news, :comments,
-           :attachments
+           :attachments, :user_preferences
 
   def setup
     User.current = nil
@@ -116,7 +118,7 @@ class NewsControllerTest < Redmine::ControllerTest
           :news => {
             :title => 'NewsControllerTest',
             :description => 'This is the description',
-            :summary => '' 
+            :summary => ''
           }
         }
     end
@@ -139,11 +141,11 @@ class NewsControllerTest < Redmine::ControllerTest
             :project_id => 1,
             :news => {
               :title => 'Test',
-              :description => 'This is the description' 
-            },  
+              :description => 'This is the description'
+            },
             :attachments => {
               '1' => {
-              'file' => uploaded_test_file('testfile.txt', 'text/plain')}    
+              'file' => uploaded_test_file('testfile.txt', 'text/plain')}
             }
           }
       end
@@ -160,7 +162,7 @@ class NewsControllerTest < Redmine::ControllerTest
         :news => {
           :title => '',
           :description => 'This is the description',
-          :summary => '' 
+          :summary => ''
         }
       }
     assert_response :success
@@ -181,7 +183,7 @@ class NewsControllerTest < Redmine::ControllerTest
     put :update, :params => {
         :id => 1,
         :news => {
-          :description => 'Description changed by test_post_edit' 
+          :description => 'Description changed by test_post_edit'
         }
       }
     assert_redirected_to '/news/1'
@@ -197,11 +199,11 @@ class NewsControllerTest < Redmine::ControllerTest
         put :update, :params => {
             :id => 1,
             :news => {
-              :description => 'This is the description' 
-            },  
+              :description => 'This is the description'
+            },
             :attachments => {
               '1' => {
-              'file' => uploaded_test_file('testfile.txt', 'text/plain')}    
+              'file' => uploaded_test_file('testfile.txt', 'text/plain')}
             }
           }
       end
@@ -215,7 +217,7 @@ class NewsControllerTest < Redmine::ControllerTest
     put :update, :params => {
         :id => 1,
         :news => {
-          :description => '' 
+          :description => ''
         }
       }
     assert_response :success

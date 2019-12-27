@@ -1,7 +1,7 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -26,6 +26,7 @@ class MailerTest < ActiveSupport::TestCase
            :member_roles, :roles, :documents, :attachments, :news,
            :tokens, :journals, :journal_details, :changesets,
            :trackers, :projects_trackers,
+           :custom_fields, :custom_fields_trackers,
            :issue_statuses, :enumerations, :messages, :boards, :repositories,
            :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions,
            :versions,
@@ -198,12 +199,16 @@ class MailerTest < ActiveSupport::TestCase
   end
 
   def test_email_headers
-    issue = Issue.find(1)
-    Mailer.deliver_issue_add(issue)
+    with_settings :mail_from => 'Redmine <redmine@example.net>' do
+      issue = Issue.find(1)
+      Mailer.deliver_issue_add(issue)
+    end
     mail = last_email
     assert_equal 'All', mail.header['X-Auto-Response-Suppress'].to_s
     assert_equal 'auto-generated', mail.header['Auto-Submitted'].to_s
+    # List-Id should not include the display name "Redmine"
     assert_equal '<redmine.example.net>', mail.header['List-Id'].to_s
+    assert_equal 'Bug', mail.header['X-Redmine-Issue-Tracker'].to_s
   end
 
   def test_email_headers_should_include_sender
@@ -249,6 +254,38 @@ class MailerTest < ActiveSupport::TestCase
     assert_equal 'Redmine app <redmine@example.net>', mail.header['From'].to_s
   end
 
+  def test_from_header_with_rfc_non_compliant_phrase
+    # Send out the email instead of raising an exception
+    # no matter if the emission email address is not RFC compliant
+    assert_nothing_raised do
+      with_settings :mail_from => '[Redmine app] <redmine@example.net>' do
+        Mailer.deliver_test_email(User.find(1))
+      end
+    end
+    mail = last_email
+    assert_match /<redmine@example\.net>/, mail.from_addrs.first
+    assert_equal '[Redmine app] <redmine@example.net>', mail.header['From'].to_s
+  end
+
+  def test_from_header_with_author_name
+    # Use the author's name or Setting.app_title as a display name
+    # when Setting.mail_from does not include a display name
+    with_settings :mail_from => 'redmine@example.net', :app_title => 'Foo' do
+      # Use @author.name as a display name
+      Issue.create!(:project_id => 1, :tracker_id => 1, :status_id => 5,
+      :subject => 'Issue created by Dave Lopper', :author_id => 3)
+      mail = last_email
+      assert_equal 'redmine@example.net', mail.from_addrs.first
+      assert_equal 'Dave Lopper <redmine@example.net>', mail.header['From'].to_s
+
+      # Use app_title if @author is nil or AnonymousUser
+      Mailer.deliver_test_email(User.find(1))
+      mail = last_email
+      assert_equal 'redmine@example.net', mail.from_addrs.first
+      assert_equal "Foo <redmine@example.net>", mail.header['From'].to_s
+    end
+  end
+
   def test_should_not_send_email_without_recipient
     news = News.first
     user = news.author
@@ -274,8 +311,9 @@ class MailerTest < ActiveSupport::TestCase
     issue = Issue.find(2)
     Mailer.deliver_issue_add(issue)
     mail = last_email
-    assert_match /^redmine\.issue-2\.20060719190421\.[a-f0-9]+@example\.net/, mail.message_id
-    assert_include "redmine.issue-2.20060719190421@example.net", mail.references
+    uid = destination_user(mail).id
+    assert_include "redmine.issue-2.20060719190421.#{uid}@example.net", mail.message_id
+    assert_include "redmine.issue-2.20060719190421.#{uid}@example.net", mail.references
   end
 
   def test_issue_edit_message_id
@@ -284,8 +322,9 @@ class MailerTest < ActiveSupport::TestCase
 
     Mailer.deliver_issue_edit(journal)
     mail = last_email
-    assert_match /^redmine\.journal-3\.\d+\.[a-f0-9]+@example\.net/, mail.message_id
-    assert_include "redmine.issue-2.20060719190421@example.net", mail.references
+    uid = destination_user(mail).id
+    assert_match /^redmine\.journal-3\.\d+\.#{uid}@example\.net/, mail.message_id
+    assert_include "redmine.issue-2.20060719190421.#{uid}@example.net", mail.references
     assert_select_email do
       # link to the update
       assert_select "a[href=?]",
@@ -297,8 +336,9 @@ class MailerTest < ActiveSupport::TestCase
     message = Message.find(1)
     Mailer.deliver_message_posted(message)
     mail = last_email
-    assert_match /^redmine\.message-1\.\d+\.[a-f0-9]+@example\.net/, mail.message_id
-    assert_include "redmine.message-1.20070512151532@example.net", mail.references
+    uid = destination_user(mail).id
+    assert_include "redmine.message-1.20070512151532.#{uid}@example.net", mail.message_id
+    assert_include "redmine.message-1.20070512151532.#{uid}@example.net", mail.references
     assert_select_email do
       # link to the message
       assert_select "a[href=?]",
@@ -311,14 +351,27 @@ class MailerTest < ActiveSupport::TestCase
     message = Message.find(3)
     Mailer.deliver_message_posted(message)
     mail = last_email
-    assert_match /^redmine\.message-3\.\d+\.[a-f0-9]+@example\.net/, mail.message_id
-    assert_include "redmine.message-1.20070512151532@example.net", mail.references
+    uid = destination_user(mail).id
+    assert_include "redmine.message-3.20070512151802.#{uid}@example.net", mail.message_id
+    assert_include "redmine.message-1.20070512151532.#{uid}@example.net", mail.references
     assert_select_email do
       # link to the reply
       assert_select "a[href=?]",
                     "http://localhost:3000/boards/#{message.board.id}/topics/#{message.root.id}?r=#{message.id}#message-#{message.id}",
                     :text => message.subject
     end
+  end
+
+  def test_timestamp_in_message_id_should_be_utc
+    zone_was = Time.zone
+    issue = Issue.find(3)
+    user = User.find(1)
+    %w(UTC Paris Tokyo).each do |zone|
+      Time.zone = zone
+      assert_match /^redmine\.issue-3\.20060719190727\.1@example\.net/, Mailer.token_for(issue, user)
+    end
+  ensure
+    Time.zone = zone_was
   end
 
   test "#issue_add should notify project members" do
@@ -378,12 +431,62 @@ class MailerTest < ActiveSupport::TestCase
   def test_issue_add_should_not_include_disabled_fields
     issue = Issue.find(2)
     tracker = issue.tracker
-    tracker.core_fields -= ['fixed_version_id']
+    tracker.core_fields -= ['fixed_version_id', 'start_date']
     tracker.save!
     assert Mailer.deliver_issue_add(issue)
     assert_mail_body_no_match 'Target version', last_email
+    assert_mail_body_no_match 'Start date', last_email
     assert_select_email do
       assert_select 'li', :text => /Target version/, :count => 0
+      assert_select 'li', :text => /Start date/, :count => 0
+    end
+  end
+
+  def test_issue_add_subject_should_include_status_if_setting_is_enabled
+    with_settings :show_status_changes_in_mail_subject => 1 do
+      issue = Issue.find(2)
+      Mailer.deliver_issue_add(issue)
+
+      mail = last_email
+      assert_equal "[eCookbook - Feature request #2] (Assigned) Add ingredients categories", mail.subject
+    end
+  end
+
+  def test_issue_add_subject_should_not_include_status_if_setting_is_disabled
+    with_settings :show_status_changes_in_mail_subject => 0 do
+      issue = Issue.find(2)
+      Mailer.deliver_issue_add(issue)
+
+      mail = last_email
+      assert_equal "[eCookbook - Feature request #2] Add ingredients categories", mail.subject
+    end
+  end
+
+  def test_issue_edit_subject_should_include_status_changes_if_setting_is_enabled
+    with_settings :show_status_changes_in_mail_subject => 1 do
+      issue = Issue.find(2)
+      issue.init_journal(User.current)
+      issue.update(:status_id => 4)
+      journal = issue.journals.last
+      Mailer.deliver_issue_edit(journal)
+
+      assert journal.new_value_for('status_id')
+      mail = last_email
+      assert_equal "[eCookbook - Feature request #2] (Feedback) Add ingredients categories", mail.subject
+    end
+  end
+
+  def test_issue_edit_subject_should_not_include_status_changes_if_setting_is_disabled
+    with_settings :show_status_changes_in_mail_subject => 0 do
+      issue = Issue.find(2)
+      issue.init_journal(User.current)
+      issue.update(:status_id => 4)
+      journal = issue.journals.last
+      Mailer.deliver_issue_edit(journal)
+
+      assert journal.new_value_for('status_id')
+      mail = last_email
+      assert_equal "[eCookbook - Feature request #2] Add ingredients categories", mail.subject
     end
   end
 
@@ -450,6 +553,27 @@ class MailerTest < ActiveSupport::TestCase
     end
   end
 
+  def test_issue_should_send_email_notification_with_suppress_empty_fields
+    ActionMailer::Base.deliveries.clear
+    with_settings :notified_events => %w(issue_added) do
+      cf = IssueCustomField.generate!
+      issue = Issue.generate!
+      Mailer.deliver_issue_add(issue)
+
+      assert_not_equal 0, ActionMailer::Base.deliveries.size
+
+      mail = last_email
+      assert_mail_body_match /^\* Author: /, mail
+      assert_mail_body_match /^\* Status: /, mail
+      assert_mail_body_match /^\* Priority: /, mail
+
+      assert_mail_body_no_match /^\* Assignee: /, mail
+      assert_mail_body_no_match /^\* Category: /, mail
+      assert_mail_body_no_match /^\* Target version: /, mail
+      assert_mail_body_no_match /^\* #{cf.name}: /, mail
+    end
+  end
+
   def test_version_file_added
     attachements = [ Attachment.find_by_container_type('Version') ]
     assert Mailer.deliver_attachments_added(attachements)
@@ -487,8 +611,8 @@ class MailerTest < ActiveSupport::TestCase
       assert Mailer.deliver_wiki_content_added(content)
       assert_select_email do
         assert_select 'a[href=?]',
-          'http://localhost:3000/projects/ecookbook/wiki/CookBook_documentation',
-          :text => 'CookBook documentation'
+                      'http://localhost:3000/projects/ecookbook/wiki/CookBook_documentation',
+                      :text => 'CookBook documentation'
       end
     end
   end
@@ -498,8 +622,8 @@ class MailerTest < ActiveSupport::TestCase
     assert Mailer.deliver_wiki_content_updated(content)
     assert_select_email do
       assert_select 'a[href=?]',
-        'http://localhost:3000/projects/ecookbook/wiki/CookBook_documentation',
-        :text => 'CookBook documentation'
+                    'http://localhost:3000/projects/ecookbook/wiki/CookBook_documentation',
+                    :text => 'CookBook documentation'
     end
   end
 
@@ -520,15 +644,18 @@ class MailerTest < ActiveSupport::TestCase
   end
 
   def test_reminders
+    users(:users_003).pref.update_attribute :time_zone, 'UTC' # dlopper
     Mailer.reminders(:days => 42)
     assert_equal 1, ActionMailer::Base.deliveries.size
     mail = last_email
     assert mail.bcc.include?('dlopper@somenet.foo')
-    assert_mail_body_match 'Bug #3: Error 281 when updating a recipe', mail
+    assert_mail_body_match 'Bug #3: Error 281 when updating a recipe (5 days late)', mail
+    assert_mail_body_match 'View all issues (2 open)', mail
     assert_select_email do
       assert_select 'a[href=?]',
                     'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
                     :text => 'View all issues'
+      assert_select '/p:nth-last-of-type(1)', :text => 'View all issues (2 open)'
     end
     assert_equal '1 issue(s) due in the next 42 days', mail.subject
   end
@@ -537,11 +664,12 @@ class MailerTest < ActiveSupport::TestCase
     with_settings :default_language => 'fr' do
       user = User.find(3)
       user.update_attribute :language, ''
+      user.pref.update_attribute :time_zone, 'UTC'
       Mailer.reminders(:days => 42)
       assert_equal 1, ActionMailer::Base.deliveries.size
       mail = last_email
       assert mail.bcc.include?('dlopper@somenet.foo')
-      assert_mail_body_match 'Bug #3: Error 281 when updating a recipe', mail
+      assert_mail_body_match 'Bug #3: Error 281 when updating a recipe (En retard de 5 jours)', mail
       assert_equal "1 demande(s) arrivent à échéance (42)", mail.subject
     end
   end
@@ -563,22 +691,29 @@ class MailerTest < ActiveSupport::TestCase
   end
 
   def test_reminders_for_users
+    users(:users_003).pref.update_attribute :time_zone, 'UTC' # dlopper
     Mailer.reminders(:days => 42, :users => ['5'])
     assert_equal 0, ActionMailer::Base.deliveries.size # No mail for dlopper
     Mailer.reminders(:days => 42, :users => ['3'])
     assert_equal 1, ActionMailer::Base.deliveries.size # No mail for dlopper
     mail = last_email
     assert mail.bcc.include?('dlopper@somenet.foo')
-    assert_mail_body_match 'Bug #3: Error 281 when updating a recipe', mail
+    assert_mail_body_match 'Bug #3: Error 281 when updating a recipe (5 days late)', mail
   end
 
   def test_reminder_should_include_issues_assigned_to_groups
     with_settings :default_language => 'en', :issue_group_assignment => '1' do
       group = Group.generate!
       Member.create!(:project_id => 1, :principal => group, :role_ids => [1])
-      group.users << User.find(2)
-      group.users << User.find(3)
+      [users(:users_002), users(:users_003)].each do |user| # jsmith, dlopper
+        group.users << user
+        user.pref.update_attribute :time_zone, 'UTC'
+      end
 
+      Issue.update_all(:assigned_to_id => nil)
+      due_date = 10.days.from_now
+      Issue.update(1, :due_date => due_date, :assigned_to_id => 3)
+      Issue.update(2, :due_date => due_date, :assigned_to_id => group.id)
       Issue.create!(:project_id => 1, :tracker_id => 1, :status_id => 1,
                       :subject => 'Assigned to group', :assigned_to => group,
                       :due_date => 5.days.from_now,
@@ -589,7 +724,9 @@ class MailerTest < ActiveSupport::TestCase
       assert_equal 2, ActionMailer::Base.deliveries.size
       assert_equal %w(dlopper@somenet.foo jsmith@somenet.foo), recipients
       ActionMailer::Base.deliveries.each do |mail|
-        assert_mail_body_match 'Assigned to group', mail
+        assert_mail_body_match '1 issue(s) that are assigned to you are due in the next 7 days::', mail
+        assert_mail_body_match 'Assigned to group (Due in 5 days)', mail
+        assert_mail_body_match "View all issues (#{mail.bcc.include?('dlopper@somenet.foo') ? 3 : 2} open)", mail
       end
     end
   end
@@ -628,6 +765,7 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_reminders_should_sort_issues_by_due_date
     user = User.find(2)
+    user.pref.update_attribute :time_zone, 'UTC'
     Issue.generate!(:assigned_to => user, :due_date => 2.days.from_now, :subject => 'quux')
     Issue.generate!(:assigned_to => user, :due_date => 0.days.from_now, :subject => 'baz')
     Issue.generate!(:assigned_to => user, :due_date => 1.days.from_now, :subject => 'qux')
@@ -639,11 +777,11 @@ class MailerTest < ActiveSupport::TestCase
     assert_equal 1, ActionMailer::Base.deliveries.size
     assert_select_email do
       assert_select 'li', 5
-      assert_select 'li:nth-child(1)', /foo/
-      assert_select 'li:nth-child(2)', /bar/
-      assert_select 'li:nth-child(3)', /baz/
-      assert_select 'li:nth-child(4)', /qux/
-      assert_select 'li:nth-child(5)', /quux/
+      assert_select 'li:nth-child(1)', /foo \(1 day late\)/
+      assert_select 'li:nth-child(2)', /bar \(1 day late\)/
+      assert_select 'li:nth-child(3)', /baz \(Due in 0 days\)/
+      assert_select 'li:nth-child(4)', /qux \(Due in 1 day\)/
+      assert_select 'li:nth-child(5)', /quux \(Due in 2 days\)/
     end
   end
 
@@ -678,10 +816,11 @@ class MailerTest < ActiveSupport::TestCase
   def test_security_notification_should_include_title
     set_language_if_valid User.find(2).language
     with_settings :emails_footer => "footer without link" do
-      assert Mailer.deliver_security_notification(User.find(2), User.find(2),
-        message: :notice_account_password_updated,
-        title: :label_my_account
-      )
+      assert Mailer.deliver_security_notification(
+               User.find(2), User.find(2),
+               message: :notice_account_password_updated,
+               title: :label_my_account
+             )
       assert_select_email do
         assert_select "a", false
         assert_select "h1", :text => I18n.t(:label_my_account)
@@ -692,11 +831,12 @@ class MailerTest < ActiveSupport::TestCase
   def test_security_notification_should_include_link
     set_language_if_valid User.find(3).language
     with_settings :emails_footer => "footer without link" do
-      assert Mailer.deliver_security_notification(User.find(3), User.find(3),
-      message: :notice_account_password_updated,
-      title: :label_my_account,
-      url: {controller: 'my', action: 'account'}
-      )
+      assert Mailer.deliver_security_notification(
+               User.find(3), User.find(3),
+               message: :notice_account_password_updated,
+               title: :label_my_account,
+               url: {controller: 'my', action: 'account'}
+             )
       assert_select_email do
         assert_select "h1", false
         assert_select 'a[href=?]', 'http://localhost:3000/my/account', :text => I18n.t(:label_my_account)
@@ -729,7 +869,8 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_token_for_should_strip_trailing_gt_from_address_with_full_name
     with_settings :mail_from => "Redmine Mailer<no-reply@redmine.org>" do
-      assert_match /\Aredmine.issue-\d+\.\d+\.[0-9a-f]+@redmine.org\z/, Mailer.token_for(Issue.generate!)
+      assert_match /\Aredmine.issue-\d+\.\d+\.3@redmine.org\z/,
+                   Mailer.token_for(Issue.generate!, User.find(3))
     end
   end
 
@@ -805,10 +946,10 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_should_raise_delivery_errors_when_raise_delivery_errors_is_true
     mail = Mailer.test_email(User.find(1))
-    mail.delivery_method.stubs(:deliver!).raises(Exception.new("delivery error"))
+    mail.delivery_method.stubs(:deliver!).raises(StandardError.new("delivery error"))
 
     ActionMailer::Base.raise_delivery_errors = true
-    assert_raise Exception, "delivery error" do
+    assert_raise StandardError, "delivery error" do
       mail.deliver
     end
   ensure
@@ -817,7 +958,7 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_should_log_delivery_errors_when_raise_delivery_errors_is_false
     mail = Mailer.test_email(User.find(1))
-    mail.delivery_method.stubs(:deliver!).raises(Exception.new("delivery error"))
+    mail.delivery_method.stubs(:deliver!).raises(StandardError.new("delivery error"))
 
     Rails.logger.expects(:error).with("Email delivery error: delivery error")
     ActionMailer::Base.raise_delivery_errors = false
@@ -839,26 +980,23 @@ class MailerTest < ActiveSupport::TestCase
 
   def test_email_addresses_should_keep_addresses
     assert_equal ["foo@example.net"],
-      Mailer.email_addresses("foo@example.net")
-
+                 Mailer.email_addresses("foo@example.net")
     assert_equal ["foo@example.net", "bar@example.net"],
-      Mailer.email_addresses(["foo@example.net", "bar@example.net"])
+                 Mailer.email_addresses(["foo@example.net", "bar@example.net"])
   end
 
   def test_email_addresses_should_replace_users_with_their_email_addresses
     assert_equal ["admin@somenet.foo"],
-      Mailer.email_addresses(User.find(1))
-
+                 Mailer.email_addresses(User.find(1))
     assert_equal ["admin@somenet.foo", "jsmith@somenet.foo"],
-      Mailer.email_addresses(User.where(:id => [1,2])).sort
+                 Mailer.email_addresses(User.where(:id => [1,2])).sort
   end
 
   def test_email_addresses_should_include_notified_emails_addresses_only
     EmailAddress.create!(:user_id => 2, :address => "another@somenet.foo", :notify => false)
     EmailAddress.create!(:user_id => 2, :address => "another2@somenet.foo")
-
     assert_equal ["another2@somenet.foo", "jsmith@somenet.foo"],
-      Mailer.email_addresses(User.find(2)).sort
+                 Mailer.email_addresses(User.find(2)).sort
   end
 
   private
@@ -880,5 +1018,9 @@ class MailerTest < ActiveSupport::TestCase
 
   def html_part
     last_email.parts.detect {|part| part.content_type.include?('text/html')}
+  end
+
+  def destination_user(mail)
+    EmailAddress.where(:address => [mail.to, mail.cc, mail.bcc].flatten).map(&:user).first
   end
 end

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -62,7 +64,7 @@ class Redmine::CipheringTest < ActiveSupport::TestCase
       assert_equal 'clear', r.password
     end
   end
-  
+
   def test_ciphered_password_with_no_cipher_key_configured_should_be_returned_ciphered
     Redmine::Configuration.with 'database_cipher_key' => 'secret' do
       r = Repository::Subversion.create!(:password => 'clear', :url => 'file:///tmp', :identifier => 'svn')

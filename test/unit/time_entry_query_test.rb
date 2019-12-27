@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -39,7 +41,7 @@ class TimeEntryQueryTest < ActiveSupport::TestCase
     q.available_filters.each do |name, filter|
       values = filter.values
       assert (values.nil? || values.is_a?(Array)),
-        "#values for #{name} filter returned a #{values.class.name}"
+             "#values for #{name} filter returned a #{values.class.name}"
     end
   end
 
@@ -50,7 +52,7 @@ class TimeEntryQueryTest < ActiveSupport::TestCase
     q.available_filters.each do |name, filter|
       values = filter.values
       assert (values.nil? || values.is_a?(Array)),
-        "#values for #{name} filter returned a #{values.class.name}"
+             "#values for #{name} filter returned a #{values.class.name}"
     end
   end
 
@@ -126,5 +128,20 @@ class TimeEntryQueryTest < ActiveSupport::TestCase
   def test_project_status_filter_should_not_be_available_when_project_is_leaf
     query = TimeEntryQuery.new(:project => Project.find(2), :name => '_')
     assert !query.available_filters.has_key?('project.status')
+  end
+
+  def test_results_scope_should_be_in_the_same_order_when_paginating
+    4.times { TimeEntry.generate! }
+    q = TimeEntryQuery.new
+    q.sort_criteria = {'0' => ['user', 'asc']}
+    time_entry_ids = q.results_scope.pluck(:id)
+    paginated_time_entry_ids = []
+    # Test with a maximum of 2 records per page.
+    ((q.results_scope.count / 2) + 1).times do |i|
+      paginated_time_entry_ids += q.results_scope.offset((i * 2)).limit(2).pluck(:id)
+    end
+
+    # Non-paginated time entry ids and paginated time entry ids should be in the same order.
+    assert_equal time_entry_ids, paginated_time_entry_ids
   end
 end

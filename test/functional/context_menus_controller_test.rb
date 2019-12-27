@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -188,7 +190,7 @@ class ContextMenusControllerTest < Redmine::ControllerTest
     assert_select "li.cf_#{field.id}" do
       assert_select 'a[href="#"]', :text => 'User'
       assert_select 'ul' do
-        assert_select 'a', Project.find(1).members.count + 1
+        assert_select 'a', Project.find(1).members.count + 2 # users + 'none' + 'me'
         assert_select 'a[href=?]', "/issues/bulk_update?ids%5B%5D=1&issue%5Bcustom_field_values%5D%5B#{field.id}%5D=2", :text => 'John Smith'
         assert_select 'a[href=?]', "/issues/bulk_update?ids%5B%5D=1&issue%5Bcustom_field_values%5D%5B#{field.id}%5D=__none__", :text => 'none'
       end
@@ -317,7 +319,7 @@ class ContextMenusControllerTest < Redmine::ControllerTest
   def test_time_entries_context_menu_without_edit_permission
     @request.session[:user_id] = 2
     Role.find_by_name('Manager').remove_permission! :edit_time_entries
-    
+
     get :time_entries, :params => {
         :ids => [1, 2]
       }

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -82,7 +84,7 @@ class FilesControllerTest < Redmine::ControllerTest
             :version_id => '',
             :attachments => {
               '1' => {
-              'file' => uploaded_test_file('testfile.txt', 'text/plain')}    
+              'file' => uploaded_test_file('testfile.txt', 'text/plain')}
             }
           }
         assert_response :redirect
@@ -109,7 +111,7 @@ class FilesControllerTest < Redmine::ControllerTest
           :version_id => '2',
           :attachments => {
             '1' => {
-            'file' => uploaded_test_file('testfile.txt', 'text/plain')}    
+            'file' => uploaded_test_file('testfile.txt', 'text/plain')}
           }
         }
       assert_response :redirect
