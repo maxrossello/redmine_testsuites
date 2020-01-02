@@ -111,6 +111,8 @@ class AdminControllerTest < Redmine::ControllerTest
     get :plugins
     assert_response :success
     assert_select '.nodata'
+  ensure  # redmine_testsuites
+    Redmine::Plugin.unstub(:registered_plugins)  
   end
 
   def test_plugins

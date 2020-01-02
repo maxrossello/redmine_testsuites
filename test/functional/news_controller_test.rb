@@ -24,6 +24,8 @@ class NewsControllerTest < Redmine::ControllerTest
            :enabled_modules, :news, :comments,
            :attachments, :user_preferences
 
+  include ActiveJob::TestHelper  # redmine_testsuites
+
   def setup
     User.current = nil
   end

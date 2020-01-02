@@ -35,6 +35,7 @@ end
 class Redmine::PluginTest < ActiveSupport::TestCase
   def setup
     @klass = Redmine::Plugin
+    @klass.save_plugins  # redmine_testsuites
     # Change plugin directory for testing to default
     # plugins/foo => test/fixtures/plugins/foo
     @klass.directory = Rails.root.join('test/fixtures/plugins')

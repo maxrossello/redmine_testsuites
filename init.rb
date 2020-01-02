@@ -41,7 +41,7 @@ if ENV["RAILS_ENV"] == "test"
     redmine_testsuites:        {},
     redmine_translation_terms: [{ version_or_higher: '4.0.0' }],
     redmine_base_deface:       {},
-    redmine_better_overview:   {}
+    redmine_better_overview:   { version_or_higher: '4.1.0' }
   }
   
   require_dependency 'testsuites_versions'
