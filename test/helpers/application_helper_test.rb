@@ -1688,7 +1688,8 @@ RAW
     theme.images << 'image.png'
 
     with_settings :ui_theme => theme.id do
-      assert_match %|src="/themes/#{theme.dir}/images/image.png"|, image_tag("image.png")
+      #assert_match %|src="/themes/#{theme.dir}/images/image.png"|, image_tag("image.png")
+      assert_match %r(src="(/plugin_assets/redmine_themes)?/themes/#{theme.dir}/images/image.png"), image_tag("image.png")
       assert_match %|src="/images/other.png"|, image_tag("other.png")
     end
   ensure

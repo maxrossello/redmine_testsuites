@@ -18,7 +18,9 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class RepositoryTest < ActiveSupport::TestCase
+
   fixtures :projects,
+           #:users, # redmine_testsuites
            :trackers,
            :projects_trackers,
            :enabled_modules,
@@ -33,9 +35,12 @@ class RepositoryTest < ActiveSupport::TestCase
            :members,
            :member_roles,
            :roles,
-           :enumerations
-
+           :enumerations,
+           :user_preferences, # redmine_testsuites
+           :watchers # redmine_testsuites
+           
   include Redmine::I18n
+  include ActiveJob::TestHelper  # redmine_testsuites
 
   def setup
     User.current = nil
@@ -254,7 +259,9 @@ class RepositoryTest < ActiveSupport::TestCase
     old_status = fixed_issue.status
 
     with_settings :notified_events => %w(issue_added issue_updated) do
-      Repository.scan_changesets_for_issue_ids
+      perform_enqueued_jobs do  # redmine_testsuites
+        Repository.scan_changesets_for_issue_ids
+      end
     end
     assert_equal [101, 102], Issue.find(3).changeset_ids
 

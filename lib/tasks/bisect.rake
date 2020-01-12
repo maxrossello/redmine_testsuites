@@ -1,4 +1,6 @@
 require 'minitest/bisect'
+require 'redmine/plugin'
+require Redmine::Plugin.directory + '/redmine_testsuites/lib/testsuites_tests'
 
 namespace :redmine do
   
@@ -11,41 +13,38 @@ namespace :redmine do
     desc 'Bisects all Redmine tests along with all the plugins tests.'
     ENV['MTB_VERBOSE']="2"
     task :all do
-      Rake::Task["redmine:bisect:units"].invoke
-      Rake::Task["redmine:bisect:functionals"].invoke
-      Rake::Task["redmine:bisect:integration"].invoke
-      Rake::Task["redmine:bisect:routing"].invoke
-      Rake::Task["redmine:bisect:helpers"].invoke
+      $: << "plugins/redmine_testsuites/test"
+      Minitest::Bisect.run ["-Iplugins/redmine_testsuites/test"] + all_tests + ENV['TESTOPTS'].split(" ")
     end
 
     desc 'Bisects all Redmine unit tests along with all the plugins unit tests.'
     task(:units => "db:test:prepare") do |t|
       $: << "plugins/redmine_testsuites/test"
-      Minitest::Bisect.run ["-Iplugins/redmine_testsuites/test"]+FileList["plugins/*/test/unit/**/*_test.rb"] + ENV['TESTOPTS'].split(" ")
+      Minitest::Bisect.run ["-Iplugins/redmine_testsuites/test"] + unit_tests + ENV['TESTOPTS'].split(" ")
     end
 
     desc 'Bisects all Redmine functional tests along with all the plugins functional tests.'
     task(:functionals => "db:test:prepare") do |t|
       $: << "plugins/redmine_testsuites/test"
-      Minitest::Bisect.run ["-Iplugins/redmine_testsuites/test"]+FileList["plugins/*/test/functional/**/*_test.rb"] + ENV['TESTOPTS'].split(" ")
+      Minitest::Bisect.run ["-Iplugins/redmine_testsuites/test"]+ functional_tests + ENV['TESTOPTS'].split(" ")
     end
 
     desc 'Bisects all Redmine integration tests along with all the plugins integration tests.'
     task(:integration => "db:test:prepare") do |t|
       $: << "plugins/redmine_testsuites/test"
-      Minitest::Bisect.run ["-Iplugins/redmine_testsuites/test"]+FileList["plugins/*/test/integration/**/*_test.rb"] + ENV['TESTOPTS'].split(" ")
+      Minitest::Bisect.run ["-Iplugins/redmine_testsuites/test"] + integration_tests + ENV['TESTOPTS'].split(" ")
     end
 
     desc 'Bisects all Redmine routing tests along with all the plugins routing tests.'
     task(:routing) do |t|
       $: << "plugins/redmine_testsuites/test"
-      Minitest::Bisect.run ["-Iplugins/redmine_testsuites/test"]+FileList["plugins/*/test/integration/routing/*_test.rb"] + FileList["plugins/*/test/integration/api_test/*_routing_test.rb"] + FileList["plugins/*/test/routing/*_test.rb"] + ENV['TESTOPTS'].split(" ")
+      Minitest::Bisect.run ["-Iplugins/redmine_testsuites/test"] + routing_tests + ENV['TESTOPTS'].split(" ")
     end
     
     desc 'Bisects all Redmine helpers tests along with all the plugins helpers tests.'
     task(:helpers) do |t|
       $: << "plugins/redmine_testsuites/test"
-      Minitest::Bisect.run ["-Iplugins/redmine_testsuites/test"]+FileList["plugins/*/test/helpers/*_test.rb"]
+      Minitest::Bisect.run ["-Iplugins/redmine_testsuites/test"] + helper_tests + ENV['TESTOPTS'].split(" ")
     end
   end
 end

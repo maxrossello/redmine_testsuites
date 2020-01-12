@@ -201,6 +201,8 @@ class Redmine::I18nTest < ActiveSupport::TestCase
   def test_languages_options_should_ignore_locales_without_general_lang_name_key
     stubs(:valid_languages).returns([:en, :foo])
     assert_equal [["English", "en"]], languages_options(:cache => false)
+  ensure
+    unstub(:valid_languages)  # redmine_testsuites
   end
 
   def test_locales_validness
