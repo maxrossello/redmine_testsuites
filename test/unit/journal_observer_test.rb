@@ -25,6 +25,8 @@ class JournalObserverTest < ActiveSupport::TestCase
            :users, :user_preferences, :email_addresses, :roles, :members, :member_roles,
            :versions
 
+  include ActiveJob::TestHelper  # redmine_testsuites
+
   def setup
     User.current = nil
     ActionMailer::Base.deliveries.clear
@@ -37,7 +39,9 @@ class JournalObserverTest < ActiveSupport::TestCase
     journal = issue.init_journal(user, "some notes")
 
     with_settings :notified_events => %w(issue_updated) do
-      assert journal.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert journal.save
+      end
     end
     assert_equal 2, ActionMailer::Base.deliveries.size
   end
@@ -49,7 +53,9 @@ class JournalObserverTest < ActiveSupport::TestCase
     journal.notify = false
 
     with_settings :notified_events => %w(issue_updated) do
-      assert journal.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert journal.save
+      end
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -60,7 +66,9 @@ class JournalObserverTest < ActiveSupport::TestCase
     journal = issue.init_journal(user, "some notes")
 
     with_settings :notified_events => [] do
-      assert journal.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert journal.save
+      end
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -72,7 +80,9 @@ class JournalObserverTest < ActiveSupport::TestCase
     journal.notes = 'This update has a note'
 
     with_settings :notified_events => %w(issue_note_added) do
-      assert journal.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert journal.save
+      end
     end
     assert_equal 2, ActionMailer::Base.deliveries.size
   end
@@ -84,7 +94,9 @@ class JournalObserverTest < ActiveSupport::TestCase
     journal.notes = 'This update has a note'
 
     with_settings :notified_events => [] do
-      assert journal.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert journal.save
+      end
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -96,7 +108,9 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.status = IssueStatus.last
 
     with_settings :notified_events => %w(issue_status_updated) do
-      assert issue.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert issue.save
+      end
     end
     assert_equal 2, ActionMailer::Base.deliveries.size
   end
@@ -108,7 +122,9 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.status = IssueStatus.last
 
     with_settings :notified_events => [] do
-      assert issue.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert issue.save
+      end
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -120,7 +136,9 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.subject = "No status update"
 
     with_settings :notified_events => %w(issue_status_updated) do
-      assert issue.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert issue.save
+      end
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -133,7 +151,9 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.assigned_to = User.find(3)
 
     with_settings :notified_events => %w(issue_assigned_to_updated) do
-      assert issue.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert issue.save
+      end
     end
     assert_equal 2, ActionMailer::Base.deliveries.size
   end
@@ -158,7 +178,9 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.priority = IssuePriority.last
 
     with_settings :notified_events => %w(issue_priority_updated) do
-      assert issue.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert issue.save
+      end
     end
     assert_equal 2, ActionMailer::Base.deliveries.size
   end
