@@ -166,7 +166,9 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.assigned_to = User.find(3)
 
     with_settings :notified_events => [] do
-      assert issue.save 
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert issue.save
+      end 
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -192,7 +194,9 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.priority = IssuePriority.last
 
     with_settings :notified_events => [] do
-      assert issue.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert issue.save
+      end
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -204,7 +208,9 @@ class JournalObserverTest < ActiveSupport::TestCase
       issue.init_journal(user)
       issue.fixed_version = versions(:versions_003)
 
-      assert issue.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert issue.save
+      end
       assert_equal 2, ActionMailer::Base.deliveries.size
     end
   end
@@ -216,7 +222,9 @@ class JournalObserverTest < ActiveSupport::TestCase
       issue.init_journal(user)
       issue.fixed_version = versions(:versions_003)
 
-      assert issue.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert issue.save
+      end
       assert_equal 0, ActionMailer::Base.deliveries.size
     end
   end
