@@ -80,7 +80,8 @@ class ActiveSupport::TestCase
   end
 
   def set_fixtures_attachments_directory
-    Attachment.storage_path = "#{Rails.root}/test/fixtures/files"
+    #Attachment.storage_path = "#{Rails.root}/test/fixtures/files"
+    Attachment.storage_path = "#{Redmine::Plugin.find(:redmine_testsuites).directory}/test/fixtures/files"
   end
 
   def with_settings(options, &block)

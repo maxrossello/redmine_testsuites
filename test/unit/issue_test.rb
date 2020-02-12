@@ -2927,7 +2927,12 @@ class IssueTest < ActiveSupport::TestCase
   def test_css_classes_should_include_priority
     issue = Issue.new(:priority => IssuePriority.find(8))
     classes = issue.css_classes.split(' ')
-    assert_include 'priority-8', classes
+    if Redmine::Plugin.installed? :redwine
+      priority = IssuePriority.find(8).position
+      assert_include "priority-#{priority}", classes
+    else
+      assert_include 'priority-8', classes
+    end
     assert_include 'priority-highest', classes
   end
 

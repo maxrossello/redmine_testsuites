@@ -27,7 +27,9 @@ if ENV["RAILS_ENV"] == "test"
   Redmine::Plugin.register :redmine_testsuites do
     name 'Redmine Test Suites plugin'
     author 'Massimo Rossello'
-    description 'Allows to run the Redmine test suite along with plugin tests, considering the different behaviors introduced by supported plugins over the Redmine default behavior.'
+    description 'Allows to run the Redmine test suite along with plugin tests, considering the different behaviors 
+                 introduced by supported plugins over the Redmine default behavior. 
+                 Unsupported plugins are signaled in the logs.'
     version '4.0.6'
     url 'https://github.com/maxrossello/redmine_testsuites.git'
     author_url 'https://github.com/maxrossello'
@@ -43,7 +45,8 @@ if ENV["RAILS_ENV"] == "test"
     redmine_base_deface:       {},
     redmine_better_overview:   { tilde_greater_than: '1.0' },
     redmine_pluggable_themes:  { tilde_greater_than: '4.0.0' },
-    redmine_themes:            { tilde_greater_than: '4.0.0' }
+    redmine_themes:            { tilde_greater_than: '4.0.0' },
+    redwine:                   { tilde_greater_than: '4.0.6' }
   }
   
   require_dependency 'testsuites_versions'
