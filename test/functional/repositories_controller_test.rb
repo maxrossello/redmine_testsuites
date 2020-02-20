@@ -181,6 +181,9 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
   end
 
   def test_show_should_show_diff_button_depending_on_browse_repository_permission
+    #redmine_testsuites
+    skip unless File.directory?(Rails.root.join('tmp/test/subversion_repository').to_s)
+
     @request.session[:user_id] = 2
     role = Role.find(1)
 
