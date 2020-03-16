@@ -45,7 +45,7 @@ if ENV["RAILS_ENV"] == "test"
     redmine_base_deface:       {},
     redmine_better_overview:   { tilde_greater_than: '4.1.0' },
     redmine_pluggable_themes:  { tilde_greater_than: '4.1.0' },
-    redmine_themes:            { tilde_greater_than: '4.1.0' }
+    redmine_themes:            { tilde_greater_than: '4.1.0' },
     redwine:                   { tilde_greater_than: '4.1.0' }
   }
   
