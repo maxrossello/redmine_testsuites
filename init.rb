@@ -46,7 +46,8 @@ if ENV["RAILS_ENV"] == "test"
     redmine_better_overview:   { tilde_greater_than: '4.1.0' },
     redmine_pluggable_themes:  { tilde_greater_than: '4.1.0' },
     redmine_themes:            { tilde_greater_than: '4.1.0' },
-    redwine:                   { tilde_greater_than: '4.1.0' }
+    redwine:                   { tilde_greater_than: '4.1.0' },
+    sidebar_hide:              { version_or_higher: '1.0.0' }
   }
   
   require_dependency 'testsuites_versions'
