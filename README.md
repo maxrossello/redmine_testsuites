@@ -17,16 +17,17 @@ This plugin installs itself only if RAILS_ENV="test", but like other plugins, it
 - replicates the core Redmine tests into its own plugin space, modified according to *possibly* modified behavior by the *possible* presence of supported plugins (see list below)
 
 - creates additional rails tasks for running plugin tests along with core tests:
-    - **redmine:test** : runs core tests along with all the plugins tests (like redmine:test:all)
-    - **redmine:test:all** : runs all core tests along with all the plugins tests
+    - **redmine:test** : runs core tests along with all the plugins tests, except system tests (like redmine:test:all)
+    - **redmine:test:all** : runs all core tests along with all the plugins tests, except system tests
     - **redmine:test:functionals** : run core functional tests along with plugins functional tests
     - **redmine:test:helpers**: run core helpers tests along with plugins helpers tests
     - **redmine:test:integration** : run core integration tests along with plugins integration tests
     - **redmine:test:routing** : run core routing tests along with plugins routing tests
     - **redmine:test:units** : run core unit tests along with plugins unit tests
+    - **redmine:test:system** : run core system tests along with plugins system tests
     
-    Example:
-*RAILS_ENV="test" bundle exec rails redmine:test:units TESTOPTS="--seed 45334"*
+Example:
+    *RAILS_ENV="test" bundle exec rails redmine:test:units TESTOPTS="--seed 45334"*
     
 - creates additional rails tasks for running [minitest_bisect](https://github.com/seattlerb/minitest-bisect) on same files selected by redmine:test tasks, by using the **redmine:bisect** prefix. Environment variable *TESTOPTS* can be used to pass additional arguments, for example the offending seed.
 
@@ -44,9 +45,13 @@ The plugin repository comes with a tag for each supported Redmine core version.
 
 ## Supported plugins
 
-- [redmine_translation_terms](https://github.com/maxrossello/redmine_translation_terms) : allows to customize specific terms in Redmine translations (e.g. issue -> work item, project -> workspace) in order to better adapt the issue tracker to a specific task
 - [redmine_base_deface](https://github.com/jbbarth/redmine_base_deface) : manage view modifications in plugins
 - [redmine_better_overview](https://github.com/maxrossello/redmine_better_overview) : provides a better projects overview
+- [redmine_pluggable_themes](https://github.com/maxrossello/redmine_pluggable_themes.git) : allows Redmine plugins to export themes in their assets
+- [redmine_themes](https://github.com/maxrossello/redmine_themes) : brings a selection of Redmine themes
+- [redmine_translation_terms](https://github.com/maxrossello/redmine_translation_terms) : allows to customize specific terms in Redmine translations (e.g. issue -> work item, project -> workspace) in order to better adapt the issue tracker to a specific task
+- [redwine](https://github.com/maxrossello/redwine) : Redmine profile holding some enhancements and fixes encountered against the official Redmine release
+- [sidebar_hide](https://github.com/maxrossello/sidebar_hide) : adds simple hide button for sidebar of Redmine
 
 ## How to support further plugins
 

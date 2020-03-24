@@ -20,6 +20,11 @@ def helper_tests
   FileList["plugins/*/test/helpers/*_test.rb"]
 end
 
+def system_tests
+  FileList["plugins/*/test/system/*_test.rb"]
+end
+
 def all_tests
+  # system tests excluded
   unit_tests + functional_tests + integration_tests + routing_tests + helper_tests
 end

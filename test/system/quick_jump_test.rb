@@ -30,7 +30,8 @@ class QuickJumpTest < ApplicationSystemTestCase
     visit '/'
 
     within '#header' do
-      page.first('span', :text => 'Jump to a project...').click
+      #page.first('span', :text => 'Jump to a project...').click
+      page.first('span', :text => I18n.t(:label_jump_to_a_project)).click
       click_on 'eCookbook'
     end
     assert_current_path '/projects/ecookbook?jump=welcome'
@@ -41,12 +42,14 @@ class QuickJumpTest < ApplicationSystemTestCase
     visit '/issues'
 
     within '#header' do
-      page.first('span', :text => 'Jump to a project...').click
+      #page.first('span', :text => 'Jump to a project...').click
+      page.first('span', :text => I18n.t(:label_jump_to_a_project)).click
       click_on 'eCookbook'
       assert_current_path '/projects/ecookbook/issues'
 
       page.first('span', :text => 'eCookbook').click
-      click_on 'All Projects'
+      #click_on 'All Projects'
+      click_on I18n.t(:label_project_all)
       assert_current_path '/issues'
     end
   end
@@ -58,7 +61,8 @@ class QuickJumpTest < ApplicationSystemTestCase
     visit '/'
 
     within '#header' do
-      page.first('span', :text => 'Jump to a project...').click
+      #page.first('span', :text => 'Jump to a project...').click
+      page.first('span', :text => I18n.t(:label_jump_to_a_project)).click
       # Fill the quick search input that should have focus
       page.first('*:focus').set('meg')
       click_on 'Megaproject'

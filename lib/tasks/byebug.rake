@@ -5,13 +5,13 @@ require Redmine::Plugin.directory + '/redmine_testsuites/lib/testsuites_tests'
 
 namespace :redmine do
   
-  desc 'Debug all Redmine tests along with all the plugins tests.'
+  desc 'Debug all Redmine tests along with all the plugins tests, excluding system tests.'
   task :byebug do
     Rake::Task["redmine:byebug:all"].invoke
   end
 
   namespace :byebug do
-    desc 'Debug all Redmine tests along with all the plugins tests.'
+    desc 'Debug all Redmine tests along with all the plugins tests, excluding system tests.'
     task :all do
       $: << "plugins/redmine_testsuites/test"
       Rails::TestUnit::Runner.rake_run all_tests
@@ -51,5 +51,13 @@ namespace :redmine do
       byebug
       Rails::TestUnit::Runner.rake_run helper_tests
     end
+    
+    desc 'Debug all Redmine system tests along with all the plugins system tests.'
+    task(:system) do |t|
+      $: << "plugins/redmine_testsuites/test"
+      byebug
+      Rails::TestUnit::Runner.rake_run system_tests
+    end
+
   end
 end
