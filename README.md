@@ -22,13 +22,15 @@ This plugin installs itself only if RAILS_ENV="test", and does the following thi
     - **rake test:plugins:ui** : run core ui tests along with plugins ui tests
     - **rake test:plugins:units** : run core unit tests along with plugins unit tests
     
+
 The Redmine core tests are cloned under the plugin itself and modified. Every modified line is kept in commented form, so that a diff against the verbatim tests is easy.
 
 The plugin repository comes with a tag for each supported Redmine core version.
 
 ## Supported plugins
 
-- [redmine_translation_terms](https://github.com/maxrossello/redmine_translation_terms) : allows to customize specific terms in Redmine translations (e.g. issue -> work item, project -> workspace) 
+- [redmine_translation_terms](https://github.com/maxrossello/redmine_translation_terms) : allows to customize specific terms in Redmine translations (e.g. issue -> work item, project -> workspace)
+- [redmine_extended_watchers](https://github.com/maxrossello/redmine_extended_watchers) : make issues and containing project visible to non member watchers, and send change notifications to them
 
 ## How to support further plugins
 

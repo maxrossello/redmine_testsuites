@@ -1,2 +1,13 @@
 Gemfile.lock
 config/overrides
+.byebug_history
+.metadata/
+.project
+config/
+db/
+files/
+log/
+test/fixtures/files/20*
+test/html_reports/
+tmp/
+

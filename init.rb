@@ -28,7 +28,7 @@ if ENV["RAILS_ENV"] == "test"
     name 'Redmine Test Suites plugin'
     author 'Massimo Rossello'
     description 'Allows to run the Redmine test suite along with plugin tests, considering the different behaviors introduced by supported plugins over the Redmine default behavior.'
-    version '3.4.13'
+    version '3.4.13.1'
     url 'https://github.com/maxrossello/redmine_testsuites.git'
     author_url 'https://github.com/maxrossello'
     requires_redmine :version => '3.4.13'
@@ -39,7 +39,8 @@ if ENV["RAILS_ENV"] == "test"
   # each hash contains conditions in AND; plugin is supported if any hash in array matches 
   supported_plugins = {
     redmine_testsuites:        {},
-    redmine_translation_terms: [{ version_or_higher: '3.4.8' }]
+    redmine_translation_terms: [{ tilde_greater_than: '3.4.8' }],
+    redmine_extended_watchers: { tilde_greater_than: '3.4.0' }
   }
   
   require_dependency 'testsuites_versions'

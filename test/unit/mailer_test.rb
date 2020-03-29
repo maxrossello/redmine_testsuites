@@ -360,7 +360,12 @@ class MailerTest < ActiveSupport::TestCase
     Watcher.create!(:watchable => issue, :user => user)
     Role.non_member.remove_permission!(:view_issues)
     assert Mailer.deliver_issue_add(issue)
-    assert !last_email.bcc.include?(user.mail)
+    if Redmine::Plugin.installed? :redmine_extended_watchers
+      # the plugin provides full watching features, including notifications, also to watchers with no membership
+      assert last_email.bcc.include?(user.mail)
+    else
+      assert !last_email.bcc.include?(user.mail)
+    end
   end
 
   def test_issue_add_should_include_enabled_fields

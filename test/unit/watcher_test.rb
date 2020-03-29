@@ -106,7 +106,11 @@ class WatcherTest < ActiveSupport::TestCase
 
   def test_addable_watcher_users_should_not_include_user_that_cannot_view_the_object
     issue = Issue.new(:project => Project.find(1), :is_private => true)
-    assert_nil issue.addable_watcher_users.detect {|user| !issue.visible?(user)}
+    if Redmine::Plugin.installed? :redmine_extended_watchers
+      # plugin allows to add any user as a watcher, then the issue becomes visible to it
+    else
+      assert_nil issue.addable_watcher_users.detect {|user| !issue.visible?(user)}
+    end
   end
 
   def test_any_watched_should_return_false_if_no_object_is_watched
@@ -174,12 +178,22 @@ class WatcherTest < ActiveSupport::TestCase
 
     Member.delete_all
 
-    assert_difference 'Watcher.count', -4 do
-      Watcher.prune(:user => User.find(9))
-    end
+    if Redmine::Plugin.installed? :redmine_extended_watchers
+      # watching does allow issue visibility, therefore issue watcher is not pruned
+      assert_difference 'Watcher.count', -3 do
+        Watcher.prune(:user => User.find(9))
+      end
+      
+      assert Issue.find(1).watched_by?(user)
+      assert Issue.find(4).watched_by?(user)
+    else 
+      assert_difference 'Watcher.count', -4 do
+        Watcher.prune(:user => User.find(9))
+      end
 
-    assert Issue.find(1).watched_by?(user)
-    assert !Issue.find(4).watched_by?(user)
+      assert Issue.find(1).watched_by?(user)
+      assert !Issue.find(4).watched_by?(user)
+    end
   end
 
   def test_prune_with_project
@@ -187,16 +201,29 @@ class WatcherTest < ActiveSupport::TestCase
     Watcher.new(:watchable => Issue.find(4), :user => User.find(9)).save(:validate => false) # project 2
     Watcher.new(:watchable => Issue.find(6), :user => User.find(9)).save(:validate => false) # project 5
 
-    assert Watcher.prune(:project => Project.find(5)) > 0
-    assert Issue.find(4).watched_by?(user)
-    assert !Issue.find(6).watched_by?(user)
+    if Redmine::Plugin.installed? :redmine_extended_watchers
+      # watching does allow issue visibility, therefore issue watcher is not pruned
+      assert Watcher.prune(:project => Project.find(5)) == 0
+      assert Issue.find(4).watched_by?(user)
+      assert Issue.find(6).watched_by?(user)
+    else
+      assert Watcher.prune(:project => Project.find(5)) > 0
+      assert Issue.find(4).watched_by?(user)
+      assert !Issue.find(6).watched_by?(user)
+    end
   end
 
   def test_prune_all
     user = User.find(9)
     Watcher.new(:watchable => Issue.find(4), :user => User.find(9)).save(:validate => false)
 
-    assert Watcher.prune > 0
-    assert !Issue.find(4).watched_by?(user)
+    if Redmine::Plugin.installed? :redmine_extended_watchers
+      # watching does allow issue visibility, therefore issue watcher is not pruned
+      assert Watcher.prune == 0
+      assert Issue.find(4).watched_by?(user)
+    else
+      assert Watcher.prune > 0
+      assert !Issue.find(4).watched_by?(user)
+    end
   end
 end
