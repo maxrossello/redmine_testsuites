@@ -337,7 +337,11 @@ class MailerTest < ActiveSupport::TestCase
     issue = Issue.find(1)
     Role.find(2).remove_permission!(:view_issues)
     assert Mailer.deliver_issue_add(issue)
-    assert !last_email.bcc.include?('dlopper@somenet.foo')
+    if Redmine::Plugin.installed?(:redmine_extended_watchers) and issue.watcher_users.include?(User.find(3))
+       assert last_email.bcc.include?('dlopper@somenet.foo')
+    else
+       assert !last_email.bcc.include?('dlopper@somenet.foo')
+    end
   end
 
   test "#issue_add should notify issue watchers" do

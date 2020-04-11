@@ -28,7 +28,7 @@ if ENV["RAILS_ENV"] == "test"
     name 'Redmine Test Suites plugin'
     author 'Massimo Rossello'
     description 'Allows to run the Redmine test suite along with plugin tests, considering the different behaviors introduced by supported plugins over the Redmine default behavior.'
-    version '3.4.13.1'
+    version '3.4.13.2'
     url 'https://github.com/maxrossello/redmine_testsuites.git'
     author_url 'https://github.com/maxrossello'
     requires_redmine :version => '3.4.13'

@@ -90,17 +90,9 @@ class WatchersControllerTest < Redmine::ControllerTest
   def test_watch_should_be_denied_without_permission
     Role.find(2).remove_permission! :view_issues
     @request.session[:user_id] = 3
-    if Redmine::Plugin.installed? :redmine_extended_watchers
-      # plugin allows to add any watcher to make project/issue visible
-      assert_difference('Watcher.count', 1) do
-        post :watch, :params => {:object_type => 'issue', :object_id => '1'}, :xhr => true
-        assert_response :success
-      end
-    else
-      assert_no_difference('Watcher.count') do
-        post :watch, :params => {:object_type => 'issue', :object_id => '1'}, :xhr => true
-        assert_response 403
-      end
+    assert_no_difference('Watcher.count') do
+      post :watch, :params => {:object_type => 'issue', :object_id => '1'}, :xhr => true
+      assert_response 403
     end
   end
 
