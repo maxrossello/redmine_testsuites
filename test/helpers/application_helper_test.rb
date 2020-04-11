@@ -1791,11 +1791,6 @@ RAW
     assert !result.html_safe?
   end
 
-  def test_back_url_should_remove_utf8_checkmark_from_referer
-    stubs(:request).returns(stub(:env => {'HTTP_REFERER' => "/path?utf8=\u2713&foo=bar"}))
-    assert_equal "/path?foo=bar", back_url
-  end
-
   def test_hours_formatting
     set_language_if_valid 'en'
 
