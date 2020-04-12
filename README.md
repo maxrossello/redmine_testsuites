@@ -25,8 +25,8 @@ This plugin installs itself only if RAILS_ENV="test", but like other plugins, it
     - **redmine:test:routing** : run core routing tests along with plugins routing tests
     - **redmine:test:units** : run core unit tests along with plugins unit tests
     
-    Example:
-*RAILS_ENV="test" bundle exec rails redmine:test:units TESTOPTS="--seed 45334"*
+Example:
+    *RAILS_ENV="test" bundle exec rails redmine:test:units TESTOPTS="--seed 45334"*
     
 - creates additional rails tasks for running [minitest_bisect](https://github.com/seattlerb/minitest-bisect) on same files selected by redmine:test tasks, by using the **redmine:bisect** prefix. Environment variable *TESTOPTS* can be used to pass additional arguments, for example the offending seed.
 
@@ -44,9 +44,12 @@ The plugin repository comes with a tag for each supported Redmine core version.
 
 ## Supported plugins
 
-- [redmine_translation_terms](https://github.com/maxrossello/redmine_translation_terms) : allows to customize specific terms in Redmine translations (e.g. issue -> work item, project -> workspace) in order to better adapt the issue tracker to a specific task
 - [redmine_base_deface](https://github.com/jbbarth/redmine_base_deface) : manage view modifications in plugins
 - [redmine_better_overview](https://github.com/maxrossello/redmine_better_overview) : provides a better projects overview
+- [redmine_pluggable_themes](https://github.com/maxrossello/redmine_pluggable_themes.git) : allows Redmine plugins to export themes in their assets
+- [redmine_themes](https://github.com/maxrossello/redmine_themes) : brings a selection of Redmine themes
+- [redmine_translation_terms](https://github.com/maxrossello/redmine_translation_terms) : allows to customize specific terms in Redmine translations (e.g. issue -> work item, project -> workspace) in order to better adapt the issue tracker to a specific task
+- [redwine](https://github.com/maxrossello/redwine) : Redmine profile holding some enhancements and fixes encountered against the official Redmine release
 
 ## How to support further plugins
 
