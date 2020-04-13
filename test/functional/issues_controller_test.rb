@@ -661,6 +661,23 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#csv-export-form input[name=?][value=?]', 'f[]', ''
   end
 
+  def test_index_should_show_block_columns_in_csv_export_form
+    field = IssueCustomField.
+              create!(
+                :name => 'Long text', :field_format => 'text',
+                :full_width_layout => '1',
+                :tracker_ids => [1], :is_for_all => true
+              )
+    get :index
+
+    assert_response :success
+    assert_select '#csv-export-form' do
+      assert_select 'input[value=?]', 'description'
+      assert_select 'input[value=?]', 'last_notes'
+      assert_select 'input[value=?]', "cf_#{field.id}"
+    end
+  end
+
   def test_index_csv
     get :index, :params => {
         :format => 'csv'
@@ -895,7 +912,7 @@ class IssuesControllerTest < Redmine::ControllerTest
   end
 
   def test_index_pdf
-    ["en", "zh", "zh-TW", "ja", "ko"].each do |lang|
+    ["en", "zh", "zh-TW", "ja", "ko", "ar"].each do |lang|
       with_settings :default_language => lang do
         get :index
         assert_response :success
@@ -2388,7 +2405,7 @@ class IssuesControllerTest < Redmine::ControllerTest
 
   def test_export_to_pdf_with_utf8_u_fffd
     issue = Issue.generate!(:subject => "�")
-    ["en", "zh", "zh-TW", "ja", "ko"].each do |lang|
+    ["en", "zh", "zh-TW", "ja", "ko", "ar"].each do |lang|
       with_settings :default_language => lang do
         get :show, :params => {
             :id => issue.id,
@@ -2432,6 +2449,26 @@ class IssuesControllerTest < Redmine::ControllerTest
         :id => 1,
         :format => 'pdf'
       }
+    assert_response :success
+    assert_equal 'application/pdf', @response.content_type
+    assert @response.body.starts_with?('%PDF')
+  end
+
+  def test_show_export_to_pdf_with_private_journal
+    Journal.create!(
+      :journalized => Issue.find(1),
+      :notes => 'Private notes',
+      :private_notes => true,
+      :user_id => 3
+    )
+    @request.session[:user_id] = 3
+    get(
+      :show,
+      :params => {
+        :id => 1,
+        :format => 'pdf'
+      }
+    )
     assert_response :success
     assert_equal 'application/pdf', @response.content_type
     assert @response.body.starts_with?('%PDF')
