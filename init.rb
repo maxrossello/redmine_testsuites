@@ -41,7 +41,7 @@ if ENV["RAILS_ENV"] == "test"
   # each hash contains conditions in AND; plugin is supported if any hash in array matches 
   supported_plugins = {
     redmine_testsuites:        {},
-    redmine_translation_terms: [{ tilde_greater_than: '4.1.0' }],
+    redmine_translation_terms: [{ tilde_greater_than: '4.1.1' }],
     redmine_base_deface:       {},
     redmine_better_overview:   { tilde_greater_than: '4.1.0' },
     redmine_pluggable_themes:  { tilde_greater_than: '4.1.0' },
