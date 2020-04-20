@@ -306,7 +306,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
     page.execute_script "$('tr#issue-1 td.updated_on').trigger('contextmenu');"
     assert_difference 'Watcher.count', 2 do
       within('#context-menu') do
-        click_link 'Watch'
+        #click_link 'Watch'
+        find_link('Watch').hover.click
       end
       # wait for ajax response
       assert page.has_css?('#context-menu .issue-bulk-watcher.icon-fav')
