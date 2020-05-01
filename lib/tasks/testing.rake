@@ -1,17 +1,17 @@
-namespace :test do
+namespace :redmine do
   desc 'Runs all Redmine tests along with all the plugins tests.'
-  task :plugins do
-    Rake::Task["test:plugins:all"].invoke
+  task :test do
+    Rake::Task["redmine:test:all"].invoke
   end
 
-  namespace :plugins do
+  namespace :test do
     desc 'Runs all Redmine tests along with all the plugins tests.'
     task :all do
-      Rake::Task["test:plugins:units"].invoke
-      Rake::Task["test:plugins:functionals"].invoke
-      Rake::Task["test:plugins:integration"].invoke
-      #Rake::Task["test:plugins:ui"].invoke
-      Rake::Task["test:plugins:routing"].invoke
+      Rake::Task["redmine:test:units"].invoke
+      Rake::Task["redmine:test:functionals"].invoke
+      Rake::Task["redmine:test:integration"].invoke
+      #Rake::Task["redmine:test:ui"].invoke
+      Rake::Task["redmine:test:routing"].invoke
     end
 
     desc 'Runs all Redmine unit tests along with all the plugins unit tests.'
