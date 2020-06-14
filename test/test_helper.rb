@@ -19,7 +19,7 @@
 
 if ENV["COVERAGE"]
   require 'simplecov'
-  require File.expand_path(File.dirname(__FILE__) + "/../../coverage/html_formatter")
+  require File.expand_path(File.dirname(__FILE__) + "/coverage/html_formatter")
   SimpleCov.formatter = Redmine::Coverage::HtmlFormatter
   SimpleCov.start 'rails'
 end
@@ -390,7 +390,6 @@ module Redmine
   end
 
   module ApiTest
-    TS_API_FORMATS = %w(json xml).freeze
 
     # Base class for API tests
     class Base < Redmine::IntegrationTest
@@ -450,8 +449,9 @@ module Redmine
         request = arg.keys.detect {|key| key.is_a?(String)}
         raise ArgumentError unless request
         options = arg.slice!(request)
-
-        TS_API_FORMATS.each do |format|
+  
+        api_formats = %w(json xml).freeze
+        api_formats.each do |format|
           format_request = request.sub /$/, ".#{format}"
           super options.merge(format_request => arg[request], :format => format)
         end
