@@ -44,7 +44,7 @@ if ENV["RAILS_ENV"] == "test"
     redmine_translation_terms: [{ tilde_greater_than: '4.0.0' }],
     redmine_base_deface:       {},
     redmine_better_overview:   { tilde_greater_than: '1.0' },
-    redmine_extended_watchers: { tilde_greater_than: '4.0.0' }
+    redmine_extended_watchers: { tilde_greater_than: '4.0.0' },
     redmine_pluggable_themes:  { tilde_greater_than: '4.0.0' },
     redmine_themes:            { tilde_greater_than: '4.0.0' },
     redwine:                   { tilde_greater_than: '4.0.7' }

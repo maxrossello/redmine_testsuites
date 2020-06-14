@@ -552,7 +552,6 @@ class ProjectsControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 1
     project = Project.find_by_identifier('ecookbook')
     project.archive
-  
     get :show, :params => {
         :id => 'ecookbook'
       }
