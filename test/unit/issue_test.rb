@@ -2000,7 +2000,12 @@ class IssueTest < ActiveSupport::TestCase
     issue = Issue.find(9)
     Watcher.create!(:user => user, :watchable => issue)
     assert issue.watched_by?(user)
-    assert !issue.watcher_recipients.include?(user.mail)
+    if Redmine::Plugin.installed? :redmine_extended_watchers
+      # the plugins lets the issue visible to watchers
+      assert issue.watcher_recipients.include?(user.mail)
+    else
+      assert !issue.watcher_recipients.include?(user.mail)
+    end
   end
 
   def test_issue_destroy

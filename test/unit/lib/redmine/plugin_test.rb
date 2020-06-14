@@ -17,7 +17,7 @@
 
 require File.expand_path('../../../../test_helper', __FILE__)
 
-# redmine_testsuites
+# redmine_testsuites start
 class << Redmine::Plugin
     def save_plugins
         @saved = @registered_plugins
@@ -29,6 +29,7 @@ class << Redmine::Plugin
         @registered_plugins = @saved
     end
 end
+# redmine_testsuites end
 
 class Redmine::PluginTest < ActiveSupport::TestCase
   def setup

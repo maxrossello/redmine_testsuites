@@ -46,6 +46,7 @@ The plugin repository comes with a tag for each supported Redmine core version.
 
 - [redmine_base_deface](https://github.com/jbbarth/redmine_base_deface) : manage view modifications in plugins
 - [redmine_better_overview](https://github.com/maxrossello/redmine_better_overview) : provides a better projects overview
+- [redmine_extended_watchers](https://github.com/maxrossello/redmine_extended_watchers) : make issues and containing project visible to non member watchers, and send change notifications to them
 - [redmine_pluggable_themes](https://github.com/maxrossello/redmine_pluggable_themes.git) : allows Redmine plugins to export themes in their assets
 - [redmine_themes](https://github.com/maxrossello/redmine_themes) : brings a selection of Redmine themes
 - [redmine_translation_terms](https://github.com/maxrossello/redmine_translation_terms) : allows to customize specific terms in Redmine translations (e.g. issue -> work item, project -> workspace) in order to better adapt the issue tracker to a specific task
