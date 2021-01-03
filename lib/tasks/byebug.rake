@@ -14,6 +14,7 @@ namespace :redmine do
     desc 'Debug all Redmine tests along with all the plugins tests.'
     task :all do
       $: << "plugins/redmine_testsuites/test"
+      byebug
       Rails::TestUnit::Runner.rake_run all_tests
     end
 
