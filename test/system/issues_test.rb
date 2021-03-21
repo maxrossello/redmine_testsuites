@@ -255,6 +255,9 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     log_user('jsmith', 'jsmith')
     visit '/issues/1'
+    if Redmine::Plugin.installed?(:sidebar_hide)
+        page.execute_script("setSideBarVisible()")
+    end
     #assert page.first('#sidebar').has_content?('Watchers (1)')
     assert page.first('#sidebar').has_content?("#{I18n.t(:label_issue_watchers)} (1)")
     assert page.first('#sidebar').has_content?(user.name)
@@ -270,6 +273,9 @@ class IssuesSystemTest < ApplicationSystemTestCase
     user = User.find(2)
     log_user('jsmith', 'jsmith')
     visit '/issues/1'
+    if Redmine::Plugin.installed?(:sidebar_hide)
+        page.execute_script("setSideBarVisible()")
+    end
     #assert page.first('#sidebar').has_content?('Watchers (0)')
     assert page.first('#sidebar').has_content?("#{I18n.t(:label_issue_watchers)} (0)")
 
