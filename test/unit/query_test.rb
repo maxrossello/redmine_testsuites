@@ -1644,6 +1644,16 @@ class QueryTest < ActiveSupport::TestCase
     assert !q.sortable_columns['cf_1']
   end
 
+  def test_sortable_should_return_false_for_multi_custom_field
+    field = CustomField.find(1)
+    field.update_attribute :multiple, true
+
+    q = IssueQuery.new
+
+    field_column = q.available_columns.detect {|c| c.name==:cf_1}
+    assert !field_column.sortable?
+  end
+
   def test_default_sort
     q = IssueQuery.new
     assert_equal [['id', 'desc']], q.sort_criteria
@@ -1812,6 +1822,37 @@ class QueryTest < ActiveSupport::TestCase
     field = IssueCustomField.generate!(:field_format => 'float', :is_for_all => true)
     q = IssueQuery.new
     assert_include "cf_#{field.id}".to_sym, q.available_totalable_columns.map(&:name)
+  end
+
+  def test_available_totalable_columns_should_sort_in_position_order_for_custom_field
+    ProjectCustomField.delete_all
+    cf_pos3 = ProjectCustomField.generate!(:position => 3, :is_for_all => true, :field_format => 'int')
+    cf_pos4 = ProjectCustomField.generate!(:position => 4, :is_for_all => true, :field_format => 'float')
+    cf_pos1 = ProjectCustomField.generate!(:position => 1, :is_for_all => true, :field_format => 'float')
+    cf_pos2 = ProjectCustomField.generate!(:position => 2, :is_for_all => true, :field_format => 'int')
+    q = ProjectQuery.new
+    custom_field_columns = q.available_totalable_columns.select{|column| column.is_a?(QueryCustomFieldColumn)}
+    assert_equal [cf_pos1, cf_pos2, cf_pos3, cf_pos4], custom_field_columns.collect(&:custom_field)
+
+    IssueCustomField.delete_all
+    cf_pos3 = IssueCustomField.generate!(:position => 3, :is_for_all => true, :field_format => 'int')
+    cf_pos4 = IssueCustomField.generate!(:position => 4, :is_for_all => true, :field_format => 'float')
+    cf_pos1 = IssueCustomField.generate!(:position => 1, :is_for_all => true, :field_format => 'float')
+    cf_pos2 = IssueCustomField.generate!(:position => 2, :is_for_all => true, :field_format => 'int')
+    q = IssueQuery.new
+    custom_field_columns = q.available_totalable_columns.select{|column| column.is_a?(QueryCustomFieldColumn)}
+    assert_equal [cf_pos1, cf_pos2, cf_pos3, cf_pos4], custom_field_columns.collect(&:custom_field)
+
+    ProjectCustomField.delete_all
+    IssueCustomField.delete_all
+    TimeEntryCustomField.delete_all
+    cf_pos3 = TimeEntryCustomField.generate!(:position => 3, :is_for_all => true, :field_format => 'int')
+    cf_pos4 = TimeEntryCustomField.generate!(:position => 4, :is_for_all => true, :field_format => 'float')
+    cf_pos1 = TimeEntryCustomField.generate!(:position => 1, :is_for_all => true, :field_format => 'float')
+    cf_pos2 = TimeEntryCustomField.generate!(:position => 2, :is_for_all => true, :field_format => 'int')
+    q = TimeEntryQuery.new
+    custom_field_columns = q.available_totalable_columns.select{|column| column.is_a?(QueryCustomFieldColumn)}
+    assert_equal [cf_pos1, cf_pos2, cf_pos3, cf_pos4], custom_field_columns.collect(&:custom_field)
   end
 
   def test_total_for_estimated_hours
@@ -2383,6 +2424,17 @@ class QueryTest < ActiveSupport::TestCase
     assert_equal "table.field > '#{Query.connection.quoted_date f}' AND table.field <= '#{Query.connection.quoted_date t}'", c
   ensure
     ActiveRecord::Base.default_timezone = :local # restore Redmine default
+  end
+
+  def test_project_statement_with_closed_subprojects
+    project = Project.find(1)
+    project.descendants.each(&:close)
+
+    with_settings :display_subprojects_issues => '1' do
+      query = IssueQuery.new(:name => '_', :project => project)
+      statement = query.project_statement
+      assert_equal "projects.lft >= #{project.lft} AND projects.rgt <= #{project.rgt}", statement
+    end
   end
 
   def test_filter_on_subprojects

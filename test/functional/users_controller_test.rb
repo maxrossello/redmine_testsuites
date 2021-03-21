@@ -207,15 +207,13 @@ class UsersControllerTest < Redmine::ControllerTest
     get :show, :params => {:id => 2}
     assert_select 'table.list.issue-report>tbody' do
       assert_select 'tr:nth-of-type(1)' do
-        #assert_select 'td:nth-of-type(1)>a', :text => 'Assigned issues'
-        assert_select 'td:nth-of-type(1)>a', :text => I18n.t(:label_assigned_issues)
+        assert_select 'td:nth-of-type(1)>a', :text => 'Assigned issues'
         assert_select 'td:nth-of-type(2)>a', :text => '1'   # open
         assert_select 'td:nth-of-type(3)>a', :text => '0'   # closed
         assert_select 'td:nth-of-type(4)>a', :text => '1'   # total
       end
       assert_select 'tr:nth-of-type(2)' do
-        #assert_select 'td:nth-of-type(1)>a', :text => 'Reported issues'
-        assert_select 'td:nth-of-type(1)>a', :text => I18n.t(:label_reported_issues)
+        assert_select 'td:nth-of-type(1)>a', :text => 'Reported issues'
         assert_select 'td:nth-of-type(2)>a', :text => '11'  # open
         assert_select 'td:nth-of-type(3)>a', :text => '2'   # closed
         assert_select 'td:nth-of-type(4)>a', :text => '13'  # total
@@ -708,6 +706,19 @@ class UsersControllerTest < Redmine::ControllerTest
     assert User.find(6).anonymous?
     put :update, :params => {:id => 6}
     assert_response 404
+  end
+
+  def test_update_with_blank_email_should_not_raise_exception
+    assert_no_difference 'User.count' do
+      with_settings :gravatar_enabled => '1' do
+        put :update, :params => {
+          :id => 2,
+          :user => {:mail => ''}
+        }
+      end
+    end
+    assert_response :success
+    assert_select_error /Email cannot be blank/
   end
 
   def test_destroy

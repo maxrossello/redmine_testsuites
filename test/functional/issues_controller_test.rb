@@ -126,6 +126,49 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'a[href="/issues/6"]', 0
   end
 
+  def test_index_should_list_issues_of_closed_subprojects
+    @request.session[:user_id] = 1
+    project = Project.find(1)
+
+    with_settings :display_subprojects_issues => '1' do
+      # One of subprojects is closed
+      Project.find_by(:identifier => 'subproject1').close
+      get(:index, :params => {:project_id => project.id})
+      assert_response :success
+      assert_equal 10, issues_in_list.count
+
+      # All subprojects are closed
+      project.descendants.each(&:close)
+      get(:index, :params => {:project_id => project.id})
+      assert_response :success
+      assert_equal 10, issues_in_list.count
+    end
+  end
+
+  def test_index_with_subproject_filter_should_not_exclude_closed_subprojects_issues
+    subproject1 = Project.find(3)
+    subproject2 = Project.find(4)
+    subproject1.close
+
+    with_settings :display_subprojects_issues => '1' do
+      get(
+        :index,
+        :params => {
+          :project_id => 1,
+          :set_filter => 1,
+          :f => ['subproject_id'],
+          :op => {'subproject_id' => '!'},
+          :v => {'subproject_id' => [subproject2.id.to_s]},
+          :c => ['project']
+        }
+      )
+    end
+    assert_response :success
+    column_values = columns_values_in_list('project')
+    assert_includes column_values, subproject1.name
+    assert_equal 9, column_values.size
+  end
+
   def test_index_with_project_and_subprojects_should_show_private_subprojects_with_permission
     @request.session[:user_id] = 2
     Setting.display_subprojects_issues = 1
@@ -1464,23 +1507,6 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select "td.cf_#{field.id} span", :text => 'Long text'
   end
 
-  def test_index_with_full_width_layout_custom_field_column_should_show_column_as_block_column
-    field = IssueCustomField.create!(:name => 'Long text', :field_format => 'text', :full_width_layout => '1',
-      :tracker_ids => [1], :is_for_all => true)
-    issue = Issue.find(1)
-    issue.custom_field_values = {field.id => 'This is a long text'}
-    issue.save!
-
-    get :index, :params => {
-        :set_filter => 1,
-        :c => ['subject', 'description', "cf_#{field.id}"]
-      }
-    assert_response :success
-
-    assert_select 'td.description[colspan="4"] span', :text => 'Description'
-    assert_select "td.cf_#{field.id} span", :text => 'Long text'
-  end
-
   def test_index_with_parent_column
     Issue.delete_all
     parent = Issue.generate!
@@ -1744,6 +1770,22 @@ class IssuesControllerTest < Redmine::ControllerTest
           :project_id => 1
         }
       assert_select '#main-menu a.new-issue', 0
+    end
+  end
+
+  def test_index_should_respect_timespan_format
+    with_settings :timespan_format => 'minutes' do
+      get(
+        :index,
+        :params => {
+          :set_filter => 1,
+          :c => %w(estimated_hours total_estimated_hours spent_hours total_spent_hours)
+        }
+      )
+      assert_select 'table.issues tr#issue-1 td.estimated_hours', :text => '200:00'
+      assert_select 'table.issues tr#issue-1 td.total_estimated_hours', :text => '200:00'
+      assert_select 'table.issues tr#issue-1 td.spent_hours', :text => '154:15'
+      assert_select 'table.issues tr#issue-1 td.total_spent_hours', :text => '154:15'
     end
   end
 
@@ -4861,6 +4903,41 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_get_edit_should_display_visible_spent_time_custom_field
+    @request.session[:user_id] = 2
+
+    get(
+      :edit,
+      :params => {
+        :id => 13,
+      }
+    )
+
+    assert_response :success
+
+    assert_select '#issue-form select#time_entry_custom_field_values_10', 1
+  end
+
+  def test_get_edit_should_not_display_spent_time_custom_field_not_visible
+    cf = TimeEntryCustomField.find(10)
+    cf.visible = false
+    cf.role_ids = [1]
+    cf.save!
+
+    @request.session[:user_id] = 2
+
+    get(
+      :edit,
+      :params => {
+        :id => 13,
+      }
+    )
+
+    assert_response :success
+
+    assert_select '#issue-form select#time_entry_custom_field_values_10', 0
+  end
+
   def test_update_form_for_existing_issue
     @request.session[:user_id] = 2
     patch :edit, :params => {
@@ -5278,6 +5355,24 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_not_nil t
     assert_equal 2.5, t.hours
     assert_equal spent_hours_before + 2.5, issue.spent_hours
+  end
+
+  def test_put_update_should_check_add_issue_notes_permission
+    role = Role.find(1)
+    role.remove_permission! :add_issue_notes
+    @request.session[:user_id] = 2
+
+    assert_no_difference 'Journal.count' do
+      put(
+        :update,
+        :params => {
+          :id => 1,
+          :issue => {
+            :notes => 'New note'
+          }
+        }
+      )
+    end
   end
 
   def test_put_update_should_preserve_parent_issue_even_if_not_visible
