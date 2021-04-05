@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -86,7 +86,6 @@ class Redmine::UnifiedDiffTest < ActiveSupport::TestCase
     assert_equal [24, -8], diff[6].offsets
     assert_equal [37, -1], diff[8].offsets
     assert_equal [0, -38], diff[10].offsets
-
   end
 
   def test_partials_with_html_entities
@@ -319,8 +318,10 @@ class Redmine::UnifiedDiffTest < ActiveSupport::TestCase
 
   def test_offset_range_japanese_1
     with_settings :repositories_encodings => '' do
-      diff = Redmine::UnifiedDiff.new(
-               read_diff_fixture('issue-13644-1.diff'), :type => 'sbs')
+      diff =
+        Redmine::UnifiedDiff.new(
+          read_diff_fixture('issue-13644-1.diff'), :type => 'sbs'
+        )
       assert_equal 1, diff.size
       assert_equal 3, diff.first.size
       assert_equal '日本<span></span>', diff.first[1].html_line_left
@@ -330,8 +331,10 @@ class Redmine::UnifiedDiffTest < ActiveSupport::TestCase
 
   def test_offset_range_japanese_2
     with_settings :repositories_encodings => '' do
-      diff = Redmine::UnifiedDiff.new(
-               read_diff_fixture('issue-13644-2.diff'), :type => 'sbs')
+      diff =
+        Redmine::UnifiedDiff.new(
+          read_diff_fixture('issue-13644-2.diff'), :type => 'sbs'
+        )
       assert_equal 1, diff.size
       assert_equal 3, diff.first.size
       assert_equal '<span></span>日本', diff.first[1].html_line_left
@@ -342,8 +345,10 @@ class Redmine::UnifiedDiffTest < ActiveSupport::TestCase
   def test_offset_range_japanese_3
     # UTF-8 The 1st byte differs.
     with_settings :repositories_encodings => '' do
-      diff = Redmine::UnifiedDiff.new(
-               read_diff_fixture('issue-13644-3.diff'), :type => 'sbs')
+      diff =
+        Redmine::UnifiedDiff.new(
+          read_diff_fixture('issue-13644-3.diff'), :type => 'sbs'
+        )
       assert_equal 1, diff.size
       assert_equal 3, diff.first.size
       assert_equal '日本<span>記</span>', diff.first[1].html_line_left
@@ -354,8 +359,10 @@ class Redmine::UnifiedDiffTest < ActiveSupport::TestCase
   def test_offset_range_japanese_4
     # UTF-8 The 2nd byte differs.
     with_settings :repositories_encodings => '' do
-      diff = Redmine::UnifiedDiff.new(
-               read_diff_fixture('issue-13644-4.diff'), :type => 'sbs')
+      diff =
+        Redmine::UnifiedDiff.new(
+          read_diff_fixture('issue-13644-4.diff'), :type => 'sbs'
+        )
       assert_equal 1, diff.size
       assert_equal 3, diff.first.size
       assert_equal '日本<span>記</span>', diff.first[1].html_line_left
@@ -366,13 +373,109 @@ class Redmine::UnifiedDiffTest < ActiveSupport::TestCase
   def test_offset_range_japanese_5
     # UTF-8 The 2nd byte differs.
     with_settings :repositories_encodings => '' do
-      diff = Redmine::UnifiedDiff.new(
-               read_diff_fixture('issue-13644-5.diff'), :type => 'sbs')
+      diff =
+        Redmine::UnifiedDiff.new(
+          read_diff_fixture('issue-13644-5.diff'), :type => 'sbs'
+        )
       assert_equal 1, diff.size
       assert_equal 3, diff.first.size
       assert_equal '日本<span>記</span>ok', diff.first[1].html_line_left
       assert_equal '日本<span>誘</span>ok', diff.first[1].html_line_right
     end
+  end
+
+  def test_keep_similar_git_footer_line
+    raw = <<~DIFF
+      diff --git a/test1.txt b/test1.txt
+      --- a/test1.txt
+      +++ b/test1.txt
+      @@ -1,11 +1,6 @@
+       $ git init --bare git_utf8_repository
+       $ hg init git_utf8_repository_hg
+       $ cd git_utf8_repository_hg
+      --
+      -Next line has white space after '-'
+      -- 
+      ---
+      --
+       $ touch test.txt
+       $ hg add test.txt
+       $ hg commit -m `echo -e "U+1F603\U1F603"` -u `echo -e "U+1F603\U1F603"`
+      diff --git a/test2.txt b/test2.txt
+      --- a/test2.txt
+      +++ b/test2.txt
+      @@ -5,9 +5,4 @@
+       $ hg add test.txt
+       $ hg commit -m `echo -e "U+1F603\U1F603"` -u `echo -e "U+1F603\U1F603"`
+       $ hg bookmark master
+      --
+      -Next line has white space after '-'
+      -- 
+      ---
+      --
+       $ hg push ../git_utf8_repository
+    DIFF
+    lines = raw.split("\n")
+    assert_equal '-- ', lines[9]
+    assert_equal '-- ', lines[24]
+    diff = Redmine::UnifiedDiff.new(raw, :type => 'sbs')
+    assert_equal 2, diff.size
+    assert_equal 11, diff[0].size
+    assert_equal 9, diff[1].size
+  end
+
+  def test_git_footer_line
+    raw = <<~DIFF
+      From 1ed13eda266a3e0a5a8624e79ae28874ebcdeb5c Mon Sep 17 00:00:00 2001
+      From: test <none@none>
+      Date: Thu, 30 Apr 2020 11:40:20 +0900
+      Subject: [PATCH] add 'rpm -q git' and its result
+      
+      ---
+       test.txt | 2 ++
+       1 file changed, 2 insertions(+)
+
+      diff --git a/test.txt b/test.txt
+      index 0a406b9..c39ee31 100644
+      --- a/test.txt
+      +++ b/test.txt
+      @@ -6,3 +6,5 @@ $ hg add test.txt
+       $ hg commit -m `echo -e "U+1F603\U1F603"` -u `echo -e "U+1F603\U1F603"`
+       $ hg bookmark master
+       $ hg push ../git_utf8_repository
+      +$ rpm -q git
+      +git-1.8.3.1-21.el7_7.x86_64
+      -- 
+      1.8.3.1
+      
+    DIFF
+    lines = raw.split("\n")
+    lines << ""
+    assert_equal '', lines[-1]
+    body_lines = lines[0..-4]
+    footer_lines = lines[-3..-1]
+    assert_equal '+git-1.8.3.1-21.el7_7.x86_64', body_lines[-1]
+    assert_equal '-- ', footer_lines[0]
+    assert_equal '', footer_lines[-1]
+    diff = Redmine::UnifiedDiff.new(body_lines.join("\n") + "\n", :type => 'sbs')
+
+    diff_size = diff.size
+    diff_0_size = diff[0].size
+    assert_equal 1, diff_size
+    assert_equal 5, diff_0_size
+
+    diff = Redmine::UnifiedDiff.new("test\n", :type => 'sbs')
+    assert_equal 0, diff.size
+    diff = Redmine::UnifiedDiff.new("test\ntest\n", :type => 'sbs')
+    assert_equal 0, diff.size
+
+    diff = Redmine::UnifiedDiff.new(raw, :type => 'sbs')
+    assert_equal diff_size, diff.size
+    assert_equal diff_0_size, diff[0].size
+
+    diff = Redmine::UnifiedDiff.new(raw + "\n\n\n\n", :type => 'sbs')
+    assert_equal diff_size, diff.size
+    assert_equal diff_0_size, diff[0].size
   end
 
   private

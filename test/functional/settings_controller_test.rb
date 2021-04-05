@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -141,10 +141,14 @@ class SettingsControllerTest < Redmine::ControllerTest
       }
     }
     assert_redirected_to '/settings'
-    assert_equal([
-      {"keywords" => "resolves", "status_id" => "3"},
-      {"keywords" => "closes", "status_id" => "5", "done_ratio" => "100", "if_tracker_id" => "2"}
-    ], Setting.commit_update_keywords)
+    assert_equal(
+      [
+        {"keywords" => "resolves", "status_id" => "3"},
+        {"keywords" => "closes", "status_id" => "5",
+         "done_ratio" => "100", "if_tracker_id" => "2"}
+      ],
+      Setting.commit_update_keywords
+    )
   end
 
   def test_post_edit_with_invalid_setting_should_not_error
@@ -207,8 +211,10 @@ class SettingsControllerTest < Redmine::ControllerTest
     get :plugin, :params => {:id => 'foo'}
     assert_response :success
 
-    assert_select 'form[action="/settings/plugin/foo"]' do
-      assert_select 'input[name=?][value=?]', 'settings[sample_setting]', 'Plugin setting value'
+    assert_select '#settings.plugin.plugin-foo' do
+      assert_select 'form[action="/settings/plugin/foo"]' do
+        assert_select 'input[name=?][value=?]', 'settings[sample_setting]', 'Plugin setting value'
+      end
     end
   ensure
     Redmine::Plugin.unregister(:foo)

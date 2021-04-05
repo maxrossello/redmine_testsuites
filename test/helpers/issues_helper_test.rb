@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -117,12 +117,13 @@ class IssuesHelperTest < Redmine::HelperTest
   end
 
   test 'show_detail with a start_date attribute should format the dates' do
-    detail = JournalDetail.new(
-               :property  => 'attr',
-               :old_value => '2010-01-01',
-               :value     => '2010-01-31',
-               :prop_key  => 'start_date'
-            )
+    detail =
+      JournalDetail.new(
+        :property  => 'attr',
+        :old_value => '2010-01-01',
+        :value     => '2010-01-31',
+        :prop_key  => 'start_date'
+      )
     with_settings :date_format => '%m/%d/%Y' do
       assert_match "01/31/2010", show_detail(detail, true)
       assert_match "01/01/2010", show_detail(detail, true)
@@ -130,12 +131,13 @@ class IssuesHelperTest < Redmine::HelperTest
   end
 
   test 'show_detail with a due_date attribute should format the dates' do
-    detail = JournalDetail.new(
-              :property  => 'attr',
-              :old_value => '2010-01-01',
-              :value     => '2010-01-31',
-              :prop_key  => 'due_date'
-            )
+    detail =
+      JournalDetail.new(
+        :property  => 'attr',
+        :old_value => '2010-01-01',
+        :value     => '2010-01-31',
+        :prop_key  => 'due_date'
+      )
     with_settings :date_format => '%m/%d/%Y' do
       assert_match "01/31/2010", show_detail(detail, true)
       assert_match "01/01/2010", show_detail(detail, true)
@@ -326,14 +328,20 @@ class IssuesHelperTest < Redmine::HelperTest
     details << JournalDetail.new(:property => 'cf', :prop_key => field.id.to_s, :old_value => '2', :value => nil)
     details << JournalDetail.new(:property => 'cf', :prop_key => field.id.to_s, :old_value => '3', :value => nil)
 
-    assert_equal [
-      "User Redmine Admin added",
-      "User deleted (Dave Lopper, John Smith)"
-      ], details_to_strings(details, true)
-    assert_equal [
-      "<strong>User</strong> <i>Redmine Admin</i> added",
-      "<strong>User</strong> deleted (<del><i>Dave Lopper, John Smith</i></del>)"
-      ], details_to_strings(details, false)
+    assert_equal(
+      [
+        "User Redmine Admin added",
+        "User deleted (Dave Lopper, John Smith)"
+      ],
+      details_to_strings(details, true)
+    )
+    assert_equal(
+      [
+        "<strong>User</strong> <i>Redmine Admin</i> added",
+        "<strong>User</strong> deleted (<del><i>Dave Lopper, John Smith</i></del>)"
+      ],
+      details_to_strings(details, false)
+    )
   end
 
   def test_find_name_by_reflection_should_return_nil_for_missing_record
@@ -359,5 +367,12 @@ class IssuesHelperTest < Redmine::HelperTest
       issue.save!
       assert_equal '06/06/2019', issue_due_date_details(issue)
     end
+  end
+
+  def test_url_for_new_subtask
+    issue = Issue.find(1)
+    params = {:issue => {:parent_issue_id => issue.id, :tracker_id => issue.tracker.id}}
+    assert_equal new_project_issue_path(issue.project, params),
+                 url_for_new_subtask(issue)
   end
 end

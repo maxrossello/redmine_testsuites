@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -74,14 +74,15 @@ class VersionsControllerTest < Redmine::ControllerTest
   end
 
   def test_index_showing_subprojects_versions
-    @subproject_version = Version.create!(:project => Project.find(3), :name => "Subproject version")
+    version_name = "Subproject version"
+    Version.create!(:project => Project.find(3), :name => version_name)
     get :index, :params => {:project_id => 1, :with_subprojects => 1}
     assert_response :success
 
     # Shared version
     assert_select 'h3', :text => Version.find(4).name
     # Subproject version
-    assert_select 'h3', :text => /Subproject version/
+    assert_select 'h3', :text => /#{version_name}/
   end
 
   def test_index_should_prepend_shared_versions
@@ -228,7 +229,7 @@ class VersionsControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     get :new, :params => {:project_id => '1'}, :xhr => true
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
   end
 
   def test_create
@@ -252,7 +253,7 @@ class VersionsControllerTest < Redmine::ControllerTest
     assert_equal 1, version.project_id
 
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
     assert_include 'test_add_version_from_issue_form', response.body
   end
 
@@ -262,7 +263,7 @@ class VersionsControllerTest < Redmine::ControllerTest
       post :create, :params => {:project_id => '1', :version => {:name => ''}}, :xhr => true
     end
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
   end
 
   def test_get_edit

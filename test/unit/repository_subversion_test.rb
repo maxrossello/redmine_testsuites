@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@ class RepositorySubversionTest < ActiveSupport::TestCase
 
   include Redmine::I18n
 
-  NUM_REV = 11
+  NUM_REV = 12
 
   def setup
     User.current = nil
@@ -37,11 +37,12 @@ class RepositorySubversionTest < ActiveSupport::TestCase
   def test_invalid_url
     set_language_if_valid 'en'
     ['invalid', 'http://', 'svn://', 'svn+ssh://', 'file://'].each do |url|
-      repo = Repository::Subversion.new(
-                            :project      => @project,
-                            :identifier   => 'test',
-                            :url => url
-                          )
+      repo =
+        Repository::Subversion.new(
+          :project      => @project,
+          :identifier   => 'test',
+          :url => url
+        )
       assert !repo.save
       assert_equal ["is invalid"], repo.errors[:url]
     end
@@ -49,11 +50,12 @@ class RepositorySubversionTest < ActiveSupport::TestCase
 
   def test_valid_url
     ['http://valid', 'svn://valid', 'svn+ssh://valid', 'file://valid'].each do |url|
-      repo = Repository::Subversion.new(
-                            :project      => @project,
-                            :identifier   => 'test',
-                            :url => url
-                          )
+      repo =
+        Repository::Subversion.new(
+          :project      => @project,
+          :identifier   => 'test',
+          :url => url
+        )
       assert repo.save
       assert_equal [], repo.errors[:url]
       assert repo.destroy
@@ -98,7 +100,7 @@ class RepositorySubversionTest < ActiveSupport::TestCase
       @project.reload
 
       assert_equal NUM_REV, @repository.changesets.count
-      assert_equal 20, @repository.filechanges.count
+      assert_equal 21, @repository.filechanges.count
       assert_equal 'Initial import.', @repository.changesets.find_by_revision('1').comments
     end
 
@@ -138,11 +140,11 @@ class RepositorySubversionTest < ActiveSupport::TestCase
       # with limit
       changesets = @repository.latest_changesets('', nil, 2)
       assert_equal 2, changesets.size
-      assert_equal @repository.latest_changesets('', nil).slice(0,2), changesets
+      assert_equal @repository.latest_changesets('', nil).slice(0, 2), changesets
 
       # with path
       changesets = @repository.latest_changesets('subversion_test/folder', nil)
-      assert_equal ["10", "9", "7", "6", "5", "2"], changesets.collect(&:revision)
+      assert_equal ["12", "10", "9", "7", "6", "5", "2"], changesets.collect(&:revision)
 
       # with path and revision
       changesets = @repository.latest_changesets('subversion_test/folder', 8)
@@ -163,10 +165,11 @@ class RepositorySubversionTest < ActiveSupport::TestCase
 
     def test_directory_listing_with_square_brackets_in_base
       @project = Project.find(3)
-      @repository = Repository::Subversion.create(
-                          :project => @project,
-                          :url => "file:///#{self.class.repository_path('subversion')}/subversion_test/[folder_with_brackets]")
-
+      @repository =
+        Repository::Subversion.create(
+          :project => @project,
+          :url => "file:///#{self.class.repository_path('subversion')}/subversion_test/[folder_with_brackets]"
+        )
       assert_equal 0, @repository.changesets.count
       @repository.fetch_changesets
       @project.reload
@@ -278,7 +281,7 @@ class RepositorySubversionTest < ActiveSupport::TestCase
       @repository.fetch_changesets
       @project.reload
       assert_equal NUM_REV, @repository.changesets.count
-      changeset = @repository.find_changeset_by_name('11')
+      changeset = @repository.find_changeset_by_name(NUM_REV.to_s)
       assert_nil changeset.next
     end
   else

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,11 +34,12 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
     User.current = nil
     Setting.enabled_scm << 'Filesystem' unless Setting.enabled_scm.include?('Filesystem')
     @project = Project.find(PRJ_ID)
-    @repository = Repository::Filesystem.create(
-                      :project       => @project,
-                      :url           => REPOSITORY_PATH,
-                      :path_encoding => ''
-                      )
+    @repository =
+      Repository::Filesystem.create(
+        :project       => @project,
+        :url           => REPOSITORY_PATH,
+        :path_encoding => ''
+      )
     assert @repository
   end
 
@@ -46,10 +47,13 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
     def test_get_new
       @request.session[:user_id] = 1
       @project.repository.destroy
-      get :new, :params => {
+      get(
+        :new,
+        :params => {
           :project_id => 'subproject1',
           :repository_scm => 'Filesystem'
         }
+      )
       assert_response :success
       assert_select 'select[name=?]', 'repository_scm' do
         assert_select 'option[value=?][selected=selected]', 'Filesystem'
@@ -59,9 +63,12 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
     def test_browse_root
       @repository.fetch_changesets
       @repository.reload
-      get :show, :params => {
+      get(
+        :show,
+        :params => {
           :id => PRJ_ID
         }
+      )
       assert_response :success
 
       assert_select 'table.entries tbody' do
@@ -79,37 +86,46 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
     end
 
     def test_show_no_extension
-      get :entry, :params => {
+      get(
+        :entry,
+        :params => {
           :id => PRJ_ID,
           :repository_id => @repository.id,
           :path => repository_path_hash(['test'])[:param]
         }
+      )
       assert_response :success
       assert_select 'tr#L1 td.line-code', :text => /TEST CAT/
     end
 
     def test_entry_download_no_extension
-      get :raw, :params => {
+      get(
+        :raw,
+        :params => {
           :id => PRJ_ID,
           :repository_id => @repository.id,
           :path => repository_path_hash(['test'])[:param]
         }
+      )
       assert_response :success
-      assert_equal 'application/octet-stream', @response.content_type
+      assert_equal 'application/octet-stream', @response.media_type
     end
 
     def test_show_non_ascii_contents
       with_settings :repositories_encodings => 'UTF-8,EUC-JP' do
-        get :entry, :params => {
+        get(
+          :entry,
+          :params => {
             :id => PRJ_ID,
             :repository_id => @repository.id,
             :path => repository_path_hash(['japanese', 'euc-jp.txt'])[:param]
           }
+        )
         assert_response :success
         assert_select 'tr#L2 td.line-code', :text => /japanese/
         if @ruby19_non_utf8_pass
-          puts "TODO: show repository file contents test fails " +
-               "when Encoding.default_external is not UTF-8. " +
+          puts "TODO: show repository file contents test fails " \
+               "when Encoding.default_external is not UTF-8. " \
                "Current value is '#{Encoding.default_external.to_s}'"
         else
           assert_select 'tr#L3 td.line-code', :text => /日本語/
@@ -120,11 +136,14 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
     def test_show_utf16
       enc = 'UTF-16'
       with_settings :repositories_encodings => enc do
-        get :entry, :params => {
+        get(
+          :entry,
+          :params => {
             :id => PRJ_ID,
             :repository_id => @repository.id,
             :path => repository_path_hash(['japanese', 'utf-16.txt'])[:param]
           }
+        )
         assert_response :success
         assert_select 'tr#L2 td.line-code', :text => /japanese/
       end
@@ -132,13 +151,16 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
 
     def test_show_text_file_should_show_other_if_too_big
       with_settings :file_max_size_displayed => 1 do
-        get :entry, :params => {
+        get(
+          :entry,
+          :params => {
             :id => PRJ_ID,
             :repository_id => @repository.id,
             :path => repository_path_hash(['japanese', 'big-file.txt'])[:param]
           }
+        )
         assert_response :success
-        assert_equal 'text/html', @response.content_type
+        assert_equal 'text/html', @response.media_type
         assert_select 'p.nodata'
       end
     end
@@ -147,9 +169,12 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
       @request.session[:user_id] = 1 # admin
 
       assert_difference 'Repository.count', -1 do
-        delete :destroy, :params => {
+        delete(
+          :destroy,
+          :params => {
             :id => @repository.id
           }
+        )
       end
       assert_response 302
       @project.reload
@@ -159,16 +184,19 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
     def test_destroy_invalid_repository
       @request.session[:user_id] = 1 # admin
       @project.repository.destroy
-      @repository = Repository::Filesystem.create!(
-                      :project       => @project,
-                      :url           => "/invalid",
-                      :path_encoding => ''
-                      )
-
+      @repository =
+        Repository::Filesystem.create!(
+          :project       => @project,
+          :url           => "/invalid",
+          :path_encoding => ''
+        )
       assert_difference 'Repository.count', -1 do
-        delete :destroy, :params => {
+        delete(
+          :destroy,
+          :params => {
             :id => @repository.id
           }
+        )
       end
       assert_response 302
       @project.reload

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -45,18 +45,24 @@ class AdminControllerTest < Redmine::ControllerTest
   end
 
   def test_projects_with_status_filter
-    get :projects, :params => {
+    get(
+      :projects,
+      :params => {
         :status => 1
       }
+    )
     assert_response :success
     assert_select 'tr.project.closed', 0
   end
 
   def test_projects_with_name_filter
-    get :projects, :params => {
+    get(
+      :projects,
+      :params => {
         :name => 'store',
         :status => ''
       }
+    )
     assert_response :success
 
     assert_select 'tr.project td.name', :text => 'OnlineStore'
@@ -65,9 +71,12 @@ class AdminControllerTest < Redmine::ControllerTest
 
   def test_load_default_configuration_data
     delete_configuration_data
-    post :default_configuration, :params => {
+    post(
+      :default_configuration,
+      :params => {
         :lang => 'fr'
       }
+    )
     assert_response :redirect
     assert_nil flash[:error]
     assert IssueStatus.find_by_name('Nouveau')
@@ -76,9 +85,12 @@ class AdminControllerTest < Redmine::ControllerTest
   def test_load_default_configuration_data_should_rescue_error
     delete_configuration_data
     Redmine::DefaultData::Loader.stubs(:load).raises(StandardError.new("Something went wrong"))
-    post :default_configuration, :params => {
+    post(
+      :default_configuration,
+      :params => {
         :lang => 'fr'
       }
+    )
     assert_response :redirect
     assert_not_nil flash[:error]
     assert_match /Something went wrong/, flash[:error]
@@ -166,5 +178,6 @@ class AdminControllerTest < Redmine::ControllerTest
     Tracker.delete_all
     IssueStatus.delete_all
     Enumeration.delete_all
+    Query.delete_all
   end
 end

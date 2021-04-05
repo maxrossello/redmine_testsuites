@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,9 +20,10 @@
 require File.expand_path('../../../../../test_helper', __FILE__)
 
 class Redmine::WikiFormatting::MarkdownFormatterTest < ActionView::TestCase
-  if Object.const_defined?(:Redcarpet)
-
   def setup
+    unless Object.const_defined?(:Redcarpet)
+      skip "Redcarpet is not installed"
+    end
     @formatter = Redmine::WikiFormatting::Markdown::Formatter
   end
 
@@ -173,9 +174,10 @@ class Redmine::WikiFormatting::MarkdownFormatterTest < ActionView::TestCase
   def test_update_section_should_not_escape_pre_content_outside_section
     text = STR_WITH_PRE.join("\n\n")
     replacement = "New text"
-
-    assert_equal [STR_WITH_PRE[0..1], "New text"].flatten.join("\n\n"),
+    assert_equal(
+      [STR_WITH_PRE[0..1], "New text"].flatten.join("\n\n"),
       @formatter.new(text).update_section(3, replacement)
+    )
   end
 
   def test_should_support_underlined_text
@@ -192,6 +194,5 @@ class Redmine::WikiFormatting::MarkdownFormatterTest < ActionView::TestCase
     assert_equal 2, result.size
     assert_equal expected, result.first, "section content did not match"
     assert_equal Digest::MD5.hexdigest(expected), result.last, "section hash did not match"
-  end
   end
 end

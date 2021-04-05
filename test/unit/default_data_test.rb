@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -36,10 +36,11 @@ class DefaultDataTest < ActiveSupport::TestCase
   def test_load
     clear_data
     assert Redmine::DefaultData::Loader::load('en')
-    assert_not_nil DocumentCategory.first
-    assert_not_nil IssuePriority.first
-    assert_not_nil TimeEntryActivity.first
-    assert_not_nil WorkflowTransition.first
+    assert DocumentCategory.exists?
+    assert IssuePriority.exists?
+    assert TimeEntryActivity.exists?
+    assert WorkflowTransition.exists?
+    assert Query.exists?
   end
 
   def test_load_for_all_language
@@ -47,9 +48,10 @@ class DefaultDataTest < ActiveSupport::TestCase
       clear_data
       begin
         assert Redmine::DefaultData::Loader::load(lang, :workflow => false)
-        assert_not_nil DocumentCategory.first
-        assert_not_nil IssuePriority.first
-        assert_not_nil TimeEntryActivity.first
+        assert DocumentCategory.exists?
+        assert IssuePriority.exists?
+        assert TimeEntryActivity.exists?
+        assert Query.exists?
       rescue ActiveRecord::RecordInvalid => e
         assert false, ":#{lang} default data is invalid (#{e.message})."
       end
@@ -62,5 +64,6 @@ class DefaultDataTest < ActiveSupport::TestCase
     IssueStatus.delete_all
     Enumeration.delete_all
     WorkflowRule.delete_all
+    Query.delete_all
   end
 end

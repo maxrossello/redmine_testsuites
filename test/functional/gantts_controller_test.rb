@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,9 +34,12 @@ class GanttsControllerTest < Redmine::ControllerTest
     i2 = Issue.find(2)
     i2.update_attribute(:due_date, 1.month.from_now)
     with_settings :gravatar_enabled => '1' do
-      get :show, :params => {
+      get(
+        :show,
+        :params => {
           :project_id => 1
         }
+      )
     end
     assert_response :success
 
@@ -49,8 +52,14 @@ class GanttsControllerTest < Redmine::ControllerTest
         end
         assert_select 'p.contextual' do
           prev_month, next_month = User.current.today.prev_month, User.current.today.next_month
-          assert_select 'a[accesskey="p"][href=?]', project_gantt_path(:project_id => 1, :month => prev_month.month, :year => prev_month.year)
-          assert_select 'a[accesskey="n"][href=?]', project_gantt_path(:project_id => 1, :month => next_month.month, :year => next_month.year)
+          assert_select(
+            'a[accesskey="p"][href=?]',
+            project_gantt_path(:project_id => 1, :month => prev_month.month, :year => prev_month.year)
+          )
+          assert_select(
+            'a[accesskey="n"][href=?]',
+            project_gantt_path(:project_id => 1, :month => next_month.month, :year => next_month.year)
+          )
         end
         assert_select 'p.buttons'
       end
@@ -73,37 +82,39 @@ class GanttsControllerTest < Redmine::ControllerTest
   end
 
   def test_gantt_at_minimal_zoom
-    get :show, :params => {
+    get(
+      :show,
+      :params => {
         :project_id => 1,
         :zoom => 1
       }
+    )
     assert_response :success
     assert_select 'input[type=hidden][name=zoom][value=?]', '1'
   end
 
   def test_gantt_at_maximal_zoom
-    get :show, :params => {
+    get(
+      :show,
+      :params => {
         :project_id => 1,
         :zoom => 4
       }
+    )
     assert_response :success
     assert_select 'input[type=hidden][name=zoom][value=?]', '4'
   end
 
   def test_gantt_should_work_without_issue_due_dates
     Issue.update_all("due_date = NULL")
-    get :show, :params => {
-        :project_id => 1
-      }
+    get(:show, :params => {:project_id => 1})
     assert_response :success
   end
 
   def test_gantt_should_work_without_issue_and_version_due_dates
     Issue.update_all("due_date = NULL")
     Version.update_all("effective_date = NULL")
-    get :show, :params => {
-        :project_id => 1
-      }
+    get(:show, :params => {:project_id => 1})
     assert_response :success
   end
 
@@ -137,32 +148,38 @@ class GanttsControllerTest < Redmine::ControllerTest
   end
 
   def test_gantt_should_export_to_pdf
-    get :show, :params => {
+    get(
+      :show,
+      :params => {
         :project_id => 1,
+        :months => 1,
         :format => 'pdf'
       }
+    )
     assert_response :success
-    assert_equal 'application/pdf', @response.content_type
+    assert_equal 'application/pdf', @response.media_type
     assert @response.body.starts_with?('%PDF')
   end
 
   def test_gantt_should_export_to_pdf_cross_project
-    get :show, :params => {
-        :format => 'pdf'
-      }
+    get(:show, :params => {:format => 'pdf'})
     assert_response :success
-    assert_equal 'application/pdf', @response.content_type
+    assert_equal 'application/pdf', @response.media_type
     assert @response.body.starts_with?('%PDF')
   end
 
-  if Object.const_defined?(:MiniMagick)
+  if Object.const_defined?(:MiniMagick) && convert_installed?
     def test_gantt_should_export_to_png
-      get :show, :params => {
+      get(
+        :show,
+        :params => {
           :project_id => 1,
+          :zoom => 4,
           :format => 'png'
         }
+      )
       assert_response :success
-      assert_equal 'image/png', @response.content_type
+      assert_equal 'image/png', @response.media_type
     end
   end
 
@@ -170,21 +187,27 @@ class GanttsControllerTest < Redmine::ControllerTest
     with_settings :gantt_months_limit => '40' do
       # `months` parameter can be less than or equal to
       # `Setting.gantt_months_limit`
-      get :show, :params => {
-        :project_id => 1,
-        :zoom => 4,
-        :months => 40
-      }
+      get(
+        :show,
+        :params => {
+          :project_id => 1,
+          :zoom => 4,
+          :months => 40
+        }
+      )
       assert_response :success
       assert_select 'div.gantt_hdr>a', :text => /^[\d-]+$/, :count => 40
 
       # Displays 6 months (the default value for `months`) if `months` exceeds
       # gant_months_limit
-      get :show, :params => {
-        :project_id => 1,
-        :zoom => 4,
-        :months => 41
-      }
+      get(
+        :show,
+        :params => {
+          :project_id => 1,
+          :zoom => 4,
+          :months => 41
+        }
+      )
       assert_response :success
       assert_select 'div.gantt_hdr>a', :text => /^[\d-]+$/, :count => 6
     end

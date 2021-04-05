@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -31,8 +31,6 @@ class QueryTest < ActiveSupport::TestCase
            :custom_fields_trackers,
            :workflows, :journals,
            :attachments, :time_entries
-
-  INTEGER_KLASS = RUBY_VERSION >= "2.4" ? Integer : Fixnum
 
   def setup
     User.current = nil
@@ -73,9 +71,9 @@ class QueryTest < ActiveSupport::TestCase
   def test_available_filters_with_custom_fields_should_be_ordered
     set_language_if_valid 'en'
     UserCustomField.create!(
-              :name => 'order test', :field_format => 'string',
-              :is_for_all => true, :is_filter => true
-            )
+      :name => 'order test', :field_format => 'string',
+      :is_for_all => true, :is_filter => true
+    )
     query = IssueQuery.new
     expected_order = [
       "Searchable field",
@@ -144,9 +142,8 @@ class QueryTest < ActiveSupport::TestCase
   end
 
   def find_issues_with_query(query)
-    Issue.joins(:status, :tracker, :project, :priority).where(
-         query.statement
-       ).to_a
+    Issue.joins(:status, :tracker, :project, :priority).
+      where(query.statement).to_a
   end
 
   def assert_find_issues_with_query_is_successful(query)
@@ -277,35 +274,35 @@ class QueryTest < ActiveSupport::TestCase
     query.add_filter("issue_id", '=', ['1,3'])
     issues = find_issues_with_query(query)
     assert_equal 2, issues.size
-    assert_equal [1,3], issues.map(&:id).sort
+    assert_equal [1, 3], issues.map(&:id).sort
   end
 
   def test_operator_is_on_parent_id_should_accept_comma_separated_values
-    Issue.where(:id => [2,4]).update_all(:parent_id => 1)
+    Issue.where(:id => [2, 4]).update_all(:parent_id => 1)
     Issue.where(:id => 5).update_all(:parent_id => 3)
     query = IssueQuery.new(:name => '_')
     query.add_filter("parent_id", '=', ['1,3'])
     issues = find_issues_with_query(query)
     assert_equal 3, issues.size
-    assert_equal [2,4,5], issues.map(&:id).sort
+    assert_equal [2, 4, 5], issues.map(&:id).sort
   end
 
   def test_operator_is_on_child_id_should_accept_comma_separated_values
-    Issue.where(:id => [2,4]).update_all(:parent_id => 1)
+    Issue.where(:id => [2, 4]).update_all(:parent_id => 1)
     Issue.where(:id => 5).update_all(:parent_id => 3)
     query = IssueQuery.new(:name => '_')
     query.add_filter("child_id", '=', ['2,4,5'])
     issues = find_issues_with_query(query)
     assert_equal 2, issues.size
-    assert_equal [1,3], issues.map(&:id).sort
+    assert_equal [1, 3], issues.map(&:id).sort
   end
 
   def test_operator_between_on_issue_id_should_return_range
     query = IssueQuery.new(:name => '_')
-    query.add_filter("issue_id", '><', ['2','3'])
+    query.add_filter("issue_id", '><', ['2', '3'])
     issues = find_issues_with_query(query)
     assert_equal 2, issues.size
-    assert_equal [2,3], issues.map(&:id).sort
+    assert_equal [2, 3], issues.map(&:id).sort
   end
 
   def test_operator_is_on_integer_custom_field
@@ -421,8 +418,6 @@ class QueryTest < ActiveSupport::TestCase
     issues = find_issues_with_query(query)
     assert issues.any?
     assert_nil issues.detect {|issue| !issue.is_private?}
-  ensure
-    User.current = nil
   end
 
   def test_operator_is_not_on_is_private_field
@@ -436,8 +431,6 @@ class QueryTest < ActiveSupport::TestCase
     issues = find_issues_with_query(query)
     assert issues.any?
     assert_nil issues.detect {|issue| issue.is_private?}
-  ensure
-    User.current = nil
   end
 
   def test_operator_greater_than
@@ -667,7 +660,7 @@ class QueryTest < ActiveSupport::TestCase
     query.add_filter('due_date', 'nd', [''])
     issues = find_issues_with_query(query)
     assert_include issue, issues
-    other_issues.each {|i| assert_not_include i, issues }
+    other_issues.each {|i| assert_not_include i, issues}
   end
 
   def test_operator_date_periods
@@ -695,7 +688,7 @@ class QueryTest < ActiveSupport::TestCase
     query.add_filter('subject', '~', ['cdeF'])
     result = find_issues_with_query(query)
     assert_include issue, result
-    result.each {|issue| assert issue.subject.downcase.include?('cdef') }
+    result.each {|issue| assert issue.subject.downcase.include?('cdef')}
   end
 
   def test_operator_contains_with_utf8_string
@@ -789,11 +782,21 @@ class QueryTest < ActiveSupport::TestCase
       i1 = Issue.generate!(:project_id => 1, :tracker_id => 1, :assigned_to => user)
       i2 = Issue.generate!(:project_id => 1, :tracker_id => 1, :assigned_to => group)
       i3 = Issue.generate!(:project_id => 1, :tracker_id => 1, :assigned_to => other_group)
-
-      query = IssueQuery.new(:name => '_', :filters => { 'assigned_to_id' => {:operator => '=', :values => ['me']}})
+      query =
+        IssueQuery.new(
+          :name => '_',
+          :filters => {
+            'assigned_to_id' => {
+              :operator => '=',
+              :values => ['me']
+            }
+          }
+        )
       result = query.issues
-      assert_equal Issue.visible.where(:assigned_to_id => ([2] + user.reload.group_ids)).sort_by(&:id), result.sort_by(&:id)
-
+      assert_equal(
+        Issue.visible.where(:assigned_to_id => ([2] + user.reload.group_ids)).sort_by(&:id),
+        result.sort_by(&:id)
+      )
       assert result.include?(i1)
       assert result.include?(i2)
       assert !result.include?(i3)
@@ -898,7 +901,7 @@ class QueryTest < ActiveSupport::TestCase
     assert_not_nil filter
     assert_include 'me', filter[:values].map{|v| v[1]}
 
-    query.filters = { "cf_#{cf.id}" => {:operator => '=', :values => ['me']}}
+    query.filters = {"cf_#{cf.id}" => {:operator => '=', :values => ['me']}}
     result = query.issues
     assert_equal 1, result.size
     assert_equal issue1, result.first
@@ -906,7 +909,16 @@ class QueryTest < ActiveSupport::TestCase
 
   def test_filter_on_me_by_anonymous_user
     User.current = nil
-    query = IssueQuery.new(:name => '_', :filters => { 'assigned_to_id' => {:operator => '=', :values => ['me']}})
+    query =
+      IssueQuery.new(
+        :name => '_',
+        :filters => {
+          'assigned_to_id' => {
+            :operator => '=',
+            :values => ['me']
+          }
+        }
+      )
     assert_equal [], query.issues
   end
 
@@ -917,7 +929,7 @@ class QueryTest < ActiveSupport::TestCase
     assert_not_nil filter
     assert_include 'mine', filter[:values].map{|v| v[1]}
 
-    query.filters = { 'project_id' => {:operator => '=', :values => ['mine']}}
+    query.filters = {'project_id' => {:operator => '=', :values => ['mine']}}
     result = query.issues
     assert_nil result.detect {|issue| !User.current.member_of?(issue.project)}
   end
@@ -929,10 +941,10 @@ class QueryTest < ActiveSupport::TestCase
     assert_not_nil filter
     assert_include 'bookmarks', filter[:values].map{|v| v[1]}
 
-    query.filters = { 'id' => {:operator => '=', :values => ['bookmarks']}}
+    query.filters = {'id' => {:operator => '=', :values => ['bookmarks']}}
     result = query.results_scope
 
-    assert_equal [1,5], result.map(&:id).sort
+    assert_equal [1, 5], result.map(&:id).sort
   end
 
   def test_filter_my_bookmarks_for_user_without_bookmarked_projects
@@ -950,7 +962,7 @@ class QueryTest < ActiveSupport::TestCase
     assert_not_nil filter
     assert_include 'mine', filter[:values].map{|v| v[1]}
 
-    query.filters = { 'parent_id' => {:operator => '=', :values => ['mine']}}
+    query.filters = {'parent_id' => {:operator => '=', :values => ['mine']}}
     result = query.results_scope
 
     my_projects = User.current.memberships.map(&:project_id)
@@ -964,7 +976,7 @@ class QueryTest < ActiveSupport::TestCase
     assert_not_nil filter
     assert_include 'bookmarks', filter[:values].map{|v| v[1]}
 
-    query.filters = { 'parent_id' => {:operator => '=', :values => ['bookmarks']}}
+    query.filters = {'parent_id' => {:operator => '=', :values => ['bookmarks']}}
     result = query.results_scope
 
     bookmarks = User.current.bookmarked_project_ids
@@ -973,22 +985,60 @@ class QueryTest < ActiveSupport::TestCase
 
   def test_filter_watched_issues
     User.current = User.find(1)
-    query = IssueQuery.new(:name => '_', :filters => { 'watcher_id' => {:operator => '=', :values => ['me']}})
+    query =
+      IssueQuery.new(
+        :name => '_',
+        :filters => {
+          'watcher_id' => {
+            :operator => '=',
+            :values => ['me']
+          }
+        }
+      )
     result = find_issues_with_query(query)
     assert_not_nil result
     assert !result.empty?
     assert_equal Issue.visible.watched_by(User.current).sort_by(&:id), result.sort_by(&:id)
-    User.current = nil
+  end
+
+  def test_filter_watched_issues_with_groups_also
+    user = User.find(2)
+    group = Group.find(10)
+    group.users << user
+    Issue.find(3).add_watcher(user)
+    Issue.find(7).add_watcher(group)
+    User.current = user
+    query =
+      IssueQuery.new(
+        :name => '_',
+        :filters => {
+          'watcher_id' => {
+            :operator => '=',
+            :values => ['me']
+          }
+        }
+      )
+    result = find_issues_with_query(query)
+    assert_not_nil result
+    assert !result.empty?
+    assert_equal [3, 7], result.sort_by(&:id).pluck(:id)
   end
 
   def test_filter_unwatched_issues
     User.current = User.find(1)
-    query = IssueQuery.new(:name => '_', :filters => { 'watcher_id' => {:operator => '!', :values => ['me']}})
+    query =
+      IssueQuery.new(
+        :name => '_',
+        :filters => {
+          'watcher_id' => {
+            :operator => '!', :values => ['me']
+          }
+        }
+      )
     result = find_issues_with_query(query)
     assert_not_nil result
     assert !result.empty?
     assert_equal((Issue.visible - Issue.watched_by(User.current)).sort_by(&:id).size, result.sort_by(&:id).size)
-    User.current = nil
   end
 
   def test_filter_on_watched_issues_with_view_issue_watchers_permission
@@ -998,13 +1048,19 @@ class QueryTest < ActiveSupport::TestCase
 
     Issue.find(1).add_watcher User.current
     Issue.find(3).add_watcher User.find(3)
-    query = IssueQuery.new(:name => '_', :filters => { 'watcher_id' => {:operator => '=', :values => ['me', '3']}})
+    query =
+      IssueQuery.new(
+        :name => '_',
+        :filters => {
+          'watcher_id' => {
+            :operator => '=',
+            :values => ['me', '3']
+          }
+        }
+      )
     result = find_issues_with_query(query)
     assert_includes result, Issue.find(1)
     assert_includes result, Issue.find(3)
-  ensure
-    User.current.reload
-    User.current = nil
   end
 
   def test_filter_on_watched_issues_without_view_issue_watchers_permission
@@ -1014,19 +1070,31 @@ class QueryTest < ActiveSupport::TestCase
 
     Issue.find(1).add_watcher User.current
     Issue.find(3).add_watcher User.find(3)
-    query = IssueQuery.new(:name => '_', :filters => { 'watcher_id' => {:operator => '=', :values => ['me', '3']}})
+    query =
+      IssueQuery.new(
+        :name => '_',
+        :filters => {
+          'watcher_id' => {
+            :operator => '=',
+            :values => ['me', '3']
+          }
+        }
+      )
     result = find_issues_with_query(query)
     assert_includes result, Issue.find(1)
     assert_not_includes result, Issue.find(3)
-  ensure
-    User.current.reload
-    User.current = nil
   end
 
   def test_filter_on_custom_field_should_ignore_projects_with_field_disabled
-    field = IssueCustomField.generate!(:trackers => Tracker.all, :project_ids => [1, 3, 4], :is_for_all => false, :is_filter => true)
-    Issue.generate!(:project_id => 3, :tracker_id => 2, :custom_field_values => {field.id.to_s => 'Foo'})
-    Issue.generate!(:project_id => 4, :tracker_id => 2, :custom_field_values => {field.id.to_s => 'Foo'})
+    field =
+      IssueCustomField.generate!(
+        :trackers => Tracker.all, :project_ids => [1, 3, 4],
+        :is_for_all => false, :is_filter => true
+      )
+    Issue.generate!(:project_id => 3, :tracker_id => 2,
+                    :custom_field_values => {field.id.to_s => 'Foo'})
+    Issue.generate!(:project_id => 4, :tracker_id => 2,
+                    :custom_field_values => {field.id.to_s => 'Foo'})
 
     query = IssueQuery.new(:name => '_', :project => Project.find(1))
     query.filters = {"cf_#{field.id}" => {:operator => '=', :values => ['Foo']}}
@@ -1273,7 +1341,7 @@ class QueryTest < ActiveSupport::TestCase
     IssueRelation.create!(relation_type: 'relates', issue_from: Issue.find(2), issue_to: Issue.find(3))
 
     query = IssueQuery.new(:name => '_')
-    query.filters = { 'relates' => { operator: '!o', values: [''] } }
+    query.filters = {'relates' => {:operator => '!o', :values => ['']}}
     ids = find_issues_with_query(query).map(&:id)
     assert_equal [], ids & [2]
     assert_include 1, ids
@@ -1533,8 +1601,8 @@ class QueryTest < ActiveSupport::TestCase
 
       issues = q.issues.sort_by(&:id)
       assert issues.all? {|issue| !issue.instance_variable_get("@last_updated_by").nil?}
-      assert_equal ["User", "User", "NilClass"], issues.map { |i| i.last_updated_by.class.name}
-      assert_equal ["John Smith", "John Smith", ""], issues.map { |i| i.last_updated_by.to_s }
+      assert_equal ["User", "User", "NilClass"], issues.map {|i| i.last_updated_by.class.name}
+      assert_equal ["John Smith", "John Smith", ""], issues.map {|i| i.last_updated_by.to_s}
     end
   end
 
@@ -1562,15 +1630,21 @@ class QueryTest < ActiveSupport::TestCase
   end
 
   def test_groupable_columns_should_include_user_custom_fields
-    cf = IssueCustomField.create!(:name => 'User', :is_for_all => true, :tracker_ids => [1], :field_format => 'user')
-
+    cf =
+      IssueCustomField.create!(
+        :name => 'User', :is_for_all => true, :tracker_ids => [1],
+        :field_format => 'user'
+      )
     q = IssueQuery.new
     assert q.groupable_columns.detect {|c| c.name == "cf_#{cf.id}".to_sym}
   end
 
   def test_groupable_columns_should_include_version_custom_fields
-    cf = IssueCustomField.create!(:name => 'User', :is_for_all => true, :tracker_ids => [1], :field_format => 'version')
-
+    cf =
+      IssueCustomField.create!(
+        :name => 'User', :is_for_all => true,
+        :tracker_ids => [1], :field_format => 'version'
+      )
     q = IssueQuery.new
     assert q.groupable_columns.detect {|c| c.name == "cf_#{cf.id}".to_sym}
   end
@@ -1613,7 +1687,10 @@ class QueryTest < ActiveSupport::TestCase
       q.sort_criteria = [['last_updated_by', 'desc']]
 
       assert q.sortable_columns.has_key?('last_updated_by')
-      assert_equal %w(last_journal_user.lastname last_journal_user.firstname last_journal_user.id), q.sortable_columns['last_updated_by']
+      assert_equal(
+        %w(last_journal_user.lastname last_journal_user.firstname last_journal_user.id),
+        q.sortable_columns['last_updated_by']
+      )
     end
   end
 
@@ -1647,7 +1724,10 @@ class QueryTest < ActiveSupport::TestCase
 
   def test_sort_criteria_should_have_only_first_three_elements
     q = IssueQuery.new
-    q.sort_criteria = [['priority', 'desc'], ['tracker', 'asc'], ['priority', 'asc'], ['id', 'asc'], ['project', 'asc'], ['subject', 'asc']]
+    q.sort_criteria = [
+      ['priority', 'desc'], ['tracker', 'asc'], ['priority', 'asc'],
+      ['id', 'asc'], ['project', 'asc'], ['subject', 'asc']
+    ]
     assert_equal [['priority', 'desc'], ['tracker', 'asc'], ['id', 'asc']], q.sort_criteria
   end
 
@@ -1679,7 +1759,10 @@ class QueryTest < ActiveSupport::TestCase
 
   def test_sort_by_string_custom_field_asc
     q = IssueQuery.new
-    c = q.available_columns.find {|col| col.is_a?(QueryCustomFieldColumn) && col.custom_field.field_format == 'string' }
+    c =
+      q.available_columns.find do |col|
+        col.is_a?(QueryCustomFieldColumn) && col.custom_field.field_format == 'string'
+      end
     assert c
     assert c.sortable
     q.sort_criteria = [[c.name.to_s, 'asc']]
@@ -1691,7 +1774,10 @@ class QueryTest < ActiveSupport::TestCase
 
   def test_sort_by_string_custom_field_desc
     q = IssueQuery.new
-    c = q.available_columns.find {|col| col.is_a?(QueryCustomFieldColumn) && col.custom_field.field_format == 'string' }
+    c =
+      q.available_columns.find do |col|
+        col.is_a?(QueryCustomFieldColumn) && col.custom_field.field_format == 'string'
+      end
     assert c
     assert c.sortable
     q.sort_criteria = [[c.name.to_s, 'desc']]
@@ -1703,12 +1789,22 @@ class QueryTest < ActiveSupport::TestCase
 
   def test_sort_by_float_custom_field_asc
     q = IssueQuery.new
-    c = q.available_columns.find {|col| col.is_a?(QueryCustomFieldColumn) && col.custom_field.field_format == 'float' }
+    c =
+      q.available_columns.find do |col|
+        col.is_a?(QueryCustomFieldColumn) && col.custom_field.field_format == 'float'
+      end
     assert c
     assert c.sortable
     q.sort_criteria = [[c.name.to_s, 'asc']]
     issues = q.issues
-    values = issues.collect {|i| begin; Kernel.Float(i.custom_value_for(c.custom_field).to_s); rescue; nil; end}.compact
+    values =
+      issues.collect do |i|
+        begin
+          Kernel.Float(i.custom_value_for(c.custom_field).to_s)
+        rescue
+          nil
+        end
+      end.compact
     assert !values.empty?
     assert_equal values.sort, values
   end
@@ -1721,7 +1817,7 @@ class QueryTest < ActiveSupport::TestCase
 
     q = IssueQuery.new(
       :name => '_',
-      :filters => { 'updated_on' => {:operator => 't', :values => ['']} },
+      :filters => {'updated_on' => {:operator => 't', :values => ['']}},
       :group_by => 'updated_on',
       :sort_criteria => [['subject', 'asc']]
     )
@@ -1759,7 +1855,7 @@ class QueryTest < ActiveSupport::TestCase
 
     q = IssueQuery.new(
       :name => '_',
-      :filters => { 'issue_id' => {:operator => '=', :values => ['1,7']} },
+      :filters => {'issue_id' => {:operator => '=', :values => ['1,7']}},
       :sort_criteria => [['total_estimated_hours', 'asc']]
     )
 
@@ -1952,7 +2048,7 @@ class QueryTest < ActiveSupport::TestCase
     p = Project.generate! do |project|
       project.status = Project::STATUS_ARCHIVED
     end
-    i = Issue.generate!( :project => p, :tracker => p.trackers.first )
+    i = Issue.generate!(:project => p, :tracker => p.trackers.first)
     assert !i.visible?
 
     test_issue_count
@@ -1963,7 +2059,7 @@ class QueryTest < ActiveSupport::TestCase
     count_by_group = q.result_count_by_group
     assert_kind_of Hash, count_by_group
     assert_equal %w(NilClass User), count_by_group.keys.collect {|k| k.class.name}.uniq.sort
-    assert_equal %W(#{INTEGER_KLASS}), count_by_group.values.collect {|k| k.class.name}.uniq
+    assert_equal %w(Integer), count_by_group.values.collect {|k| k.class.name}.uniq
     assert count_by_group.has_key?(User.find(3))
   end
 
@@ -1972,7 +2068,7 @@ class QueryTest < ActiveSupport::TestCase
     count_by_group = q.result_count_by_group
     assert_kind_of Hash, count_by_group
     assert_equal %w(NilClass String), count_by_group.keys.collect {|k| k.class.name}.uniq.sort
-    assert_equal %W(#{INTEGER_KLASS}), count_by_group.values.collect {|k| k.class.name}.uniq
+    assert_equal %w(Integer), count_by_group.values.collect {|k| k.class.name}.uniq
     assert count_by_group.has_key?('MySQL')
   end
 
@@ -1981,7 +2077,7 @@ class QueryTest < ActiveSupport::TestCase
     count_by_group = q.result_count_by_group
     assert_kind_of Hash, count_by_group
     assert_equal %w(Date NilClass), count_by_group.keys.collect {|k| k.class.name}.uniq.sort
-    assert_equal %W(#{INTEGER_KLASS}), count_by_group.values.collect {|k| k.class.name}.uniq
+    assert_equal %w(Integer), count_by_group.values.collect {|k| k.class.name}.uniq
   end
 
   def test_issue_count_with_nil_group_only
@@ -2089,7 +2185,7 @@ class QueryTest < ActiveSupport::TestCase
   end
 
   def test_query_with_roles_visibility_should_be_visible_to_user_with_role
-    q = IssueQuery.create!(:name => 'Query', :visibility => IssueQuery::VISIBILITY_ROLES, :role_ids => [1,2])
+    q = IssueQuery.create!(:name => 'Query', :visibility => IssueQuery::VISIBILITY_ROLES, :role_ids => [1, 2])
 
     assert !q.visible?(User.anonymous)
     assert_nil IssueQuery.visible(User.anonymous).find_by_id(q.id)
@@ -2126,15 +2222,21 @@ class QueryTest < ActiveSupport::TestCase
   end
 
   def test_build_from_params_should_not_update_query_with_nil_param_values
-    q = IssueQuery.create!(:name => 'Query',
-                           :type => "IssueQuery",
-                           :user => User.find(7),
-                           :filters => {"status_id" => {:values => ["1"], :operator => "o"}},
-                           :column_names => [:tracker, :status],
-                           :sort_criteria => ['id', 'asc'],
-                           :group_by => "project",
-                           :options => { :totalable_names=>[:estimated_hours], :draw_relations => '1', :draw_progress_line => '1' }
-                            )
+    q =
+      IssueQuery.create!(
+        :name => 'Query',
+        :type => "IssueQuery",
+        :user => User.find(7),
+        :filters => {"status_id" => {:values => ["1"], :operator => "o"}},
+        :column_names => [:tracker, :status],
+        :sort_criteria => ['id', 'asc'],
+        :group_by => "project",
+        :options => {
+          :totalable_names=>[:estimated_hours],
+          :draw_relations => '1',
+          :draw_progress_line => '1'
+        }
+      )
     old_attributes = q.attributes
     q.build_from_params({})
     assert_equal old_attributes, q.attributes
@@ -2177,12 +2279,12 @@ class QueryTest < ActiveSupport::TestCase
     assert query.available_filters.key?("assigned_to_role")
     assert_equal :list_optional, query.available_filters["assigned_to_role"][:type]
 
-    assert query.available_filters["assigned_to_role"][:values].include?(['Manager','1'])
-    assert query.available_filters["assigned_to_role"][:values].include?(['Developer','2'])
-    assert query.available_filters["assigned_to_role"][:values].include?(['Reporter','3'])
+    assert query.available_filters["assigned_to_role"][:values].include?(['Manager', '1'])
+    assert query.available_filters["assigned_to_role"][:values].include?(['Developer', '2'])
+    assert query.available_filters["assigned_to_role"][:values].include?(['Reporter', '3'])
 
-    assert ! query.available_filters["assigned_to_role"][:values].include?(['Non member','4'])
-    assert ! query.available_filters["assigned_to_role"][:values].include?(['Anonymous','5'])
+    assert ! query.available_filters["assigned_to_role"][:values].include?(['Non member', '4'])
+    assert ! query.available_filters["assigned_to_role"][:values].include?(['Anonymous', '5'])
   end
 
   def test_available_filters_should_include_custom_field_according_to_user_visibility
@@ -2465,7 +2567,7 @@ class QueryTest < ActiveSupport::TestCase
     WorkflowTransition.create(:role_id => 1, :tracker_id => 1, :old_status_id => 2, :new_status_id => 3)
     WorkflowTransition.create(:role_id => 1, :tracker_id => 2, :old_status_id => 1, :new_status_id => 3)
 
-    assert_equal ['1','2','3','4'], query.available_filters['status_id'][:values].map(&:second)
+    assert_equal ['1', '2', '3', '4'], query.available_filters['status_id'][:values].map(&:second)
   end
 
   def test_issue_statuses_without_project_should_return_all_statuses
@@ -2478,7 +2580,7 @@ class QueryTest < ActiveSupport::TestCase
     WorkflowTransition.create(:role_id => 1, :tracker_id => 1, :old_status_id => 2, :new_status_id => 3)
     WorkflowTransition.create(:role_id => 1, :tracker_id => 2, :old_status_id => 1, :new_status_id => 3)
 
-    assert_equal ['1','2','3','4','5','6'], query.available_filters['status_id'][:values].map(&:second)
+    assert_equal ['1', '2', '3', '4', '5', '6'], query.available_filters['status_id'][:values].map(&:second)
   end
 
   def test_project_status_filter_should_be_available_in_global_queries

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -75,9 +75,38 @@ class ChangesetTest < ActiveSupport::TestCase
     assert_equal [1, 2], c.issue_ids.sort
   end
 
+  def test_project_specific_activity
+    project = Project.find 1
+    activity = TimeEntryActivity.find 9
+
+    Setting.commit_ref_keywords = '*'
+    Setting.commit_logtime_enabled = '1'
+    Setting.commit_logtime_activity_id = activity.id
+
+    project_specific_activity = TimeEntryActivity.create!(
+      name: activity.name,
+      parent_id: activity.id,
+      position: activity.position,
+      project_id: project.id
+    )
+
+    c = Changeset.new(:repository   => project.repository,
+                      :committed_on => 24.hours.ago,
+                      :comments     => "Worked on this issue #1 @8h",
+                      :revision     => '520',
+                      :user         => User.find(2))
+    assert_difference 'TimeEntry.count' do
+      c.scan_comment_for_issue_ids
+    end
+
+    time = TimeEntry.order('id desc').first
+    assert_equal project_specific_activity, time.activity
+  end
+
   def test_ref_keywords_any_with_timelog
     Setting.commit_ref_keywords = '*'
     Setting.commit_logtime_enabled = '1'
+    Setting.commit_logtime_activity_id = 9
 
     {
       '2' => 2.0,
@@ -108,12 +137,16 @@ class ChangesetTest < ActiveSupport::TestCase
       assert_equal 1, time.issue_id
       assert_equal 1, time.project_id
       assert_equal 2, time.user_id
-      assert_equal expected_hours, time.hours,
-          "@#{syntax} should be logged as #{expected_hours} hours but was #{time.hours}"
+      assert_equal(
+        expected_hours, time.hours,
+        "@#{syntax} should be logged as #{expected_hours} hours but was #{time.hours}"
+      )
       assert_equal Date.yesterday, time.spent_on
-      assert time.activity.is_default?
-      assert time.comments.include?('r520'),
-            "r520 was expected in time_entry comments: #{time.comments}"
+      assert_equal 9, time.activity_id
+      assert(
+        time.comments.include?('r520'),
+        "r520 was expected in time_entry comments: #{time.comments}"
+      )
     end
   end
 
@@ -166,7 +199,7 @@ class ChangesetTest < ActiveSupport::TestCase
                       :comments     => '[#1 #2, #3] Worked on these',
                       :revision     => '12345')
     assert c.save
-    assert_equal [1,2,3], c.issue_ids.sort
+    assert_equal [1, 2, 3], c.issue_ids.sort
   end
 
   def test_ref_keywords_with_large_number_should_not_error
@@ -186,7 +219,11 @@ class ChangesetTest < ActiveSupport::TestCase
 
     with_settings :commit_update_keywords => [{'keywords' => 'fixes', 'status_id' => '3'}] do
       assert_difference 'Journal.count' do
-        c = Changeset.generate!(:repository => Project.find(1).repository,:comments => "Fixes ##{issue.id}")
+        c = Changeset.
+              generate!(
+                :repository => Project.find(1).repository,
+                :comments => "Fixes ##{issue.id}"
+              )
         assert_include c.id, issue.reload.changeset_ids
         journal = Journal.order('id DESC').first
         assert_equal 1, journal.details.count
@@ -196,10 +233,13 @@ class ChangesetTest < ActiveSupport::TestCase
 
   def test_update_keywords_without_change_should_not_create_journal
     issue = Issue.generate!(:project_id => 1, :status_id => 3)
-
     with_settings :commit_update_keywords => [{'keywords' => 'fixes', 'status_id' => '3'}] do
       assert_no_difference 'Journal.count' do
-        c = Changeset.generate!(:repository => Project.find(1).repository,:comments => "Fixes ##{issue.id}")
+        c = Changeset.
+              generate!(
+                :repository => Project.find(1).repository,
+                :comments => "Fixes ##{issue.id}"
+              )
         assert_include c.id, issue.reload.changeset_ids
       end
     end
@@ -292,9 +332,11 @@ class ChangesetTest < ActiveSupport::TestCase
 
   def test_commit_referencing_a_parent_project_issue
     # repository of child project
-    r = Repository::Subversion.create!(
-          :project => Project.find(3),
-          :url     => 'svn://localhost/test')
+    r = Repository::Subversion.
+         create!(
+           :project => Project.find(3),
+           :url     => 'svn://localhost/test'
+         )
     c = Changeset.new(:repository   => r,
                       :committed_on => Time.now,
                       :comments     => 'refs #2, an issue of a parent project',
@@ -305,9 +347,11 @@ class ChangesetTest < ActiveSupport::TestCase
   end
 
   def test_commit_referencing_a_project_with_commit_cross_project_ref_disabled
-    r = Repository::Subversion.create!(
-          :project => Project.find(3),
-          :url     => 'svn://localhost/test')
+    r = Repository::Subversion.
+          create!(
+            :project => Project.find(3),
+            :url     => 'svn://localhost/test'
+          )
     with_settings :commit_cross_project_ref => '0' do
       c = Changeset.new(:repository   => r,
                         :committed_on => Time.now,
@@ -319,9 +363,11 @@ class ChangesetTest < ActiveSupport::TestCase
   end
 
   def test_commit_referencing_a_project_with_commit_cross_project_ref_enabled
-    r = Repository::Subversion.create!(
-          :project => Project.find(3),
-          :url     => 'svn://localhost/test')
+    r = Repository::Subversion.
+          create!(
+            :project => Project.find(3),
+            :url     => 'svn://localhost/test'
+          )
     with_settings :commit_cross_project_ref => '1' do
       c = Changeset.new(:repository   => r,
                         :committed_on => Time.now,
@@ -381,19 +427,23 @@ class ChangesetTest < ActiveSupport::TestCase
   end
 
   def test_text_tag_revision_with_repository_identifier
-    r = Repository::Subversion.create!(
-          :project_id => 1,
-          :url     => 'svn://localhost/test',
-          :identifier => 'documents')
+    r = Repository::Subversion.
+         create!(
+           :project_id => 1,
+           :url     => 'svn://localhost/test',
+           :identifier => 'documents'
+         )
     c = Changeset.new(:revision => '520', :repository => r)
     assert_equal 'documents|r520', c.text_tag
     assert_equal 'ecookbook:documents|r520', c.text_tag(Project.find(2))
   end
 
   def test_text_tag_hash
-    c = Changeset.new(
-          :scmid    => '7234cb2750b63f47bff735edc50a1c0a433c2518',
-          :revision => '7234cb2750b63f47bff735edc50a1c0a433c2518')
+    c = Changeset.
+          new(
+            :scmid    => '7234cb2750b63f47bff735edc50a1c0a433c2518',
+            :revision => '7234cb2750b63f47bff735edc50a1c0a433c2518'
+          )
     assert_equal 'commit:7234cb2750b63f47bff735edc50a1c0a433c2518', c.text_tag
   end
 
@@ -413,10 +463,13 @@ class ChangesetTest < ActiveSupport::TestCase
   end
 
   def test_text_tag_hash_with_repository_identifier
-    r = Repository::Subversion.new(
+    r =
+      Repository::Subversion.
+        new(
           :project_id => 1,
           :url     => 'svn://localhost/test',
-          :identifier => 'documents')
+          :identifier => 'documents'
+        )
     c = Changeset.new(:revision => '7234cb27', :scmid => '7234cb27', :repository => r)
     assert_equal 'commit:documents|7234cb27', c.text_tag
     assert_equal 'ecookbook:commit:documents|7234cb27', c.text_tag(Project.find(2))
@@ -445,10 +498,12 @@ class ChangesetTest < ActiveSupport::TestCase
   def test_comments_should_be_converted_to_utf8
     proj = Project.find(3)
     str = "Texte encod\xe9 en ISO-8859-1.".b
-    r = Repository::Bazaar.create!(
+    r = Repository::Bazaar.
+          create!(
             :project      => proj,
             :url          => '/tmp/test/bazaar',
-            :log_encoding => 'ISO-8859-1' )
+            :log_encoding => 'ISO-8859-1'
+          )
     assert r
     c = Changeset.new(:repository   => r,
                       :committed_on => Time.now,
@@ -462,10 +517,12 @@ class ChangesetTest < ActiveSupport::TestCase
   def test_invalid_utf8_sequences_in_comments_should_be_replaced_latin1
     proj = Project.find(3)
     str2 = "\xe9a\xe9b\xe9c\xe9d\xe9e test".b
-    r = Repository::Bazaar.create!(
+    r = Repository::Bazaar.
+          create!(
             :project      => proj,
             :url          => '/tmp/test/bazaar',
-            :log_encoding => 'UTF-8' )
+            :log_encoding => 'UTF-8'
+          )
     assert r
     c = Changeset.new(:repository   => r,
                       :committed_on => Time.now,
@@ -481,10 +538,12 @@ class ChangesetTest < ActiveSupport::TestCase
   def test_invalid_utf8_sequences_in_comments_should_be_replaced_ja_jis
     proj = Project.find(3)
     str = "test\xb5\xfetest\xb5\xfe".b
-    r = Repository::Bazaar.create!(
+    r = Repository::Bazaar.
+          create!(
             :project      => proj,
             :url          => '/tmp/test/bazaar',
-            :log_encoding => 'ISO-2022-JP' )
+            :log_encoding => 'ISO-2022-JP'
+          )
     assert r
     c = Changeset.new(:repository   => r,
                       :committed_on => Time.now,
@@ -506,10 +565,12 @@ class ChangesetTest < ActiveSupport::TestCase
     s4.force_encoding('UTF-8')
     assert_equal s3.encode('UTF-8'), s4
     proj = Project.find(3)
-    r = Repository::Bazaar.create!(
+    r = Repository::Bazaar.
+          create!(
             :project      => proj,
             :url          => '/tmp/test/bazaar',
-            :log_encoding => 'ISO-8859-1' )
+            :log_encoding => 'ISO-8859-1'
+          )
     assert r
     c = Changeset.new(:repository   => r,
                       :committed_on => Time.now,
@@ -523,24 +584,30 @@ class ChangesetTest < ActiveSupport::TestCase
   def test_invalid_utf8_sequences_in_paths_should_be_replaced
     proj = Project.find(3)
     str2 = "\xe9a\xe9b\xe9c\xe9d\xe9e test".b
-    r = Repository::Bazaar.create!(
+    r = Repository::Bazaar.
+          create!(
             :project => proj,
             :url => '/tmp/test/bazaar',
-            :log_encoding => 'UTF-8' )
+            :log_encoding => 'UTF-8'
+          )
     assert r
-    cs = Changeset.new(
-               :repository   => r,
-               :committed_on => Time.now,
-               :revision     => '123',
-               :scmid        => '12345',
-               :comments     => "test")
+    cs = Changeset.
+           new(
+             :repository   => r,
+             :committed_on => Time.now,
+             :revision     => '123',
+             :scmid        => '12345',
+             :comments     => "test"
+           )
     assert(cs.save)
-    ch = Change.new(
-                  :changeset     => cs,
-                  :action        => "A",
-                  :path          => "Texte encod\xE9 en ISO-8859-1",
-                  :from_path     => str2,
-                  :from_revision => "345")
+    ch = Change.
+           new(
+             :changeset     => cs,
+             :action        => "A",
+             :path          => "Texte encod\xE9 en ISO-8859-1",
+             :from_path     => str2,
+             :from_revision => "345"
+           )
     assert(ch.save)
     assert_equal "Texte encod? en ISO-8859-1", ch.path
     assert_equal "?a?b?c?d?e test", ch.from_path
@@ -548,10 +615,12 @@ class ChangesetTest < ActiveSupport::TestCase
 
   def test_comments_nil
     proj = Project.find(3)
-    r = Repository::Bazaar.create!(
+    r = Repository::Bazaar.
+          create!(
             :project      => proj,
             :url          => '/tmp/test/bazaar',
-            :log_encoding => 'ISO-8859-1' )
+            :log_encoding => 'ISO-8859-1'
+          )
     assert r
     c = Changeset.new(:repository   => r,
                       :committed_on => Time.now,
@@ -567,10 +636,12 @@ class ChangesetTest < ActiveSupport::TestCase
 
   def test_comments_empty
     proj = Project.find(3)
-    r = Repository::Bazaar.create!(
+    r = Repository::Bazaar.
+          create!(
             :project      => proj,
             :url          => '/tmp/test/bazaar',
-            :log_encoding => 'ISO-8859-1' )
+            :log_encoding => 'ISO-8859-1'
+          )
     assert r
     c = Changeset.new(:repository   => r,
                       :committed_on => Time.now,

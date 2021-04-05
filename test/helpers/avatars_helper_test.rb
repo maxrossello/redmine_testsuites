@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -43,7 +43,7 @@ class AvatarsHelperTest < Redmine::HelperTest
   end
 
   def test_avatar_with_group
-    assert_nil avatar(Group.first)
+    assert_match %r{src="/images/group.png(\?\d+)?"}, avatar(Group.first)
   end
 
   def test_avatar_with_invalid_arg_should_return_nil
@@ -52,7 +52,7 @@ class AvatarsHelperTest < Redmine::HelperTest
   end
 
   def test_avatar_default_size_should_be_24
-      assert_include 'size=24', avatar('jsmith <jsmith@somenet.foo>')
+    assert_include 'size=24', avatar('jsmith <jsmith@somenet.foo>')
   end
 
   def test_avatar_with_size_option

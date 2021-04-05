@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,7 +25,10 @@ class RepositoryGitTest < ActiveSupport::TestCase
   include Redmine::I18n
 
   REPOSITORY_PATH = Rails.root.join('tmp/test/git_repository').to_s
-  REPOSITORY_PATH.gsub!(/\//, "\\") if Redmine::Platform.mswin?
+  REPOSITORY_PATH.tr!('/', "\\") if Redmine::Platform.mswin?
+
+  REPOSITORY_UTF8_PATH = Rails.root.join('tmp/test/git_utf8_repository').to_s
+  REPOSITORY_UTF8_PATH.tr!('/', "\\") if Redmine::Platform.mswin?
 
   NUM_REV = 28
   NUM_HEAD = 8
@@ -33,32 +36,35 @@ class RepositoryGitTest < ActiveSupport::TestCase
   def setup
     User.current = nil
     @project = Project.find(3)
-    @repository = Repository::Git.create(
-                        :project       => @project,
-                        :url           => REPOSITORY_PATH,
-                        :path_encoding => 'ISO-8859-1'
-                        )
+    @repository =
+      Repository::Git.create(
+        :project       => @project,
+        :url           => REPOSITORY_PATH,
+        :path_encoding => 'ISO-8859-1'
+      )
     assert @repository
   end
 
   def test_nondefault_repo_with_blank_identifier_destruction
     Repository.delete_all
 
-    repo1 = Repository::Git.new(
-                          :project    => @project,
-                          :url        => REPOSITORY_PATH,
-                          :identifier => '',
-                          :is_default => true
-                        )
+    repo1 =
+      Repository::Git.new(
+        :project    => @project,
+        :url        => REPOSITORY_PATH,
+        :identifier => '',
+        :is_default => true
+      )
     assert repo1.save
     repo1.fetch_changesets
 
-    repo2 = Repository::Git.new(
-                          :project    => @project,
-                          :url        => REPOSITORY_PATH,
-                          :identifier => 'repo2',
-                          :is_default => true
-                    )
+    repo2 =
+      Repository::Git.new(
+        :project    => @project,
+        :url        => REPOSITORY_PATH,
+        :identifier => 'repo2',
+        :is_default => true
+      )
     assert repo2.save
     repo2.fetch_changesets
 
@@ -74,10 +80,11 @@ class RepositoryGitTest < ActiveSupport::TestCase
 
   def test_blank_path_to_repository_error_message
     set_language_if_valid 'en'
-    repo = Repository::Git.new(
-                          :project      => @project,
-                          :identifier   => 'test'
-                        )
+    repo =
+      Repository::Git.new(
+        :project      => @project,
+        :identifier   => 'test'
+      )
     assert !repo.save
     assert_include "Path to repository cannot be blank",
                    repo.errors.full_messages
@@ -85,12 +92,13 @@ class RepositoryGitTest < ActiveSupport::TestCase
 
   def test_blank_path_to_repository_error_message_fr
     set_language_if_valid 'fr'
-    repo = Repository::Git.new(
-                          :project      => @project,
-                          :url          => "",
-                          :identifier   => 'test',
-                          :path_encoding => ''
-                        )
+    repo =
+      Repository::Git.new(
+        :project      => @project,
+        :url          => "",
+        :identifier   => 'test',
+        :path_encoding => ''
+      )
     assert !repo.save
     assert_include 'Chemin du dépôt doit être renseigné(e)', repo.errors.full_messages
   end
@@ -153,19 +161,19 @@ class RepositoryGitTest < ActiveSupport::TestCase
       assert_equal NUM_REV, @repository.changesets.count
       extra_info_heads = @repository.extra_info["heads"].dup
       assert_equal NUM_HEAD, extra_info_heads.size
-      extra_info_heads.delete_if { |x| x == "83ca5fd546063a3c7dc2e568ba3355661a9e2b2c" }
+      extra_info_heads.delete_if {|x| x == "83ca5fd546063a3c7dc2e568ba3355661a9e2b2c"}
       assert_equal NUM_HEAD - 2, extra_info_heads.size
-
-      del_revs = [
+      del_revs =
+        [
           "83ca5fd546063a3c7dc2e568ba3355661a9e2b2c",
           "ed5bb786bbda2dee66a2d50faf51429dbc043a7b",
           "4f26664364207fa8b1af9f8722647ab2d4ac5d43",
           "deff712f05a90d96edbd70facc47d944be5897e3",
           "32ae898b720c2f7eec2723d5bdd558b4cb2d3ddf",
           "7e61ac704deecde634b51e59daa8110435dcb3da",
-         ]
+        ]
       @repository.changesets.each do |rev|
-        rev.destroy if del_revs.detect {|r| r == rev.scmid.to_s }
+        rev.destroy if del_revs.detect {|r| r == rev.scmid.to_s}
       end
       @project.reload
       cs1 = @repository.changesets
@@ -191,19 +199,19 @@ class RepositoryGitTest < ActiveSupport::TestCase
       assert_equal NUM_REV, @repository.changesets.count
       extra_info_heads = @repository.extra_info["heads"].dup
       assert_equal NUM_HEAD, extra_info_heads.size
-      extra_info_heads.delete_if { |x| x == "83ca5fd546063a3c7dc2e568ba3355661a9e2b2c" }
+      extra_info_heads.delete_if {|x| x == "83ca5fd546063a3c7dc2e568ba3355661a9e2b2c"}
       assert_equal NUM_HEAD - 2, extra_info_heads.size
-
-      del_revs = [
+      del_revs =
+        [
           "83ca5fd546063a3c7dc2e568ba3355661a9e2b2c",
           "ed5bb786bbda2dee66a2d50faf51429dbc043a7b",
           "4f26664364207fa8b1af9f8722647ab2d4ac5d43",
           "deff712f05a90d96edbd70facc47d944be5897e3",
           "32ae898b720c2f7eec2723d5bdd558b4cb2d3ddf",
           "7e61ac704deecde634b51e59daa8110435dcb3da",
-         ]
+        ]
       @repository.changesets.each do |rev|
-        rev.destroy if del_revs.detect {|r| r == rev.scmid.to_s }
+        rev.destroy if del_revs.detect {|r| r == rev.scmid.to_s}
       end
       @project.reload
       assert_equal NUM_REV - 6, @repository.changesets.count
@@ -304,17 +312,18 @@ class RepositoryGitTest < ActiveSupport::TestCase
       assert_equal 0, @repository.extra_info["db_consistent"]["ordering"]
 
       extra_info_heads = @repository.extra_info["heads"].dup
-      extra_info_heads.delete_if { |x| x == "83ca5fd546063a3c7dc2e568ba3355661a9e2b2c" }
-      del_revs = [
+      extra_info_heads.delete_if {|x| x == "83ca5fd546063a3c7dc2e568ba3355661a9e2b2c"}
+      del_revs =
+        [
           "83ca5fd546063a3c7dc2e568ba3355661a9e2b2c",
           "ed5bb786bbda2dee66a2d50faf51429dbc043a7b",
           "4f26664364207fa8b1af9f8722647ab2d4ac5d43",
           "deff712f05a90d96edbd70facc47d944be5897e3",
           "32ae898b720c2f7eec2723d5bdd558b4cb2d3ddf",
           "7e61ac704deecde634b51e59daa8110435dcb3da",
-         ]
+        ]
       @repository.changesets.each do |rev|
-        rev.destroy if del_revs.detect {|r| r == rev.scmid.to_s }
+        rev.destroy if del_revs.detect {|r| r == rev.scmid.to_s}
       end
       @project.reload
       cs1 = @repository.changesets
@@ -363,110 +372,102 @@ class RepositoryGitTest < ActiveSupport::TestCase
 
       # with path
       changesets = @repository.latest_changesets('images', 'master')
-      assert_equal [
-              'deff712f05a90d96edbd70facc47d944be5897e3',
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-              '7234cb2750b63f47bff735edc50a1c0a433c2518',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        [
+          'deff712f05a90d96edbd70facc47d944be5897e3',
+          '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
+          '7234cb2750b63f47bff735edc50a1c0a433c2518',
+        ], changesets.collect(&:revision))
       changesets = @repository.latest_changesets('README', nil)
-      assert_equal [
-              '32ae898b720c2f7eec2723d5bdd558b4cb2d3ddf',
-              '4a07fe31bffcf2888791f3e6cbc9c4545cefe3e8',
-              '713f4944648826f558cf548222f813dabe7cbb04',
-              '61b685fbe55ab05b5ac68402d5720c1a6ac973d1',
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-              '7234cb2750b63f47bff735edc50a1c0a433c2518',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        [
+          '32ae898b720c2f7eec2723d5bdd558b4cb2d3ddf',
+          '4a07fe31bffcf2888791f3e6cbc9c4545cefe3e8',
+          '713f4944648826f558cf548222f813dabe7cbb04',
+          '61b685fbe55ab05b5ac68402d5720c1a6ac973d1',
+          '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
+          '7234cb2750b63f47bff735edc50a1c0a433c2518',
+        ], changesets.collect(&:revision))
       # with path, revision and limit
       changesets = @repository.latest_changesets('images', '899a15dba')
-      assert_equal [
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-              '7234cb2750b63f47bff735edc50a1c0a433c2518',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        ['899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
+         '7234cb2750b63f47bff735edc50a1c0a433c2518'],
+        changesets.collect(&:revision))
       changesets = @repository.latest_changesets('images', '899a15dba', 1)
-      assert_equal [
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        ['899a15dba03a3b350b89c3f537e4bbe02a03cdc9'],
+        changesets.collect(&:revision))
       changesets = @repository.latest_changesets('README', '899a15dba')
-      assert_equal [
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-              '7234cb2750b63f47bff735edc50a1c0a433c2518',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        ['899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
+         '7234cb2750b63f47bff735edc50a1c0a433c2518'],
+        changesets.collect(&:revision))
       changesets = @repository.latest_changesets('README', '899a15dba', 1)
-      assert_equal [
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        ['899a15dba03a3b350b89c3f537e4bbe02a03cdc9'],
+        changesets.collect(&:revision))
       # with path, tag and limit
       changesets = @repository.latest_changesets('images', 'tag01.annotated')
-      assert_equal [
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-              '7234cb2750b63f47bff735edc50a1c0a433c2518',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        ['899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
+         '7234cb2750b63f47bff735edc50a1c0a433c2518'],
+        changesets.collect(&:revision))
       changesets = @repository.latest_changesets('images', 'tag01.annotated', 1)
-      assert_equal [
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        ['899a15dba03a3b350b89c3f537e4bbe02a03cdc9'],
+        changesets.collect(&:revision))
       changesets = @repository.latest_changesets('README', 'tag01.annotated')
-      assert_equal [
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-              '7234cb2750b63f47bff735edc50a1c0a433c2518',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        ['899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
+         '7234cb2750b63f47bff735edc50a1c0a433c2518'],
+        changesets.collect(&:revision))
       changesets = @repository.latest_changesets('README', 'tag01.annotated', 1)
-      assert_equal [
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        ['899a15dba03a3b350b89c3f537e4bbe02a03cdc9'],
+        changesets.collect(&:revision))
       # with path, branch and limit
       changesets = @repository.latest_changesets('images', 'test_branch')
-      assert_equal [
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-              '7234cb2750b63f47bff735edc50a1c0a433c2518',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        ['899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
+         '7234cb2750b63f47bff735edc50a1c0a433c2518'],
+        changesets.collect(&:revision))
       changesets = @repository.latest_changesets('images', 'test_branch', 1)
-      assert_equal [
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        ['899a15dba03a3b350b89c3f537e4bbe02a03cdc9'],
+        changesets.collect(&:revision))
       changesets = @repository.latest_changesets('README', 'test_branch')
-      assert_equal [
-              '713f4944648826f558cf548222f813dabe7cbb04',
-              '61b685fbe55ab05b5ac68402d5720c1a6ac973d1',
-              '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
-              '7234cb2750b63f47bff735edc50a1c0a433c2518',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        [
+          '713f4944648826f558cf548222f813dabe7cbb04',
+          '61b685fbe55ab05b5ac68402d5720c1a6ac973d1',
+          '899a15dba03a3b350b89c3f537e4bbe02a03cdc9',
+          '7234cb2750b63f47bff735edc50a1c0a433c2518',
+        ], changesets.collect(&:revision))
       changesets = @repository.latest_changesets('README', 'test_branch', 2)
-      assert_equal [
-              '713f4944648826f558cf548222f813dabe7cbb04',
-              '61b685fbe55ab05b5ac68402d5720c1a6ac973d1',
-          ], changesets.collect(&:revision)
-
+      assert_equal(
+        ['713f4944648826f558cf548222f813dabe7cbb04',
+         '61b685fbe55ab05b5ac68402d5720c1a6ac973d1'],
+        changesets.collect(&:revision))
       if WINDOWS_PASS
         puts WINDOWS_SKIP_STR
       else
         # latin-1 encoding path
-        changesets = @repository.latest_changesets(
-                      'latin-1-dir/test-Ü-2.txt', '64f1f3e89')
-        assert_equal [
-              '64f1f3e89ad1cb57976ff0ad99a107012ba3481d',
-              '4fc55c43bf3d3dc2efb66145365ddc17639ce81e',
-          ], changesets.collect(&:revision)
-
-        changesets = @repository.latest_changesets(
-                    'latin-1-dir/test-Ü-2.txt', '64f1f3e89', 1)
-        assert_equal [
-              '64f1f3e89ad1cb57976ff0ad99a107012ba3481d',
-          ], changesets.collect(&:revision)
+        changesets =
+          @repository.latest_changesets(
+            'latin-1-dir/test-Ü-2.txt', '64f1f3e89'
+          )
+        assert_equal(
+          ['64f1f3e89ad1cb57976ff0ad99a107012ba3481d',
+           '4fc55c43bf3d3dc2efb66145365ddc17639ce81e'],
+          changesets.collect(&:revision))
+        changesets =
+          @repository.latest_changesets(
+            'latin-1-dir/test-Ü-2.txt', '64f1f3e89', 1
+          )
+        assert_equal(
+          ['64f1f3e89ad1cb57976ff0ad99a107012ba3481d'],
+          changesets.collect(&:revision))
       end
     end
 
@@ -478,11 +479,11 @@ class RepositoryGitTest < ActiveSupport::TestCase
         @repository.fetch_changesets
         @project.reload
         assert_equal NUM_REV, @repository.changesets.count
-        changesets = @repository.latest_changesets(
-                    'latin-1-dir/test-Ü-subdir', '1ca7f5ed')
-        assert_equal [
-              '1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127',
-          ], changesets.collect(&:revision)
+        changesets = @repository.
+          latest_changesets('latin-1-dir/test-Ü-subdir', '1ca7f5ed')
+        assert_equal(
+          ['1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127'],
+          changesets.collect(&:revision))
       end
     end
 
@@ -512,8 +513,8 @@ class RepositoryGitTest < ActiveSupport::TestCase
       @repository.fetch_changesets
       @project.reload
       assert_equal NUM_REV, @repository.changesets.count
-      c = @repository.changesets.find_by_revision(
-                          '7234cb2750b63f47bff735edc50a1c0a433c2518')
+      c = @repository.changesets.
+            find_by_revision('7234cb2750b63f47bff735edc50a1c0a433c2518')
       assert_equal c.scmid, c.identifier
     end
 
@@ -522,8 +523,8 @@ class RepositoryGitTest < ActiveSupport::TestCase
       @repository.fetch_changesets
       @project.reload
       assert_equal NUM_REV, @repository.changesets.count
-      c = @repository.changesets.find_by_revision(
-                          '7234cb2750b63f47bff735edc50a1c0a433c2518')
+      c = @repository.changesets.
+            find_by_revision('7234cb2750b63f47bff735edc50a1c0a433c2518')
       assert_equal '7234cb27', c.format_identifier
     end
 
@@ -542,8 +543,8 @@ class RepositoryGitTest < ActiveSupport::TestCase
       @repository.fetch_changesets
       @project.reload
       assert_equal NUM_REV, @repository.changesets.count
-      c = @repository.changesets.find_by_revision(
-                        'ed5bb786bbda2dee66a2d50faf51429dbc043a7b')
+      c = @repository.changesets.
+             find_by_revision('ed5bb786bbda2dee66a2d50faf51429dbc043a7b')
       assert_equal 'Felix Schäfer <felix@fachschaften.org>', c.committer
     end
 
@@ -579,7 +580,7 @@ class RepositoryGitTest < ActiveSupport::TestCase
       %w|64f1f3e89ad1cb57976ff0ad99a107012ba3481d 64f1f3e89ad1|.each do |r2|
         changeset = @repository.find_changeset_by_name(r2)
         %w|1ca7f5ed374f3cb31a93ae5215c2e25cc6ec5127 1ca7f5ed|.each do |r1|
-        assert_equal @repository.find_changeset_by_name(r1), changeset.next
+          assert_equal @repository.find_changeset_by_name(r1), changeset.next
         end
       end
     end
@@ -596,6 +597,35 @@ class RepositoryGitTest < ActiveSupport::TestCase
     end
   else
     puts "Git test repository NOT FOUND. Skipping unit tests !!!"
+    def test_fake; assert true end
+  end
+
+  if File.directory?(REPOSITORY_UTF8_PATH) &&
+      !(Redmine::Database.mysql? && !is_mysql_utf8mb4)
+    def test_utf8_emoji
+      repo =
+        Repository::Git.create(
+          :project      => @project,
+          :url          => REPOSITORY_UTF8_PATH,
+          :identifier   => 'utf8',
+          :path_encoding => 'UTF-8'
+        )
+      assert repo
+      assert_equal 0, repo.changesets.count
+      repo.fetch_changesets
+      @project.reload
+      assert_equal 1, repo.changesets.count
+      changeset = repo.find_changeset_by_name('d37ec5b2c54b6d1b875888f07571e372acd638c9')
+      assert_equal "U+1F603\u{1F603} <none@none>", changeset.committer
+      assert_equal "U+1F603\u{1F603}", changeset.comments
+    end
+  elsif !File.directory?(REPOSITORY_UTF8_PATH)
+    puts "Git UTF-8 test repository NOT FOUND. Skipping unit tests !!!"
+    def test_fake; assert true end
+  else
+    puts "Git UTF-8 test repository contains Emoji."
+    puts "Tests connot run on NOT utf8mb4 MySQL."
+    puts "Skipping unit tests !!!"
     def test_fake; assert true end
   end
 end

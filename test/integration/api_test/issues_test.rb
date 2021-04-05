@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -72,7 +72,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     get '/issues.xml?include=relations'
 
     assert_response :success
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
 
     assert_select 'issue id', :text => '3' do
       assert_select '~ relations relation', 1
@@ -89,7 +89,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     get '/issues.xml?include=attachments'
 
     assert_response :success
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
 
     assert_select 'issue id', :text => '3' do
       assert_select '~ attachments attachment', 4
@@ -105,7 +105,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     get '/issues.xml', :params => {:f => ['start_date'], :op => {:start_date => '='}}
 
     assert_response :unprocessable_entity
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
     assert_select 'errors error', :text => "Start date cannot be blank"
   end
 
@@ -119,7 +119,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
         where(:custom_values => {:custom_field_id => 1, :value => 'MySQL'}).map(&:id)
     assert expected_ids.any?
     assert_select 'issues > issue > id', :count => expected_ids.count do |ids|
-       ids.each { |id| assert expected_ids.delete(id.children.first.content.to_i) }
+      ids.each {|id| assert expected_ids.delete(id.children.first.content.to_i)}
     end
   end
 
@@ -132,7 +132,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     assert expected_ids.any?
 
     assert_select 'issues > issue > id', :count => expected_ids.count do |ids|
-      ids.each { |id| assert expected_ids.delete(id.children.first.content.to_i) }
+      ids.each {|id| assert expected_ids.delete(id.children.first.content.to_i)}
     end
   end
 
@@ -146,24 +146,33 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     Issue.generate!(:subject => '1').update_column(:updated_on, Time.parse("2014-01-02T10:25:00Z"))
     Issue.generate!(:subject => '2').update_column(:updated_on, Time.parse("2014-01-02T12:13:00Z"))
 
-    get '/issues.xml', :params => {
+    get(
+      '/issues.xml',
+      :params => {
         :set_filter => 1, :f => ['updated_on'], :op => {:updated_on => '<='},
         :v => {:updated_on => ['2014-01-02T12:00:00Z']}
       }
+    )
     assert_select 'issues>issue', :count => 1
     assert_select 'issues>issue>subject', :text => '1'
 
-    get '/issues.xml', :params => {
+    get(
+      '/issues.xml',
+      :params => {
         :set_filter => 1, :f => ['updated_on'], :op => {:updated_on => '>='},
         :v => {:updated_on => ['2014-01-02T12:00:00Z']}
       }
+    )
     assert_select 'issues>issue', :count => 1
     assert_select 'issues>issue>subject', :text => '2'
 
-    get '/issues.xml', :params => {
+    get(
+      '/issues.xml',
+      :params => {
         :set_filter => 1, :f => ['updated_on'], :op => {:updated_on => '>='},
         :v => {:updated_on => ['2014-01-02T08:00:00Z']}
       }
+    )
     assert_select 'issues>issue', :count => 2
   end
 
@@ -174,7 +183,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     assert expected_ids.any?
 
     assert_select 'issues > issue > id', :count => expected_ids.count do |ids|
-       ids.each { |id| assert expected_ids.delete(id.children.first.content.to_i) }
+      ids.each {|id| assert expected_ids.delete(id.children.first.content.to_i)}
     end
   end
 
@@ -182,9 +191,9 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     get '/issues.json?status_id=5'
 
     json = ActiveSupport::JSON.decode(response.body)
-    status_ids_used = json['issues'].collect {|j| j['status']['id'] }
+    status_ids_used = json['issues'].collect {|j| j['status']['id']}
     assert_equal 3, status_ids_used.length
-    assert status_ids_used.all? {|id| id == 5 }
+    assert status_ids_used.all? {|id| id == 5}
   end
 
   test "GET /issues/:id.xml with journals" do
@@ -362,7 +371,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     get '/issues/1.xml?include=watchers', :headers => credentials('jsmith')
 
     assert_response :ok
-    assert_equal 'application/xml', response.content_type
+    assert_equal 'application/xml', response.media_type
     assert_select 'issue' do
       assert_select 'watchers', Issue.find(1).watchers.count
       assert_select 'watchers' do
@@ -393,7 +402,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
                       :hours => '2.5', :comments => '', :activity_id => TimeEntryActivity.first.id)
     get '/issues/3.xml'
 
-    assert_equal 'application/xml', response.content_type
+    assert_equal 'application/xml', response.media_type
     assert_select 'issue' do
       assert_select 'estimated_hours',       parent.estimated_hours.to_s
       assert_select 'total_estimated_hours', (parent.estimated_hours.to_f + 3.0).to_s
@@ -409,7 +418,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     Role.anonymous.remove_permission! :view_time_entries
     get '/issues/3.xml'
 
-    assert_equal 'application/xml', response.content_type
+    assert_equal 'application/xml', response.media_type
     assert_select 'issue' do
       assert_select 'estimated_hours',       parent.estimated_hours.to_s
       assert_select 'total_estimated_hours', (parent.estimated_hours.to_f + 3.0).to_s
@@ -428,7 +437,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     TimeEntry.generate!(:user => User.find(1), :hours => 100, :issue_id => child.id)
     get '/issues/3.xml', :headers => credentials(user.login)
 
-    assert_equal 'application/xml', response.content_type
+    assert_equal 'application/xml', response.media_type
     assert_select 'issue' do
       assert_select 'spent_hours',           '5.5'
       assert_select 'total_spent_hours',     '7.5'
@@ -443,7 +452,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
                       :hours => '2.5', :comments => '', :activity_id => TimeEntryActivity.first.id)
     get '/issues/3.json'
 
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
     assert_equal parent.estimated_hours, json['issue']['estimated_hours']
     assert_equal (parent.estimated_hours.to_f + 3.0), json['issue']['total_estimated_hours']
@@ -458,7 +467,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     Role.anonymous.remove_permission! :view_time_entries
     get '/issues/3.json'
 
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
     assert_equal parent.estimated_hours, json['issue']['estimated_hours']
     assert_equal (parent.estimated_hours.to_f + 3.0), json['issue']['total_estimated_hours']
@@ -476,7 +485,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     TimeEntry.generate!(:user => User.find(1), :hours => 100, :issue_id => child.id)
     get '/issues/3.json', :headers => credentials(user.login)
 
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
     assert_equal 5.5, json['issue']['spent_hours']
     assert_equal 7.5, json['issue']['total_spent_hours']
@@ -507,7 +516,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     assert_equal 'API test', issue.subject
 
     assert_response :created
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
     assert_select 'issue > id', :text => issue.id.to_s
   end
 
@@ -626,10 +635,11 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
       post(
         '/issues.json',
         :params => {
-           :issue => {:project_id => 1, :subject => 'API',
-                      :custom_field_values => {field.id.to_s => ""}}
+          :issue => {:project_id => 1, :subject => 'API',
+                     :custom_field_values => {field.id.to_s => ""}}
         },
-        :headers => credentials('jsmith'))
+        :headers => credentials('jsmith')
+      )
     end
     assert_equal "", issue.custom_field_value(field)
   end
@@ -699,12 +709,12 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
       '/issues/3.xml',
       :params =>
         {
-           :issue => {
-             :custom_fields => [
-               {'id' => '1', 'value' => 'PostgreSQL' },
-               {'id' => '2', 'value' => '150'}
-             ]
-           }
+          :issue => {
+            :custom_fields => [
+              {'id' => '1', 'value' => 'PostgreSQL'},
+              {'id' => '2', 'value' => '150'}
+            ]
+          }
         },
       :headers => credentials('jsmith'))
     issue = Issue.find(3)
@@ -720,11 +730,11 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
       :params =>
         {
           :issue => {
-              :custom_fields => [
-                {'id' => '1', 'value' => ['MySQL', 'PostgreSQL']},
-                {'id' => '2', 'value' => '150'}
-              ]
-            }
+            :custom_fields => [
+              {'id' => '1', 'value' => ['MySQL', 'PostgreSQL']},
+              {'id' => '2', 'value' => '150'}
+            ]
+          }
         },
       :headers => credentials('jsmith'))
     issue = Issue.find(3)

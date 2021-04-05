@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,19 +21,20 @@ require File.expand_path('../../../../../../test_helper', __FILE__)
 
 class BazaarAdapterTest < ActiveSupport::TestCase
   REPOSITORY_PATH = Rails.root.join('tmp/test/bazaar_repository').to_s
-  REPOSITORY_PATH.gsub!(/\/+/, '/')
+  REPOSITORY_PATH.squeeze!('/')
 
   if File.directory?(REPOSITORY_PATH)
     def setup
-      @adapter = Redmine::Scm::Adapters::BazaarAdapter.new(
-                              File.join(REPOSITORY_PATH, "trunk")
-                              )
+      @adapter = Redmine::Scm::Adapters::BazaarAdapter.
+                   new(File.join(REPOSITORY_PATH, "trunk"))
     end
 
     def test_scm_version
-      to_test = { "Bazaar (bzr) 2.1.2\n"             => [2,1,2],
-                  "2.1.1\n1.7\n1.8"                  => [2,1,1],
-                  "2.0.1\r\n1.8.1\r\n1.9.1"          => [2,0,1]}
+      to_test = {
+        "Bazaar (bzr) 2.1.2\n"    => [2, 1, 2],
+        "2.1.1\n1.7\n1.8"         => [2, 1, 1],
+        "2.0.1\r\n1.8.1\r\n1.9.1" => [2, 0, 1]
+      }
       to_test.each do |s, v|
         test_scm_version_for(s, v)
       end
@@ -107,16 +108,14 @@ class BazaarAdapterTest < ActiveSupport::TestCase
     end
 
     def test_append_revisions_only_false
-      adpt = Redmine::Scm::Adapters::BazaarAdapter.new(
-                              File.join(REPOSITORY_PATH, "empty-branch")
-                              )
+      adpt = Redmine::Scm::Adapters::BazaarAdapter.
+               new(File.join(REPOSITORY_PATH, "empty-branch"))
       assert_equal false, adpt.append_revisions_only
     end
 
     def test_append_revisions_only_shared_repo
-      adpt = Redmine::Scm::Adapters::BazaarAdapter.new(
-                              REPOSITORY_PATH
-                              )
+      adpt = Redmine::Scm::Adapters::BazaarAdapter.
+               new(REPOSITORY_PATH)
       assert_equal false, adpt.append_revisions_only
     end
 
@@ -125,9 +124,8 @@ class BazaarAdapterTest < ActiveSupport::TestCase
     end
 
     def test_info_nil
-      adpt = Redmine::Scm::Adapters::BazaarAdapter.new(
-                "/invalid/invalid/"
-                )
+      adpt = Redmine::Scm::Adapters::BazaarAdapter.
+               new("/invalid/invalid/")
       assert_nil adpt.info
     end
 
@@ -137,9 +135,8 @@ class BazaarAdapterTest < ActiveSupport::TestCase
     end
 
     def test_info_emtpy
-      adpt = Redmine::Scm::Adapters::BazaarAdapter.new(
-                              File.join(REPOSITORY_PATH, "empty-branch")
-                              )
+      adpt = Redmine::Scm::Adapters::BazaarAdapter.
+               new(File.join(REPOSITORY_PATH, "empty-branch"))
       assert_equal 0, adpt.info.lastrev.identifier.to_i
     end
 

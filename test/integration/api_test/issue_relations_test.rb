@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -33,16 +33,18 @@ class Redmine::ApiTest::IssueRelationsTest < Redmine::ApiTest::Base
     get '/issues/9/relations.xml', :headers => credentials('jsmith')
 
     assert_response :success
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
 
     assert_select 'relations[type=array] relation id', :text => '1'
   end
 
   test "POST /issues/:issue_id/relations.xml should create the relation" do
     assert_difference('IssueRelation.count') do
-      post '/issues/2/relations.xml',
+      post(
+        '/issues/2/relations.xml',
         :params => {:relation => {:issue_to_id => 7, :relation_type => 'relates'}},
         :headers => credentials('jsmith')
+      )
     end
 
     relation = IssueRelation.order('id DESC').first
@@ -51,15 +53,17 @@ class Redmine::ApiTest::IssueRelationsTest < Redmine::ApiTest::Base
     assert_equal 'relates', relation.relation_type
 
     assert_response :created
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
     assert_select 'relation id', :text => relation.id.to_s
   end
 
   test "POST /issues/:issue_id/relations.xml with failure should return errors" do
     assert_no_difference('IssueRelation.count') do
-      post '/issues/2/relations.xml',
+      post(
+        '/issues/2/relations.xml',
         :params => {:relation => {:issue_to_id => 7, :relation_type => 'foo'}},
         :headers => credentials('jsmith')
+      )
     end
 
     assert_response :unprocessable_entity
@@ -70,7 +74,7 @@ class Redmine::ApiTest::IssueRelationsTest < Redmine::ApiTest::Base
     get '/relations/2.xml', :headers => credentials('jsmith')
 
     assert_response :success
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
     assert_select 'relation id', :text => '2'
   end
 
