@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -44,9 +44,22 @@ class MenuManagerTest < Redmine::IntegrationTest
     Setting.default_language = 'en'
     assert_no_difference 'Redmine::MenuManager.items(:project_menu).size' do
       Redmine::MenuManager.map :project_menu do |menu|
-        menu.push :foo, { :controller => 'projects', :action => 'show' }, :caption => 'Foo'
-        menu.push :bar, { :controller => 'projects', :action => 'show' }, :before => :activity
-        menu.push :hello, { :controller => 'projects', :action => 'show' }, :caption => Proc.new {|p| p.name.upcase }, :after => :bar
+        menu.push(
+          :foo,
+          {:controller => 'projects', :action => 'show'},
+          :caption => 'Foo'
+        )
+        menu.push(
+          :bar,
+          {:controller => 'projects', :action => 'show'},
+          :before => :activity
+        )
+        menu.push(
+          :hello,
+          {:controller => 'projects', :action => 'show'},
+          :caption => Proc.new {|p| p.name.upcase},
+          :after => :bar
+        )
       end
 
       get '/projects/ecookbook'
@@ -110,6 +123,28 @@ class MenuManagerTest < Redmine::IntegrationTest
     end
     assert_select '#projects-index' do
       assert_select 'a.project',      :count => 4
+    end
+  end
+
+  def test_cross_project_menu_should_link_to_global_activity
+    log_user('dlopper', 'foo')
+    get '/queries/3/edit'
+    assert_select 'a.activity[href=?]', '/activity'
+  end
+
+  def test_project_menu_should_show_roadmap_if_subprojects_have_versions
+    Version.delete_all
+    # Create a version in the project "eCookbook Subproject 1"
+    version = Version.generate!(project_id: 3)
+
+    with_settings :display_subprojects_issues => '1' do
+      get '/projects/ecookbook'
+      assert_select '#main-menu a.roadmap'
+    end
+
+    with_settings :display_subprojects_issues => '0' do
+      get '/projects/ecookbook'
+      assert_select '#main-menu a.roadmap', 0
     end
   end
 end

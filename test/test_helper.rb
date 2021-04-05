@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -43,9 +43,6 @@ Redmine::SudoMode.disable!
 $redmine_tmp_attachments_directory = "#{Rails.root}/tmp/test/attachments"
 FileUtils.mkdir_p $redmine_tmp_attachments_directory
 
-require "minitest/reporters"
-Minitest::Reporters.use! [Minitest::Reporters::ProgressReporter.new]
-
 $redmine_tmp_pdf_directory = "#{Rails.root}/tmp/test/pdf"
 FileUtils.mkdir_p $redmine_tmp_pdf_directory
 FileUtils.rm Dir.glob('#$redmine_tmp_pdf_directory/*.pdf')
@@ -66,7 +63,8 @@ class ActiveSupport::TestCase
   end
 
   def mock_file(options=nil)
-    options ||= {
+    options ||=
+      {
         :original_filename => 'a_file.png',
         :content_type => 'image/png',
         :size => 32
@@ -166,6 +164,30 @@ class ActiveSupport::TestCase
     File.directory?(repository_path(vendor))
   end
 
+  def repository_configured?(vendor)
+    self.class.repository_configured?(vendor)
+  end
+
+  def self.is_mysql_utf8mb4
+    return false unless Redmine::Database.mysql?
+
+    character_sets = %w[
+      character_set_connection
+      character_set_database
+      character_set_results
+      character_set_server
+    ]
+    ActiveRecord::Base.connection.
+        select_rows('show variables like "character%"').each do |r|
+      return false if character_sets.include?(r[0]) && r[1] != "utf8mb4"
+    end
+    return true
+  end
+
+  def is_mysql_utf8mb4
+    self.class.is_mysql_utf8mb4
+  end
+
   def repository_path_hash(arr)
     hs = {}
     hs[:path]  = arr.join("/")
@@ -174,15 +196,15 @@ class ActiveSupport::TestCase
   end
 
   def sqlite?
-    ActiveRecord::Base.connection.adapter_name =~ /sqlite/i
+    Redmine::Database.sqlite?
   end
 
   def mysql?
-    ActiveRecord::Base.connection.adapter_name =~ /mysql/i
+    Redmine::Database.mysql?
   end
 
   def postgresql?
-    ActiveRecord::Base.connection.adapter_name =~ /postgresql/i
+    Redmine::Database.postgresql?
   end
 
   def quoted_date(date)
@@ -226,7 +248,7 @@ class ActiveSupport::TestCase
   end
 
   def assert_select_in(text, *args, &block)
-    d = Nokogiri::HTML(CGI::unescapeHTML(String.new(text))).root
+    d = Nokogiri::HTML(CGI.unescapeHTML(String.new(text))).root
     assert_select(d, *args, &block)
   end
 
@@ -290,14 +312,14 @@ module Redmine
       arg = arg.dup
       request = arg.keys.detect {|key| key.is_a?(String)}
       raise ArgumentError unless request
+
       options = arg.slice!(request)
-
       raise ArgumentError unless request =~ /\A(GET|POST|PUT|PATCH|DELETE)\s+(.+)\z/
+
       method, path = $1.downcase.to_sym, $2
-
       raise ArgumentError unless arg.values.first =~ /\A(.+)#(.+)\z/
-      controller, action = $1, $2
 
+      controller, action = $1, $2
       assert_routing(
         {:method => method, :path => path},
         options.merge(:controller => controller, :action => action)
@@ -351,7 +373,7 @@ module Redmine
 
     # Saves the generated PDF in tmp/test/pdf
     def save_pdf
-      assert_equal 'application/pdf', response.content_type
+      assert_equal 'application/pdf', response.media_type
       filename = "#{self.class.name.underscore}__#{method_name}.pdf"
       File.open(File.join($redmine_tmp_pdf_directory, filename), "wb") do |f|
         f.write response.body
@@ -377,10 +399,13 @@ module Redmine
       assert_nil session[:user_id]
       assert_response :success
 
-      post "/login", :params => {
+      post(
+        "/login",
+        :params => {
           :username => login,
           :password => password
         }
+      )
       assert_equal login, User.find(session[:user_id]).login
     end
 
@@ -415,9 +440,11 @@ module Redmine
       def upload(format, content, credentials)
         set_tmp_attachments_directory
         assert_difference 'Attachment.count' do
-          post "/uploads.#{format}",
+          post(
+            "/uploads.#{format}",
             :params => content,
             :headers => {"CONTENT_TYPE" => 'application/octet-stream'}.merge(credentials)
+          )
           assert_response :created
         end
         data = response_data
@@ -429,9 +456,10 @@ module Redmine
 
       # Parses the response body based on its content type
       def response_data
-        unless response.content_type.to_s =~ /^application\/(.+)/
-          raise "Unexpected response type: #{response.content_type}"
+        unless response.media_type.to_s =~ /^application\/(.+)/
+          raise "Unexpected response type: #{response.media_type}"
         end
+
         format = $1
         case format
         when 'xml'
@@ -449,11 +477,10 @@ module Redmine
         arg = arg.dup
         request = arg.keys.detect {|key| key.is_a?(String)}
         raise ArgumentError unless request
+
         options = arg.slice!(request)
 
-        #API_FORMATS.each do |format|
-        api_formats = %w(json xml).freeze
-        api_formats.each do |format|
+        API_FORMATS.each do |format|
           format_request = request.sub /$/, ".#{format}"
           super options.merge(format_request => arg[request], :format => format)
         end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -35,5 +35,6 @@ class RoutingAttachmentsTest < Redmine::RoutingTest
 
     should_route 'GET /attachments/issues/1/edit' => 'attachments#edit_all', :object_type => 'issues', :object_id => '1'
     should_route 'PATCH /attachments/issues/1' => 'attachments#update_all', :object_type => 'issues', :object_id => '1'
+    should_route 'GET /attachments/issues/1/download' => 'attachments#download_all', :object_type => 'issues', :object_id => '1'
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -54,11 +54,13 @@ class RepositoryTest < ActiveSupport::TestCase
 
   def test_blank_log_encoding_error_message
     set_language_if_valid 'en'
-    repo = Repository::Bazaar.new(
-                        :project      => Project.find(3),
-                        :url          => "/test",
-                        :log_encoding => ''
-                      )
+    repo =
+      Repository::Bazaar.
+        new(
+          :project      => Project.find(3),
+          :url          => "/test",
+          :log_encoding => ''
+        )
     assert !repo.save
     assert_include "Commit messages encoding cannot be blank",
                    repo.errors.full_messages
@@ -66,10 +68,12 @@ class RepositoryTest < ActiveSupport::TestCase
 
   def test_blank_log_encoding_error_message_fr
     set_language_if_valid 'fr'
-    repo = Repository::Bazaar.new(
-                        :project      => Project.find(3),
-                        :url          => "/test"
-                      )
+    repo =
+      Repository::Bazaar.
+        new(
+          :project      => Project.find(3),
+          :url          => "/test"
+        )
     assert !repo.save
     assert_include 'Encodage des messages de commit doit être renseigné(e)', repo.errors.full_messages
   end
@@ -117,19 +121,23 @@ class RepositoryTest < ActiveSupport::TestCase
   end
 
   def test_first_repository_should_be_set_as_default
-    repository1 = Repository::Subversion.new(
-                      :project => Project.find(3),
-                      :identifier => 'svn1',
-                      :url => 'file:///svn1'
-                    )
+    repository1 =
+      Repository::Subversion.
+        new(
+          :project => Project.find(3),
+          :identifier => 'svn1',
+          :url => 'file:///svn1'
+        )
     assert repository1.save
     assert repository1.is_default?
 
-    repository2 = Repository::Subversion.new(
-                      :project => Project.find(3),
-                      :identifier => 'svn2',
-                      :url => 'file:///svn2'
-                    )
+    repository2 =
+      Repository::Subversion.
+        new(
+          :project => Project.find(3),
+          :identifier => 'svn2',
+          :url => 'file:///svn2'
+        )
     assert repository2.save
     assert !repository2.is_default?
 
@@ -139,20 +147,24 @@ class RepositoryTest < ActiveSupport::TestCase
 
   def test_default_repository_should_be_one
     assert_equal 0, Project.find(3).repositories.count
-    repository1 = Repository::Subversion.new(
-                      :project => Project.find(3),
-                      :identifier => 'svn1',
-                      :url => 'file:///svn1'
-                    )
+    repository1 =
+      Repository::Subversion.
+        new(
+          :project => Project.find(3),
+          :identifier => 'svn1',
+          :url => 'file:///svn1'
+        )
     assert repository1.save
     assert repository1.is_default?
 
-    repository2 = Repository::Subversion.new(
-                      :project => Project.find(3),
-                      :identifier => 'svn2',
-                      :url => 'file:///svn2',
-                      :is_default => true
-                    )
+    repository2 =
+      Repository::Subversion.
+        new(
+          :project => Project.find(3),
+          :identifier => 'svn2',
+          :url => 'file:///svn2',
+          :is_default => true
+        )
     assert repository2.save
     assert repository2.is_default?
     repository1.reload
@@ -163,11 +175,13 @@ class RepositoryTest < ActiveSupport::TestCase
   end
 
   def test_identifier_should_accept_letters_digits_dashes_and_underscores
-    r = Repository::Subversion.new(
-      :project_id => 3,
-      :identifier => 'svn-123_45',
-      :url => 'file:///svn'
-    )
+    r =
+      Repository::Subversion.
+        new(
+          :project_id => 3,
+          :identifier => 'svn-123_45',
+          :url => 'file:///svn'
+        )
     assert r.save
   end
 
@@ -232,8 +246,12 @@ class RepositoryTest < ActiveSupport::TestCase
   def test_should_not_create_with_disabled_scm
     # disable Subversion
     with_settings :enabled_scm => ['Mercurial', 'Git'] do
-      repository = Repository::Subversion.new(
-                      :project => Project.find(3), :url => "svn://localhost")
+      repository =
+        Repository::Subversion.
+          new(
+            :project => Project.find(3),
+            :url => "svn://localhost"
+          )
       assert !repository.save
       assert_include I18n.translate('activerecord.errors.messages.invalid'),
                      repository.errors[:type]
@@ -280,11 +298,11 @@ class RepositoryTest < ActiveSupport::TestCase
     ActionMailer::Base.deliveries.first(2).each do |mail|
       assert_not_nil mail
       assert mail.subject.starts_with?(
-          "[#{fixed_issue.project.name} - #{fixed_issue.tracker.name} ##{fixed_issue.id}]")
-      #assert_mail_body_match(
-      #    "Status changed from #{old_status} to #{fixed_issue.status}", mail)
+        "[#{fixed_issue.project.name} - #{fixed_issue.tracker.name} ##{fixed_issue.id}]"
+      )
       assert_mail_body_match(
-          I18n.t(:text_journal_changed, {label: I18n.t(:field_status), old: old_status, new: fixed_issue.status}), mail)
+        "Status changed from #{old_status} to #{fixed_issue.status}", mail
+      )
     end
 
     # ignoring commits referencing an issue of another project
@@ -292,9 +310,12 @@ class RepositoryTest < ActiveSupport::TestCase
   end
 
   def test_for_changeset_comments_strip
-    repository = Repository::Mercurial.create(
-                    :project => Project.find(4),
-                    :url => '/foo/bar/baz' )
+    repository =
+      Repository::Mercurial.
+        create(
+          :project => Project.find(4),
+          :url => '/foo/bar/baz'
+        )
     long_whitespace = "                                                "
     expected_comment = "This is a loooooooooooooooooooooooooooong comment"
     comment = +"#{expected_comment}#{long_whitespace}\n"
@@ -312,11 +333,14 @@ class RepositoryTest < ActiveSupport::TestCase
   end
 
   def test_for_urls_strip_cvs
-    repository = Repository::Cvs.create(
-        :project => Project.find(4),
-        :url => ' :pserver:login:password@host:/path/to/the/repository',
-        :root_url => 'foo  ',
-        :log_encoding => 'UTF-8')
+    repository =
+      Repository::Cvs.
+        create(
+          :project => Project.find(4),
+          :url => ' :pserver:login:password@host:/path/to/the/repository',
+          :root_url => 'foo  ',
+          :log_encoding => 'UTF-8'
+        )
     assert repository.save
     repository.reload
     assert_equal ':pserver:login:password@host:/path/to/the/repository',
@@ -325,18 +349,24 @@ class RepositoryTest < ActiveSupport::TestCase
   end
 
   def test_for_urls_strip_subversion
-    repository = Repository::Subversion.create(
-        :project => Project.find(4),
-        :url => ' file:///dummy   ')
+    repository =
+      Repository::Subversion.
+        create(
+          :project => Project.find(4),
+          :url => ' file:///dummy   '
+        )
     assert repository.save
     repository.reload
     assert_equal 'file:///dummy', repository.url
   end
 
   def test_for_urls_strip_git
-    repository = Repository::Git.create(
-        :project => Project.find(4),
-        :url => ' c:\dummy   ')
+    repository =
+      Repository::Git.
+        create(
+          :project => Project.find(4),
+          :url => ' c:\dummy   '
+        )
     assert repository.save
     repository.reload
     assert_equal 'c:\dummy', repository.url
@@ -344,7 +374,8 @@ class RepositoryTest < ActiveSupport::TestCase
 
   def test_manual_user_mapping
     assert_no_difference "Changeset.where('user_id <> 2').count" do
-      c = Changeset.create!(
+      c = Changeset.
+            create!(
               :repository => @repository,
               :committer => 'foo',
               :committed_on => Time.now,
@@ -355,7 +386,8 @@ class RepositoryTest < ActiveSupport::TestCase
       @repository.committer_ids = {'foo' => '2'}
       assert_equal User.find(2), c.reload.user
       # committer is now mapped
-      c = Changeset.create!(
+      c = Changeset.
+            create!(
               :repository => @repository,
               :committer => 'foo',
               :committed_on => Time.now,
@@ -367,24 +399,26 @@ class RepositoryTest < ActiveSupport::TestCase
   end
 
   def test_auto_user_mapping_by_username
-    c = Changeset.create!(
-          :repository   => @repository,
-          :committer    => 'jsmith',
-          :committed_on => Time.now,
-          :revision     => 100,
-          :comments     => 'Committed by john.'
-        )
+    c = Changeset.
+         create!(
+           :repository   => @repository,
+           :committer    => 'jsmith',
+           :committed_on => Time.now,
+           :revision     => 100,
+           :comments     => 'Committed by john.'
+         )
     assert_equal User.find(2), c.user
   end
 
   def test_auto_user_mapping_by_email
-    c = Changeset.create!(
-          :repository   => @repository,
-          :committer    => 'john <jsmith@somenet.foo>',
-          :committed_on => Time.now,
-          :revision     => 100,
-          :comments     => 'Committed by john.'
-        )
+    c = Changeset.
+          create!(
+            :repository   => @repository,
+            :committer    => 'john <jsmith@somenet.foo>',
+            :committed_on => Time.now,
+            :revision     => 100,
+            :comments     => 'Committed by john.'
+          )
     assert_equal User.find(2), c.user
   end
 
@@ -412,19 +446,23 @@ class RepositoryTest < ActiveSupport::TestCase
     h1 = {"test_1" => {"test_11" => "test_value_11"}}
     repo.merge_extra_info(h1)
     assert_equal h1, repo.extra_info
-    h2 = {"test_2" => {
-                   "test_21" => "test_value_21",
-                   "test_22" => "test_value_22",
-                  }}
+    h2 = {
+      "test_2" => {
+        "test_21" => "test_value_21",
+        "test_22" => "test_value_22",
+      }
+    }
     repo.merge_extra_info(h2)
     assert_equal (h = {"test_11" => "test_value_11"}),
                  repo.extra_info["test_1"]
     assert_equal "test_value_21",
                  repo.extra_info["test_2"]["test_21"]
-    h3 = {"test_2" => {
-                   "test_23" => "test_value_23",
-                   "test_24" => "test_value_24",
-                  }}
+    h3 = {
+      "test_2" => {
+        "test_23" => "test_value_23",
+        "test_24" => "test_value_24",
+      }
+    }
     repo.merge_extra_info(h3)
     assert_equal (h = {"test_11" => "test_value_11"}),
                  repo.extra_info["test_1"]

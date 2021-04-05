@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -30,9 +30,8 @@ class QuickJumpTest < ApplicationSystemTestCase
     visit '/'
 
     within '#header' do
-      #page.first('span', :text => 'Jump to a project...').click
-      page.first('span', :text => I18n.t(:label_jump_to_a_project)).click
-      click_on 'eCookbook'
+      page.first('span', :text => 'Jump to a project...').click
+      click_link('eCookbook', match: :first)
     end
     assert_current_path '/projects/ecookbook?jump=welcome'
   end
@@ -42,9 +41,8 @@ class QuickJumpTest < ApplicationSystemTestCase
     visit '/issues'
 
     within '#header' do
-      #page.first('span', :text => 'Jump to a project...').click
-      page.first('span', :text => I18n.t(:label_jump_to_a_project)).click
-      click_on 'eCookbook'
+      page.first('span', :text => 'Jump to a project...').click
+      click_link('eCookbook', match: :first)
       assert_current_path '/projects/ecookbook/issues'
 
       page.first('span', :text => 'eCookbook').click

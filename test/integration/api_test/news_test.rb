@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -66,7 +66,7 @@ class Redmine::ApiTest::NewsTest < Redmine::ApiTest::Base
   test "GET /news/:id.xml" do
     get "/news/1.xml"
     assert_response :success
-    assert_equal 'application/xml', response.content_type
+    assert_equal 'application/xml', response.media_type
     assert_select 'news' do
       assert_select 'id', 1
       assert_select "project[id=1][name=\"eCookbook\"]"
@@ -81,7 +81,7 @@ class Redmine::ApiTest::NewsTest < Redmine::ApiTest::Base
   test "GET /news/:id.json" do
     get "/news/1.json"
     assert_response :success
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
     assert_equal 1, json['news']['id']
   end

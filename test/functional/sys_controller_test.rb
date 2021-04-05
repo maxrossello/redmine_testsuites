@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ class SysControllerTest < Redmine::ControllerTest
   def test_projects_with_repository_enabled
     get :projects
     assert_response :success
-    assert_equal 'application/json', @response.content_type
+    assert_equal 'application/json', @response.media_type
 
     data = ActiveSupport::JSON.decode(response.body)
 
@@ -50,13 +50,16 @@ class SysControllerTest < Redmine::ControllerTest
   def test_create_project_repository
     assert_nil Project.find(4).repository
 
-    post :create_project_repository, :params => {
-      :id => 4,
-      :vendor => 'Subversion',
-      :repository => { :url => 'file:///create/project/repository/subproject2'}
-    }
+    post(
+      :create_project_repository,
+      :params => {
+        :id => 4,
+        :vendor => 'Subversion',
+        :repository => {:url => 'file:///create/project/repository/subproject2'}
+      }
+    )
     assert_response :created
-    assert_equal 'application/json', @response.content_type
+    assert_equal 'application/json', @response.media_type
 
     r = Project.find(4).repository
     assert r.is_a?(Repository::Subversion)
@@ -72,20 +75,26 @@ class SysControllerTest < Redmine::ControllerTest
   end
 
   def test_create_already_existing
-    post :create_project_repository, :params => {
-      :id => 1,
-      :vendor => 'Subversion',
-      :repository => { :url => 'file:///create/project/repository/subproject2'}
-    }
+    post(
+      :create_project_repository,
+      :params => {
+        :id => 1,
+        :vendor => 'Subversion',
+        :repository => {:url => 'file:///create/project/repository/subproject2'}
+      }
+    )
     assert_response :conflict
   end
 
   def test_create_with_failure
-    post :create_project_repository, :params => {
-      :id => 4,
-      :vendor => 'Subversion',
-      :repository => { :url => 'invalid url'}
-    }
+    post(
+      :create_project_repository,
+      :params => {
+        :id => 4,
+        :vendor => 'Subversion',
+        :repository => {:url => 'invalid url'}
+      }
+    )
     assert_response :unprocessable_entity
   end
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -446,16 +446,20 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_destroy_should_nullify_changesets
-    changeset = Changeset.create!(
-      :repository => Repository::Subversion.create!(
-        :project_id => 1,
-        :url => 'file:///tmp',
-        :identifier => 'tmp'
-      ),
-      :revision => '12',
-      :committed_on => Time.now,
-      :committer => 'jsmith'
-      )
+    changeset =
+      Changeset.
+        create!(
+          :repository =>
+            Repository::Subversion.
+              create!(
+                :project_id => 1,
+                :url => 'file:///tmp',
+                :identifier => 'tmp'
+              ),
+          :revision => '12',
+          :committed_on => Time.now,
+          :committer => 'jsmith'
+        )
     assert_equal 2, changeset.user_id
 
     User.find(2).destroy
@@ -691,13 +695,31 @@ class UserTest < ActiveSupport::TestCase
     assert_equal "ADMIN", user.login
   end
 
-  if ldap_configured?
-    test "#try_to_login using LDAP with failed connection to the LDAP server" do
-      auth_source = AuthSourceLdap.find(1)
-      AuthSource.any_instance.stubs(:initialize_ldap_con).raises(Net::LDAP::Error, 'Cannot connect')
+  test "#try_to_login! using LDAP with existing user and failed connection to the LDAP server" do
+    auth_source = AuthSourceLdap.find(1)
+    user = users(:users_001)
+    user.update_column :auth_source_id, auth_source.id
+    AuthSource.any_instance.stubs(:initialize_ldap_con).raises(Net::LDAP::Error, 'Cannot connect')
+    assert_raise(AuthSourceException){User.try_to_login!('admin', 'admin')}
+  end
 
-      assert_nil User.try_to_login('edavis', 'wrong')
-    end
+  test "#try_to_login using LDAP with existing user and failed connection to the LDAP server" do
+    auth_source = AuthSourceLdap.find(1)
+    user = users(:users_001)
+    user.update_column :auth_source_id, auth_source.id
+    AuthSource.any_instance.stubs(:initialize_ldap_con).raises(Net::LDAP::Error, 'Cannot connect')
+    assert_nil User.try_to_login('admin', 'admin')
+  end
+
+  test "#try_to_login using LDAP with new user and failed connection to the LDAP server" do
+    auth_source = AuthSourceLdap.find(1)
+    auth_source.update onthefly_register: true
+    AuthSource.any_instance.stubs(:initialize_ldap_con).raises(Net::LDAP::Error, 'Cannot connect')
+
+    assert_nil User.try_to_login('edavis', 'wrong')
+  end
+
+  if ldap_configured?
 
     test "#try_to_login using LDAP" do
       assert_nil User.try_to_login('edavis', 'wrong')
@@ -766,9 +788,12 @@ class UserTest < ActiveSupport::TestCase
     anon1 = User.anonymous
     assert !anon1.new_record?
     assert_kind_of AnonymousUser, anon1
-    anon2 = AnonymousUser.create(
-                :lastname => 'Anonymous', :firstname => '',
-                :login => '', :status => 0)
+    anon2 =
+      AnonymousUser.
+        create(
+          :lastname => 'Anonymous', :firstname => '',
+          :login => '', :status => 0
+        )
     assert_equal 1, anon2.errors.count
   end
 
@@ -981,7 +1006,7 @@ class UserTest < ActiveSupport::TestCase
     user = User.find(2)
     assert_kind_of Hash, user.projects_by_role
     assert_equal 2, user.projects_by_role.size
-    assert_equal [1,5], user.projects_by_role[Role.find(1)].collect(&:id).sort
+    assert_equal [1, 5], user.projects_by_role[Role.find(1)].collect(&:id).sort
     assert_equal [2], user.projects_by_role[Role.find(2)].collect(&:id).sort
   end
 
@@ -1291,30 +1316,30 @@ class UserTest < ActiveSupport::TestCase
   if Object.const_defined?(:OpenID)
     def test_setting_identity_url
       normalized_open_id_url = 'http://example.com/'
-      u = User.new( :identity_url => 'http://example.com/' )
+      u = User.new(:identity_url => 'http://example.com/')
       assert_equal normalized_open_id_url, u.identity_url
     end
 
     def test_setting_identity_url_without_trailing_slash
       normalized_open_id_url = 'http://example.com/'
-      u = User.new( :identity_url => 'http://example.com' )
+      u = User.new(:identity_url => 'http://example.com')
       assert_equal normalized_open_id_url, u.identity_url
     end
 
     def test_setting_identity_url_without_protocol
       normalized_open_id_url = 'http://example.com/'
-      u = User.new( :identity_url => 'example.com' )
+      u = User.new(:identity_url => 'example.com')
       assert_equal normalized_open_id_url, u.identity_url
     end
 
     def test_setting_blank_identity_url
-      u = User.new( :identity_url => 'example.com' )
+      u = User.new(:identity_url => 'example.com')
       u.identity_url = ''
       assert u.identity_url.blank?
     end
 
     def test_setting_invalid_identity_url
-      u = User.new( :identity_url => 'this is not an openid url' )
+      u = User.new(:identity_url => 'this is not an openid url')
       assert u.identity_url.blank?
     end
   else

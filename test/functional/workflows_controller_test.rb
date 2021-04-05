@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -51,8 +51,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
     # used status only
     statuses = IssueStatus.where(:id => [2, 3, 5]).sorted.pluck(:name)
     assert_equal(
-    #  ["New issue"] + statuses,
-      [I18n.t(:label_issue_new)] + statuses,
+      ["New issue"] + statuses,
       css_select('table.workflows.transitions-always tbody tr td:first').map(&:text).map(&:strip)
     )
     # allowed transitions
@@ -79,8 +78,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
     # statuses 1 and 5 not displayed
     statuses = IssueStatus.where(:id => [2, 3]).sorted.pluck(:name)
     assert_equal(
-    #  ["New issue"] + statuses,
-      [I18n.t(:label_issue_new)] + statuses,
+      ["New issue"] + statuses,
       css_select('table.workflows.transitions-always tbody tr td:first').map(&:text).map(&:strip)
     )
   end
@@ -116,8 +114,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
 
     statuses = IssueStatus.all.sorted.pluck(:name)
     assert_equal(
-    #  ["New issue"] + statuses,
-      [I18n.t(:label_issue_new)] + statuses,
+      ["New issue"] + statuses,
       css_select('table.workflows.transitions-always tbody tr td:first').map(&:text).map(&:strip)
     )
     assert_select 'input[type=checkbox][name=?]', 'transitions[0][1][always]'
@@ -149,8 +146,8 @@ class WorkflowsControllerTest < Redmine::ControllerTest
     assert_response 302
 
     assert_equal 3, WorkflowTransition.where(:tracker_id => 1, :role_id => 2).count
-    assert_not_nil  WorkflowTransition.where(:role_id => 2, :tracker_id => 1, :old_status_id => 3, :new_status_id => 2).first
-    assert_nil      WorkflowTransition.where(:role_id => 2, :tracker_id => 1, :old_status_id => 5, :new_status_id => 4).first
+    assert          WorkflowTransition.where(:role_id => 2, :tracker_id => 1, :old_status_id => 3, :new_status_id => 2).exists?
+    assert_not      WorkflowTransition.where(:role_id => 2, :tracker_id => 1, :old_status_id => 5, :new_status_id => 4).exists?
   end
 
   def test_post_edit_with_allowed_statuses_for_new_issues

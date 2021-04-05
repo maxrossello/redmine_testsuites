@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -29,8 +29,7 @@ class IssuesImportTest < ApplicationSystemTestCase
     log_user('jsmith', 'jsmith')
     visit '/issues'
     find('div.contextual>span.drdn').click
-    #click_on 'Import'
-    click_on I18n.t(:button_import)
+    click_on 'Import'
 
     attach_file 'file', Rails.root.join('test/fixtures/files/import_issues.csv')
     #click_on 'Next »'

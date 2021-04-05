@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,6 @@
 require File.expand_path('../../../../test_helper', __FILE__)
 
 class Redmine::CodesetUtilTest < ActiveSupport::TestCase
-
   def test_to_utf8_by_setting_from_latin1
     with_settings :repositories_encodings => 'UTF-8,ISO-8859-1' do
       s1 = 'Texte encodé'

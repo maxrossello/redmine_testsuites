@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,8 +24,6 @@ class JournalObserverTest < ActiveSupport::TestCase
            :projects_trackers, :trackers, :enabled_modules, :enumerations,
            :users, :user_preferences, :email_addresses, :roles, :members, :member_roles,
            :versions
-
-  include ActiveJob::TestHelper  # redmine_testsuites
 
   def setup
     User.current = nil
@@ -208,9 +206,7 @@ class JournalObserverTest < ActiveSupport::TestCase
       issue.init_journal(user)
       issue.fixed_version = versions(:versions_003)
 
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert issue.save
-      end
+      assert issue.save
       assert_equal 2, ActionMailer::Base.deliveries.size
     end
   end
@@ -222,9 +218,7 @@ class JournalObserverTest < ActiveSupport::TestCase
       issue.init_journal(user)
       issue.fixed_version = versions(:versions_003)
 
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert issue.save
-      end
+      assert issue.save
       assert_equal 0, ActionMailer::Base.deliveries.size
     end
   end

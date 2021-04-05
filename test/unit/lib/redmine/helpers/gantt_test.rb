@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -194,19 +194,19 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
                                    :parent_issue_id => @issue.id,
                                    :start_date => (today - 1),
                                    :due_date => (today + 2))
-                      )
+                     )
     @child2 = Issue.generate!(
                        attrs.merge(:subject => 'child2',
                                    :parent_issue_id => @issue.id,
                                    :start_date => today,
                                    :due_date => (today + 7))
-                       )
+                     )
     @grandchild = Issue.generate!(
                           attrs.merge(:subject => 'grandchild',
                                       :parent_issue_id => @child1.id,
                                       :start_date => (today - 1),
                                       :due_date => (today + 2))
-                          )
+                        )
     @output_buffer = @gantt.subjects
     # parent task 44px
     assert_select 'div.issue-subject[style*="left:44px"]', /#{@issue.subject}/
@@ -257,7 +257,7 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     issue.update(:assigned_to_id => issue.assignable_users.first.id)
     @project.issues << issue
     # :column => assigned_to
-    @output_buffer = @gantt.selected_column_content({ :column => @gantt.query.columns.last })
+    @output_buffer = @gantt.selected_column_content({:column => @gantt.query.columns.last})
     assert_select "div.issue_assigned_to#assigned_to_issue_#{issue.id}"
   end
 
@@ -490,7 +490,7 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     issue.update(:assigned_to_id => issue.assignable_users.first.id)
     @project.issues << issue
     # :column => assigned_to
-    options = { :column => @gantt.query.columns.last, :top => 64, :format => :html }
+    options = {:column => @gantt.query.columns.last, :top => 64, :format => :html}
     @output_buffer = @gantt.column_content_for_issue(issue, options)
 
     assert_select "div.issue_assigned_to#assigned_to_issue_#{issue.id}"

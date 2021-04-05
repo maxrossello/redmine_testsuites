@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -295,6 +295,36 @@ class AttachmentTest < ActiveSupport::TestCase
     end
   end
 
+  def test_archive_attachments
+    attachment = Attachment.create!(:file => uploaded_test_file("testfile.txt", ""), :author_id => 1)
+    zip_data = Attachment.archive_attachments([attachment])
+    file_names = []
+    Zip::InputStream.open(StringIO.new(zip_data)) do |io|
+      while (entry = io.get_next_entry)
+        file_names << entry.name
+      end
+    end
+    assert_equal ['testfile.txt'], file_names
+  end
+
+  def test_archive_attachments_without_attachments
+    zip_data = Attachment.archive_attachments([])
+    assert_nil zip_data
+  end
+
+  def test_archive_attachments_should_rename_duplicate_file_names
+    attachment1 = Attachment.create!(:file => uploaded_test_file("testfile.txt", ""), :author_id => 1)
+    attachment2 = Attachment.create!(:file => uploaded_test_file("testfile.txt", ""), :author_id => 1)
+    zip_data = Attachment.archive_attachments([attachment1, attachment2])
+    file_names = []
+    Zip::InputStream.open(StringIO.new(zip_data)) do |io|
+      while (entry = io.get_next_entry)
+        file_names << entry.name
+      end
+    end
+    assert_equal ['testfile.txt', 'testfile(1).txt'], file_names
+  end
+
   def test_move_from_root_to_target_directory_should_move_root_files
     a = Attachment.find(20)
     assert a.disk_directory.blank?
@@ -351,7 +381,7 @@ class AttachmentTest < ActiveSupport::TestCase
     @project = Project.find(1)
     attachment = Attachment.create!(:file => uploaded_test_file("testfile.txt", ""), :author_id => 1, :created_on => 2.days.ago)
     assert_equal 'text/plain', attachment.content_type
-    Attachment.attach_files(@project, { '1' => {'token' => attachment.token } })
+    Attachment.attach_files(@project, {'1' => {'token' => attachment.token}})
     attachment.reload
     assert_equal 'text/plain', attachment.content_type
   end
@@ -368,12 +398,15 @@ class AttachmentTest < ActiveSupport::TestCase
 
   def test_update_attachments
     attachments = Attachment.where(:id => [2, 3]).to_a
-
-    assert Attachment.update_attachments(attachments, {
-      '2' => {:filename => 'newname.txt', :description => 'New description'},
-      3 => {:filename => 'othername.txt'}
-    })
-
+    assert(
+      Attachment.update_attachments(
+        attachments,
+        {
+          '2' => {:filename => 'newname.txt', :description => 'New description'},
+          3 => {:filename => 'othername.txt'}
+        }
+      )
+    )
     attachment = Attachment.find(2)
     assert_equal 'newname.txt', attachment.filename
     assert_equal 'New description', attachment.description
@@ -384,23 +417,29 @@ class AttachmentTest < ActiveSupport::TestCase
 
   def test_update_attachments_with_failure
     attachments = Attachment.where(:id => [2, 3]).to_a
-
-    assert !Attachment.update_attachments(attachments, {
-      '2' => {:filename => '', :description => 'New description'},
-      3 => {:filename => 'othername.txt'}
-    })
-
+    assert(
+      !Attachment.update_attachments(
+        attachments,
+        {
+          '2' => {
+            :filename => '', :description => 'New description'
+          },
+          3 => {:filename => 'othername.txt'}
+        }
+      )
+    )
     attachment = Attachment.find(3)
     assert_equal 'logo.gif', attachment.filename
   end
 
   def test_update_attachments_should_sanitize_filename
     attachments = Attachment.where(:id => 2).to_a
-
-    assert Attachment.update_attachments(attachments, {
-      2 => {:filename => 'newname?.txt'},
-    })
-
+    assert(
+      Attachment.update_attachments(
+        attachments,
+        {2 => {:filename => 'newname?.txt'},}
+      )
+    )
     attachment = Attachment.find(2)
     assert_equal 'newname_.txt', attachment.filename
   end
@@ -434,7 +473,21 @@ class AttachmentTest < ActiveSupport::TestCase
     Attachment.latest_attach(Attachment.limit(2).to_a, string)
   end
 
+  def test_latest_attach_should_support_unicode_case_folding
+    a_capital = Attachment.create!(
+      :author => User.find(1),
+      :file => mock_file(:filename => 'Ā.TXT')
+    )
+    a_small = Attachment.create!(
+      :author => User.find(1),
+      :file => mock_file(:filename => 'ā.txt')
+    )
+
+    assert_equal(a_small, Attachment.latest_attach([a_capital, a_small], 'Ā.TXT'))
+  end
+
   def test_thumbnailable_should_be_true_for_images
+    skip unless convert_installed?
     assert_equal true, Attachment.new(:filename => 'test.jpg').thumbnailable?
   end
 

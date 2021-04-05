@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -76,14 +76,15 @@ class VersionsControllerTest < Redmine::ControllerTest
   end
 
   def test_index_showing_subprojects_versions
-    @subproject_version = Version.create!(:project => Project.find(3), :name => "Subproject version")
+    version_name = "Subproject version"
+    Version.create!(:project => Project.find(3), :name => version_name)
     get :index, :params => {:project_id => 1, :with_subprojects => 1}
     assert_response :success
 
     # Shared version
     assert_select 'h3', :text => Version.find(4).name
     # Subproject version
-    assert_select 'h3', :text => /Subproject version/
+    assert_select 'h3', :text => /#{version_name}/
   end
 
   def test_index_should_prepend_shared_versions
@@ -110,8 +111,7 @@ class VersionsControllerTest < Redmine::ControllerTest
 
       assert_select 'table.related-issues' do
         assert_select 'tr.issue', :count => 2 do
-          #assert_select 'img.gravatar[title=?]', 'Assignee: John Smith', :count => 1
-          assert_select 'img.gravatar[title=?]', "#{I18n.t(:field_assigned_to)}: John Smith", :count => 1
+          assert_select 'img.gravatar[title=?]', 'Assignee: John Smith', :count => 1
         end
       end
     end
@@ -137,8 +137,7 @@ class VersionsControllerTest < Redmine::ControllerTest
 
       assert_select 'table.related-issues' do
         assert_select 'tr.issue td.assigned_to', :count => 2 do
-          #assert_select 'img.gravatar[title=?]', 'Assignee: Dave Lopper', :count => 1
-          assert_select 'img.gravatar[title=?]', "#{I18n.t(:field_assigned_to)}: Dave Lopper", :count => 1
+          assert_select 'img.gravatar[title=?]', 'Assignee: Dave Lopper', :count => 1
         end
       end
     end
@@ -206,10 +205,8 @@ class VersionsControllerTest < Redmine::ControllerTest
 
       assert_select 'div.version-overview' do
         assert_select 'table.progress-98' do
-          #assert_select 'td[class=closed][title=?]', 'closed: 98%'
-          #assert_select 'td[class=done][title=?]', '% Done: 99%'
-          assert_select 'td[class=closed][title=?]', "#{I18n.t(:label_closed_issues_plural)}: 98%"
-          assert_select 'td[class=done][title=?]', "#{I18n.t(:field_done_ratio)}: 99%"
+          assert_select 'td[class=closed][title=?]', 'closed: 98%'
+          assert_select 'td[class=done][title=?]', '% Done: 99%'
         end
         assert_select 'p[class=percent]', :text => '99%'
       end
@@ -221,8 +218,7 @@ class VersionsControllerTest < Redmine::ControllerTest
     get :show, :params => {:id => 3}
 
     assert_response :success
-    #assert_select 'a.icon.icon-add', :text => 'New issue'
-    assert_select 'a.icon.icon-add', :text => I18n.t(:label_issue_new)
+    assert_select 'a.icon.icon-add', :text => 'New issue'
   end
 
   def test_new
@@ -237,7 +233,7 @@ class VersionsControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     get :new, :params => {:project_id => '1'}, :xhr => true
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
   end
 
   def test_create
@@ -261,7 +257,7 @@ class VersionsControllerTest < Redmine::ControllerTest
     assert_equal 1, version.project_id
 
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
     assert_include 'test_add_version_from_issue_form', response.body
   end
 
@@ -271,7 +267,7 @@ class VersionsControllerTest < Redmine::ControllerTest
       post :create, :params => {:project_id => '1', :version => {:name => ''}}, :xhr => true
     end
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
   end
 
   def test_get_edit

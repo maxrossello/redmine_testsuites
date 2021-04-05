@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -257,8 +257,7 @@ class TimelogReportTest < Redmine::ControllerTest
     assert_equal 'text/csv', @response.media_type
     lines = @response.body.chomp.split("\n")
     # Headers
-    #assert_equal 'Project,User,Overtime,2007-3,2007-4,Total time', lines.first
-    assert_equal "#{I18n.t(:field_project)},User,Overtime,2007-3,2007-4,Total time", lines.first
+    assert_equal 'Project,User,Overtime,2007-3,2007-4,Total time', lines.first
     # Total row
     assert_equal 'Total time,"","",154.25,8.65,162.90', lines.last
   end

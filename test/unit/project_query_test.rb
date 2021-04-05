@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -59,5 +59,14 @@ class ProjectQueryTest < ActiveSupport::TestCase
   def test_available_columns_should_include_project_custom_fields
     query = ProjectQuery.new
     assert_include :cf_3, query.available_columns.map(&:name)
+  end
+
+  def test_display_type_default_should_equal_with_setting_project_list_display_type
+    ProjectQuery.new.available_display_types.each do |t|
+      with_settings :project_list_display_type => t do
+        q = ProjectQuery.new
+        assert_equal t, q.display_type
+      end
+    end
   end
 end

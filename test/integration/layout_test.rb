@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -66,6 +66,7 @@ class LayoutTest < Redmine::IntegrationTest
 
     get '/projects/ecookbook/issues/new'
     assert_select 'head script[src^=?]', '/javascripts/jstoolbar/jstoolbar.js?'
+    assert_include "var userHlLanguages = #{UserPreference::DEFAULT_TOOLBAR_LANGUAGE_OPTIONS.to_json};", response.body
   end
 
   def test_calendar_header_tags

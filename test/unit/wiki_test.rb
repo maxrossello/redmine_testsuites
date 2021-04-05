@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -50,6 +50,16 @@ class WikiTest < ActiveSupport::TestCase
     assert_equal page, wiki.find_page('Another_page')
     assert_equal page, wiki.find_page('Another page')
     assert_equal page, wiki.find_page('ANOTHER page')
+  end
+
+  def test_ordering_pages_should_not_be_case_sensitive
+    wiki = Wiki.find(1)
+    wiki.pages.destroy_all
+    %w(ABc ACd Aac Acc).each do |title|
+      wiki.pages.create(:title => title)
+    end
+    wiki.reload
+    assert_equal %w(Aac ABc Acc ACd), wiki.pages.pluck(:title)
   end
 
   def test_find_page_with_cyrillic_characters

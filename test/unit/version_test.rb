@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2019  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -310,15 +310,27 @@ class VersionTest < ActiveSupport::TestCase
     user = User.find(2)
     version = Version.new(:project_id => 1, :name => 'v4')
 
-    version.send :safe_attributes=, {'custom_field_values' => {
-                                      cf1.id.to_s => 'value1', cf2.id.to_s => 'value2'
-                                    }}, user
+    version.send(
+      :safe_attributes=,
+      {
+        'custom_field_values' =>
+          {cf1.id.to_s => 'value1', cf2.id.to_s => 'value2'}
+      },
+      user
+    )
     assert_equal 'value1', version.custom_field_value(cf1)
     assert_nil version.custom_field_value(cf2)
-    version.send :safe_attributes=, {'custom_fields' => [
-                                     {'id' => cf1.id.to_s, 'value' => 'valuea'},
-                                     {'id' => cf2.id.to_s, 'value' => 'valueb'}
-                                   ]}, user
+    version.send(
+      :safe_attributes=,
+      {
+        'custom_fields' =>
+          [
+            {'id' => cf1.id.to_s, 'value' => 'valuea'},
+            {'id' => cf2.id.to_s, 'value' => 'valueb'}
+          ]
+      },
+      user
+    )
     assert_equal 'valuea', version.custom_field_value(cf1)
     assert_nil version.custom_field_value(cf2)
   end
