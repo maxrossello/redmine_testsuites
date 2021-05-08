@@ -431,16 +431,30 @@ class Redmine::WikiFormatting::MacrosTest < Redmine::HelperTest
 
   def test_issue_macro_should_render_link_to_issue
     issue = Issue.find(1)
-    assert_equal(
-      %{<p><a class="issue tracker-1 status-1 priority-4 priority-lowest behind-schedule" } +
-      %{href="/issues/1">Bug #1</a>: #{issue.subject}</p>},
-      textilizable("{{issue(1)}}")
-    )
-    assert_equal(
-      %{<p>eCookbook - } +
-      %{<a class="issue tracker-1 status-1 priority-4 priority-lowest behind-schedule" } +
-      %{href="/issues/1">Bug #1</a>: #{issue.subject}</p>},
-      textilizable("{{issue(1, project=true)}}")
-    )
+      if Redmine::Plugin.installed? :redwine
+        assert_equal(
+          %{<p><a class="issue tracker-1 status-1 priority-}+issue.priority.position.to_s+%{ priority-lowest behind-schedule" } +
+          %{href="/issues/1">Bug #1</a>: #{issue.subject}</p>},
+          textilizable("{{issue(1)}}")
+        )
+        assert_equal(
+          %{<p>eCookbook - } +
+          %{<a class="issue tracker-1 status-1 priority-}+issue.priority.position.to_s+%{ priority-lowest behind-schedule" } +
+          %{href="/issues/1">Bug #1</a>: #{issue.subject}</p>},
+          textilizable("{{issue(1, project=true)}}")
+        )
+      else
+        assert_equal(
+          %{<p><a class="issue tracker-1 status-1 priority-4 priority-lowest behind-schedule" } +
+          %{href="/issues/1">Bug #1</a>: #{issue.subject}</p>},
+          textilizable("{{issue(1)}}")
+        )
+        assert_equal(
+          %{<p>eCookbook - } +
+          %{<a class="issue tracker-1 status-1 priority-4 priority-lowest behind-schedule" } +
+          %{href="/issues/1">Bug #1</a>: #{issue.subject}</p>},
+          textilizable("{{issue(1, project=true)}}")
+        )
+      end
   end
 end

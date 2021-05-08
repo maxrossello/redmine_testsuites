@@ -1,6 +1,6 @@
 # Redmine Test Suites
 
-Tested with Redmine version matching the plugin version. Other supported versions come with dedicated tags.
+The plugin version corresponds to minimum version of Redmine required. Look at dedicated branch for each Redmine version.
 
 Allows to run the Redmine test suite along with plugin tests, considering the different behaviors introduced by supported plugins over the Redmine default behavior.
 

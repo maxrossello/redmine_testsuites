@@ -89,22 +89,6 @@ class Redmine::ApiTest::VersionsTest < Redmine::ApiTest::Base
     assert_select 'version id', :text => version.id.to_s
   end
 
-  test "POST /projects/:project_id/versions.xml should create the version with wiki page title" do
-    assert_difference 'Version.count' do
-      post(
-        '/projects/1/versions.xml',
-        :params => {:version => {:name => 'API test', :wiki_page_title => WikiPage.first.title}},
-        :headers => credentials('jsmith'))
-    end
-    version = Version.order('id DESC').first
-    assert_equal 'API test', version.name
-    assert_equal WikiPage.first, version.wiki_page
-
-    assert_response :created
-    assert_equal 'application/xml', @response.content_type
-    assert_select 'version id', :text => version.id.to_s
-  end
-
   test "POST /projects/:project_id/versions.xml should create the version with custom fields" do
     field = VersionCustomField.generate!
     assert_difference 'Version.count' do

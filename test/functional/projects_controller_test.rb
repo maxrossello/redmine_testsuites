@@ -156,7 +156,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
       }
       assert_response :success
     end
-    assert_equal ['Name', 'Description', 'Status'], columns_in_list
+    #assert_equal ['Name', 'Description', 'Status'], columns_in_list
+    assert_equal ['Name', 'Description', I18n.t(:field_status)], columns_in_list
   end
 
   def test_index_as_board_should_not_include_csv_export
@@ -681,7 +682,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
     ProjectCustomField.find_by_name('Development status').update_attribute :visible, true
     get(:show, :params => {:id => 'ecookbook'})
     assert_response :success
-    assert_select 'li.list_cf.cf_3', :text => /Development status/
+    if Redmine::Plugin.installed? :redmine_better_overview
+      assert_select 'h3.list_cf.cf_3', :text => /Development status/
+    else
+      assert_select 'li.list_cf.cf_3', :text => /Development status/
+    end
   end
 
   def test_show_should_not_display_hidden_custom_fields
@@ -1052,7 +1057,19 @@ class ProjectsControllerTest < Redmine::ControllerTest
       delete(:destroy, :params => {:id => 2})
       assert_response :success
     end
-    assert_select '.warning', :text => /Are you sure you want to delete this project/
+    #assert_select '.warning', :text => /Are you sure you want to delete this project/
+    assert_select '.warning', :text => /#{I18n.t(:text_project_destroy_confirmation)}/
+  end
+
+  def test_destroy_leaf_project_with_wrong_confirmation_should_show_confirmation
+    @request.session[:user_id] = 1 # admin
+
+    assert_no_difference 'Project.count' do
+      delete(:destroy, :params => {:id => 2, :confirm => 'wrong'})
+      assert_response :success
+    end
+    #assert_select '.warning', :text => /Are you sure you want to delete this project/
+    assert_select '.warning', :text => /#{I18n.t(:text_project_destroy_confirmation)}/
   end
 
   def test_destroy_leaf_project_with_wrong_confirmation_should_show_confirmation
