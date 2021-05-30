@@ -3,6 +3,8 @@ config/overrides
 .buildpath
 .byebug_history
 .project
+.metadata/
+Gemfile.lock
 config/
 db/
 files/
@@ -10,5 +12,4 @@ log/
 public/
 test/
 tmp/
-.metadata/
 coverage/
