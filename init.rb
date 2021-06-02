@@ -33,7 +33,7 @@ if ENV["RAILS_ENV"] == "test"
     version '4.0.8'
     url 'https://github.com/maxrossello/redmine_testsuites.git'
     author_url 'https://github.com/maxrossello'
-    requires_redmine :version => '4.0.8'
+    requires_redmine :version => '4.0.9.stable' unless Redmine::VERSION.to_s == '4.0.9.stable' 
   end 
 
   #Rails.application.config.active_support.test_order = :sorted
