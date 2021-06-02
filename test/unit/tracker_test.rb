@@ -26,10 +26,6 @@ class TrackerTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_sorted_scope
     assert_equal Tracker.all.sort, Tracker.sorted.to_a
   end

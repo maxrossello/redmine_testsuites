@@ -1986,8 +1986,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     get(:index, :params => {:project_id => 1})
     assert_select(
       '#content a.new-issue[href="/projects/ecookbook/issues/new"]',
-      #:text => 'New issue'
-      :text => I18n.t(:label_issue_new)
+      :text => 'New issue'
     )
   end
 
@@ -2028,8 +2027,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       get(:index, :params => {:project_id => 1})
       assert_select(
         '#main-menu a.new-issue[href="/projects/ecookbook/issues/new"]',
-        #:text => 'New issue'
-        :text => I18n.t(:label_issue_new)
+        :text => 'New issue'
       )
     end
   end
@@ -2381,13 +2379,11 @@ class IssuesControllerTest < Redmine::ControllerTest
 
     assert_select 'div#issue_tree span.issues-stat' do
       assert_select 'span.badge', text: '4'
-      #assert_select 'span.open a', text: '3 open'
-      assert_select 'span.open a', text: l(:label_x_open_issues_abbr, :count => 3)
+      assert_select 'span.open a', text: '3 open'
       assert_equal CGI.unescape(css_select('span.open a').first.attr('href')),
                    "/issues?parent_id=~1&set_filter=true&status_id=o"
 
-      #assert_select 'span.closed a', text: '1 closed'
-      assert_select 'span.closed a', text: I18n.t(:label_x_closed_issues_abbr, :count => 1)
+      assert_select 'span.closed a', text: '1 closed'
       assert_equal CGI.unescape(css_select('span.closed a').first.attr('href')),
                    "/issues?parent_id=~1&set_filter=true&status_id=c"
     end
@@ -2400,12 +2396,10 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select 'div#issue_tree span.issues-stat' do
-      #assert_select 'span.open a', text: '1 open'
-      assert_select 'span.open a', text: I18n.t(:label_x_open_issues_abbr, :count => 1)
+      assert_select 'span.open a', text: '1 open'
       assert_equal CGI.unescape(css_select('span.open a').first.attr('href')),
                    "/issues?parent_id=~1&set_filter=true&status_id=o"
-      #assert_select 'span.closed', text: '0 closed'
-      assert_select 'span.closed', text: I18n.t(:label_x_closed_issues_abbr, :count => 0)
+      assert_select 'span.closed', text: '0 closed'
       assert_select 'span.closed a', 0
     end
   end
@@ -2694,13 +2688,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     issue = Issue.find(4)
     issue.add_watcher User.find(4)
 
-    if Redmine::Plugin.installed? :redmine_extended_watchers
-      with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
-        get :show, :params => {:id => issue.id}
-      end
-    else
-      get :show, :params => {:id => issue.id}
-    end
+    get :show, :params => {:id => issue.id}
 
     assert_response :success
     assert_select 'div#watchers ul' do
@@ -3060,8 +3048,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#history' do
       assert_select 'div.tabs ul a', 2
       assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      #assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
-      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => I18n.t(:label_issue_history_notes)
+      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
     end
   end
 
@@ -3101,8 +3088,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#history' do
       assert_select 'div.tabs ul a', 3
       assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      #assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
-      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => I18n.t(:label_issue_history_notes)
+      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
       assert_select 'div.tabs a[id=?]', 'tab-properties', :text => 'Property changes'
     end
   end
@@ -3154,16 +3140,14 @@ class IssuesControllerTest < Redmine::ControllerTest
     get :show, params: {id: 1}
 
     assert_response :success
-    #assert_select 'span.badge.badge-status-open', text: 'open'
-    assert_select 'span.badge.badge-status-open', text: I18n.t(:label_open_issues)
+    assert_select 'span.badge.badge-status-open', text: 'open'
   end
 
   def test_show_should_display_closed_badge_for_closed_issue
     get :show, params: {id: 8}
 
     assert_response :success
-    #assert_select 'span.badge.badge-status-closed', text: 'closed'
-    assert_select 'span.badge.badge-status-closed', text: I18n.t(:label_closed_issues)
+    assert_select 'span.badge.badge-status-closed', text: 'closed'
   end
 
   def test_show_should_display_private_badge_for_private_issue
@@ -3787,8 +3771,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select 'form#issue-form' do
-      #assert_select 'a[title=?]', 'View all trackers description', :text => 'View all trackers description'
-      assert_select 'a[title=?]', I18n.t(:label_open_trackers_description), :text => I18n.t(:label_open_trackers_description)
+      assert_select 'a[title=?]', 'View all trackers description', :text => 'View all trackers description'
       assert_select 'select[name=?][title=?]', 'issue[tracker_id]', 'Description for Bug tracker'
     end
 
@@ -4326,23 +4309,21 @@ class IssuesControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     ActionMailer::Base.deliveries.clear
 
-    perform_enqueued_jobs do  # redmine_testsuites
-      with_settings :notified_events => %w(issue_added) do
-        assert_difference 'Watcher.count', 3 do
-          post(
+    with_settings :notified_events => %w(issue_added) do
+      assert_difference 'Watcher.count', 3 do
+        post(
           :create,
           :params => {
             :project_id => 1,
             :issue => {
-            :tracker_id => 1,
-            :subject => 'This is a new issue with watchers',
-            :description => 'This is the description',
-            :priority_id => 5,
-            :watcher_user_ids => ['2', '3', '10']
+              :tracker_id => 1,
+              :subject => 'This is a new issue with watchers',
+              :description => 'This is the description',
+              :priority_id => 5,
+              :watcher_user_ids => ['2', '3', '10']
             }
           }
-          )
-        end
+        )
       end
     end
     issue = Issue.find_by_subject('This is a new issue with watchers')
@@ -4563,25 +4544,23 @@ class IssuesControllerTest < Redmine::ControllerTest
     ActionMailer::Base.deliveries.clear
     @request.session[:user_id] = 2
     with_settings :notified_events => %w(issue_added) do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert_difference 'Issue.count' do
-          post(
+      assert_difference 'Issue.count' do
+        post(
           :create,
           :params => {
             :project_id => 1,
             :issue => {
-            :tracker_id => 3,
-            :subject => 'This is the test_new issue',
-            :description => 'This is the description',
-            :priority_id => 5,
-            :estimated_hours => '',
-            :custom_field_values => {
-            '2' => 'Value for field 2'
-            }
+              :tracker_id => 3,
+              :subject => 'This is the test_new issue',
+              :description => 'This is the description',
+              :priority_id => 5,
+              :estimated_hours => '',
+              :custom_field_values => {
+                '2' => 'Value for field 2'
+              }
             }
           }
-          )
-        end
+        )
       end
       assert_redirected_to :controller => 'issues', :action => 'show', :id => Issue.last.id
 
@@ -4698,10 +4677,9 @@ class IssuesControllerTest < Redmine::ControllerTest
     set_tmp_attachments_directory
     @request.session[:user_id] = 2
 
-    perform_enqueued_jobs do  # redmine_testsuites
-      with_settings :notified_events => %w(issue_added) do
-        assert_difference 'Issue.count' do
-          post(
+    with_settings :notified_events => %w(issue_added) do
+      assert_difference 'Issue.count' do
+        post(
           :create,
           :params => {
             :project_id => 1,
@@ -4710,14 +4688,13 @@ class IssuesControllerTest < Redmine::ControllerTest
             :subject => 'With attachment'
             },
             :attachments => {
-            '1' => {
-            'file' => uploaded_test_file('testfile.txt', 'text/plain'),
-            'description' => 'test file'
-            }
+              '1' => {
+                'file' => uploaded_test_file('testfile.txt', 'text/plain'),
+                'description' => 'test file'
+              }
             }
           }
-          )
-        end
+        )
       end
     end
 
@@ -5735,6 +5712,71 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#issue-form select.cf_10', 0
   end
 
+  def test_get_edit_with_me_assigned_to_id
+    @request.session[:user_id] = 2
+    get(
+      :edit,
+      :params => {
+        :id => 1,
+        :issue => {:assigned_to_id => 'me'}
+      }
+    )
+    assert_response :success
+    assert_select 'select[name=?]', 'issue[assigned_to_id]' do
+      assert_select 'option[value="2"][selected=selected]'
+    end
+  end
+
+  def test_get_edit_for_issue_with_transition_warning_should_show_the_warning
+    @request.session[:user_id] = 2
+
+    get(
+      :edit,
+      :params => {
+        :id => 9,
+      }
+    )
+
+    assert_response :success
+    reason = l(:notice_issue_not_closable_by_blocking_issue)
+    assert_select 'span.icon-warning[title=?]', reason, :text => reason
+  end
+
+  def test_get_edit_should_display_visible_spent_time_custom_field
+    @request.session[:user_id] = 2
+
+    get(
+      :edit,
+      :params => {
+        :id => 13,
+      }
+    )
+
+    assert_response :success
+
+    assert_select '#issue-form select.cf_10', 1
+  end
+
+  def test_get_edit_should_not_display_spent_time_custom_field_not_visible
+    cf = TimeEntryCustomField.find(10)
+    cf.visible = false
+    cf.role_ids = [1]
+    cf.save!
+
+    @request.session[:user_id] = 2
+
+    get(
+      :edit,
+      :params => {
+        :id => 13,
+      }
+    )
+
+    assert_response :success
+
+    assert_select '#issue-form select.cf_10', 0
+  end
+
   def test_update_form_for_existing_issue
     @request.session[:user_id] = 2
     patch(
@@ -5890,11 +5932,10 @@ class IssuesControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     ActionMailer::Base.deliveries.clear
 
-    perform_enqueued_jobs do  # redmine_testsuites
-      with_settings :notified_events => %w(issue_updated) do
-        assert_difference('Journal.count') do
-          assert_difference('JournalDetail.count', 3) do
-            put(
+    with_settings :notified_events => %w(issue_updated) do
+      assert_difference('Journal.count') do
+        assert_difference('JournalDetail.count', 3) do
+          put(
             :update,
             :params => {
               :id => 1,
@@ -5905,8 +5946,7 @@ class IssuesControllerTest < Redmine::ControllerTest
               :category_id => '3'
               }
             }
-            )
-          end
+          )
         end
       end
     end
@@ -5945,22 +5985,20 @@ class IssuesControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     ActionMailer::Base.deliveries.clear
 
-    perform_enqueued_jobs do  # redmine_testsuites
-      with_settings :notified_events => %w(issue_updated) do
-        assert_difference('Journal.count') do
-          assert_difference('JournalDetail.count', 3) do
-            put(
+    with_settings :notified_events => %w(issue_updated) do
+      assert_difference('Journal.count') do
+        assert_difference('JournalDetail.count', 3) do
+          put(
             :update,
             :params => {
               :id => 1,
               :issue => {
-              :project_id => '1',
-              :tracker_id => '2',
-              :priority_id => '6'
+                :project_id => '1',
+                :tracker_id => '2',
+                :priority_id => '6'
               }
             }
-            )
-          end
+          )
         end
       end
     end
@@ -5983,23 +6021,21 @@ class IssuesControllerTest < Redmine::ControllerTest
     issue = Issue.find(1)
     assert_equal '125', issue.custom_value_for(2).value
 
-    perform_enqueued_jobs do  # redmine_testsuites
-      with_settings :notified_events => %w(issue_updated) do
-        assert_difference('Journal.count') do
-          assert_difference('JournalDetail.count', 3) do
-            put(
+    with_settings :notified_events => %w(issue_updated) do
+      assert_difference('Journal.count') do
+        assert_difference('JournalDetail.count', 3) do
+          put(
             :update,
             :params => {
               :id => 1,
               :issue => {
-              :subject => 'Custom field change',
-              :priority_id => '6',
-              :category_id => '1', # no change
-              :custom_field_values => {'2' => 'New custom value'}
+                :subject => 'Custom field change',
+                :priority_id => '6',
+                :category_id => '1', # no change
+                :custom_field_values => {'2' => 'New custom value'}
               }
             }
-            )
-          end
+          )
         end
       end
     end
@@ -6045,10 +6081,9 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_equal 1, issue.status_id
     @request.session[:user_id] = 2
 
-    perform_enqueued_jobs do  # redmine_testsuites
-      with_settings :notified_events => %w(issue_updated) do
-        assert_difference('TimeEntry.count', 0) do
-          put(
+    with_settings :notified_events => %w(issue_updated) do
+      assert_difference('TimeEntry.count', 0) do
+        put(
           :update,
           :params => {
             :id => 1,
@@ -6063,8 +6098,7 @@ class IssuesControllerTest < Redmine::ControllerTest
             :activity_id => TimeEntryActivity.first
             }
           }
-          )
-        end
+        )
       end
     end
     assert_redirected_to :action => 'show', :id => '1'
@@ -6084,10 +6118,9 @@ class IssuesControllerTest < Redmine::ControllerTest
   def test_put_update_with_note_only
     notes = 'Note added by IssuesControllerTest#test_update_with_note_only'
 
-    perform_enqueued_jobs do  # redmine_testsuites
-      with_settings :notified_events => %w(issue_updated) do
-        # anonymous user
-        put(
+    with_settings :notified_events => %w(issue_updated) do
+      # anonymous user
+      put(
         :update,
         :params => {
           :id => 1,
@@ -6095,8 +6128,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           :notes => notes
           }
         }
-        )
-      end
+      )
     end
     assert_redirected_to :action => 'show', :id => '1'
     j = Journal.order('id DESC').first
@@ -6243,11 +6275,10 @@ class IssuesControllerTest < Redmine::ControllerTest
     Journal.delete_all
     JournalDetail.delete_all
 
-    perform_enqueued_jobs do  # redmine_testsuites
-      with_settings :notified_events => %w(issue_updated) do
-        # anonymous user
-        assert_difference 'Attachment.count' do
-          put(
+    with_settings :notified_events => %w(issue_updated) do
+      # anonymous user
+      assert_difference 'Attachment.count' do
+        put(
           :update,
           :params => {
             :id => 1,
@@ -6255,14 +6286,13 @@ class IssuesControllerTest < Redmine::ControllerTest
             :notes => ''
             },
             :attachments => {
-            '1' => {
-            'file' => uploaded_test_file('testfile.txt', 'text/plain'),
-            'description' => 'test file'
-            }
+              '1' => {
+                'file' => uploaded_test_file('testfile.txt', 'text/plain'),
+                'description' => 'test file'
+              }
             }
           }
-          )
-        end
+        )
       end
     end
 
@@ -6414,19 +6444,17 @@ class IssuesControllerTest < Redmine::ControllerTest
     ActionMailer::Base.deliveries.clear
     @request.session[:user_id] = 2
     journal = new_record(Journal) do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert_difference 'Attachment.count', -2 do
-          put(
+      assert_difference 'Attachment.count', -2 do
+        put(
           :update,
           :params => {
             :id => 3,
             :issue => {
-            :notes => 'Removing attachments',
-            :deleted_attachment_ids => ['1', '5']
+              :notes => 'Removing attachments',
+              :deleted_attachment_ids => ['1', '5']
             }
           }
-          )
-        end
+        )
       end
     end
     assert_equal 'Removing attachments', journal.notes
@@ -6492,19 +6520,17 @@ class IssuesControllerTest < Redmine::ControllerTest
     new_subject = 'Subject modified by IssuesControllerTest#test_post_edit'
 
     with_settings :notified_events => %w(issue_updated) do
-      perform_enqueued_jobs do  # redmine_testsuites
-        put(
+      put(
         :update,
         :params => {
           :id => 1,
           :issue => {
-          :subject => new_subject,
-          :priority_id => '6',
-          :category_id => '1' # no change
+            :subject => new_subject,
+            :priority_id => '6',
+            :category_id => '1' # no change
           }
         }
-        )
-      end
+      )
       assert_equal 2, ActionMailer::Base.deliveries.size
     end
   end
@@ -7100,8 +7126,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     ActionMailer::Base.deliveries.clear
     with_settings :notified_events => %w(issue_updated) do
-      perform_enqueued_jobs do  # redmine_testsuites
-        post(
+      post(
         :bulk_update,
         :params => {
           :ids => [1, 2],
@@ -7112,9 +7137,8 @@ class IssuesControllerTest < Redmine::ControllerTest
           :custom_field_values => {'2' => ''}
           }
         }
-        )
-        assert_response 302
-      end
+      )
+      assert_response 302
       # 4 emails for 2 members and 2 issues
       # 1 email for a watcher of issue #2
       assert_equal 5, ActionMailer::Base.deliveries.size
@@ -7470,9 +7494,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       }
     )
     assert_response :success
-    #assert_select '#errorExplanation span', :text => 'Failed to save 2 issue(s) on 2 selected: #1, #2.'
-    assert_select '#errorExplanation span', :text => l(:notice_failed_to_save_issues, :count => 2,
-                                                       :total => 2, :ids => "#1, #2")
+    assert_select '#errorExplanation span', :text => 'Failed to save 2 issue(s) on 2 selected: #1, #2.'
     assert_select '#errorExplanation ul li', :text => 'Start date is not a valid date: #1, #2'
   end
 
@@ -7882,8 +7904,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
     copy = Issue.order(:id => :desc).first
     assert_equal 2, copy.watchers.count
-    #assert_equal [3, 10], copy.watcher_user_ids
-    assert_equal [3, 10], copy.watcher_user_ids.sort
+    assert_equal [3, 10], copy.watcher_user_ids
   end
 
   def test_bulk_copy_should_not_copy_selected_subtasks_twice
