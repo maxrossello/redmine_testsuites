@@ -43,9 +43,6 @@ Redmine::SudoMode.disable!
 $redmine_tmp_attachments_directory = "#{Rails.root}/tmp/test/attachments"
 FileUtils.mkdir_p $redmine_tmp_attachments_directory
 
-require "minitest/reporters"
-Minitest::Reporters.use! [Minitest::Reporters::ProgressReporter.new]
-
 $redmine_tmp_pdf_directory = "#{Rails.root}/tmp/test/pdf"
 FileUtils.mkdir_p $redmine_tmp_pdf_directory
 FileUtils.rm Dir.glob('#$redmine_tmp_pdf_directory/*.pdf')
@@ -451,9 +448,7 @@ module Redmine
         raise ArgumentError unless request
         options = arg.slice!(request)
 
-        #API_FORMATS.each do |format|
-        api_formats = %w(json xml).freeze
-        api_formats.each do |format|
+        API_FORMATS.each do |format|
           format_request = request.sub /$/, ".#{format}"
           super options.merge(format_request => arg[request], :format => format)
         end

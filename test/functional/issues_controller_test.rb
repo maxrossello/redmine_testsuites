@@ -2609,8 +2609,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#history' do
       assert_select 'div.tabs ul a', 2
       assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      #assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
-      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => I18n.t(:label_issue_history_notes)
+      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
     end
   end
 
@@ -2642,8 +2641,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#history' do
       assert_select 'div.tabs ul a', 3
       assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      #assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
-      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => I18n.t(:label_issue_history_notes)
+      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
       assert_select 'div.tabs a[id=?]', 'tab-properties', :text => 'Property changes'
     end
   end
@@ -3224,8 +3222,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select 'form#issue-form' do
-      #assert_select 'a[title=?]', 'View all trackers description', :text => 'View all trackers description'
-      assert_select 'a[title=?]', I18n.t(:label_open_trackers_description), :text => I18n.t(:label_open_trackers_description)
+      assert_select 'a[title=?]', 'View all trackers description', :text => 'View all trackers description'
       assert_select 'select[name=?][title=?]', 'issue[tracker_id]', 'Description for Bug tracker'
     end
 
@@ -6473,9 +6470,6 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     assert_response :success
-
-    #assert_select '#errorExplanation span',
-    #          :text => "Failed to save 2 issue(s) on 3 selected: ##{issue1.id}, ##{issue2.id}."
     assert_select '#errorExplanation span',
               :text => I18n.t(:notice_failed_to_save_issues, { count: 2, total: 3, ids: "##{issue1.id}, ##{issue2.id}"})
     assert_select '#errorExplanation ul li',

@@ -1094,8 +1094,7 @@ class IssueTest < ActiveSupport::TestCase
     assert_equal [cf.id.to_s, "category_id", "due_date"],
                  issue.required_attribute_names(user).sort
     assert !issue.save, "Issue was saved"
-    #assert_equal ["Category cannot be blank", "Due date cannot be blank", "Foo cannot be blank"],
-    assert_equal ["Due date cannot be blank", "Foo cannot be blank", "#{I18n.t(:field_category)} cannot be blank"],
+    assert_equal ["Category cannot be blank", "Due date cannot be blank", "Foo cannot be blank"],
                  issue.errors.full_messages.sort
 
     issue.tracker_id = 2
@@ -1481,6 +1480,23 @@ class IssueTest < ActiveSupport::TestCase
     end
 
     assert_equal [3, nil], copy.children.map(&:assigned_to_id)
+  end
+
+  def test_copy_should_not_add_attachments_to_journal
+    set_tmp_attachments_directory
+    issue = Issue.generate!
+    copy = Issue.new
+    copy.init_journal User.find(1)
+    copy.copy_from issue
+
+    copy.project = issue.project
+    copy.save_attachments(
+      { 'p0' => {'file' => mock_file_with_options(:original_filename => 'upload')} }
+    )
+    assert copy.save
+    assert j = copy.journals.last
+    assert_equal 1, j.details.size
+    assert_equal 'relation', j.details[0].property
   end
 
   def test_should_not_call_after_project_change_on_creation
@@ -1881,9 +1897,7 @@ class IssueTest < ActiveSupport::TestCase
     parent.project_id = project.id
     assert !parent.save
     assert_include(
-      #"Subtask ##{child.id} could not be moved to the new project: Tracker is not included in the list",
-      #parent.errors[:base])
-      I18n.t(:error_move_of_child_not_possible, { child: "##{child.id}", errors: "#{I18n.t(:field_tracker)} #{I18n.t('activerecord.errors.messages.inclusion')}"}),
+      "Subtask ##{child.id} could not be moved to the new project: Tracker is not included in the list",
       parent.errors[:base])
   end
 

@@ -579,10 +579,8 @@ class MailerTest < ActiveSupport::TestCase
 
       mail = last_email
       assert_mail_body_match /^\* Author: /, mail
-      #assert_mail_body_match /^\* Status: /, mail
-      assert_mail_body_match /^\* #{I18n.t(:field_status)}: /, mail
-      #assert_mail_body_match /^\* Priority: /, mail
-      assert_mail_body_match /^\* #{I18n.t(:field_priority)}: /, mail
+      assert_mail_body_match /^\* Status: /, mail
+      assert_mail_body_match /^\* Priority: /, mail
 
       assert_mail_body_no_match /^\* Assignee: /, mail
       assert_mail_body_no_match /^\* Category: /, mail
@@ -667,17 +665,15 @@ class MailerTest < ActiveSupport::TestCase
     mail = last_email
     assert mail.bcc.include?('dlopper@somenet.foo')
     assert_mail_body_match 'Bug #3: Error 281 when updating a recipe (5 days late)', mail
-    #assert_mail_body_match 'View all issues (2 open)', mail
-    assert_mail_body_match "#{I18n.t(:label_issue_view_all)} (#{I18n.t(:label_x_open_issues_abbr, :count => 2)})", mail
+    assert_mail_body_match 'View all issues (2 open)', mail
     assert_select_email do
       #assert_select 'a[href=?]',
       #              'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
       #              :text => 'View all issues'
       assert_select 'a[href=?]',
                     'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
-                    :text => I18n.t(:label_issue_view_all)
-      #assert_select '/p:nth-last-of-type(1)', :text => 'View all issues (2 open)'
-      assert_select '/p:nth-last-of-type(1)', :text => "#{I18n.t(:label_issue_view_all)} (#{I18n.t(:label_x_open_issues_abbr, :count => 2)})"
+                    :text => 'View all issues'
+      assert_select '/p:nth-last-of-type(1)', :text => 'View all issues (2 open)'
     end
     #assert_equal '1 issue(s) due in the next 42 days', mail.subject
     assert_equal "#{I18n.t :mail_subject_reminder, {count: 1, days: 42}}", mail.subject
@@ -747,11 +743,9 @@ class MailerTest < ActiveSupport::TestCase
       assert_equal 2, ActionMailer::Base.deliveries.size
       assert_equal %w(dlopper@somenet.foo jsmith@somenet.foo), recipients
       ActionMailer::Base.deliveries.each do |mail|
-        #assert_mail_body_match '1 issue(s) that are assigned to you are due in the next 7 days::', mail
-        assert_mail_body_match I18n.t(:mail_body_reminder, {count: 1, days: 7}), mail
+        assert_mail_body_match '1 issue(s) that are assigned to you are due in the next 7 days::', mail
         assert_mail_body_match 'Assigned to group (Due in 5 days)', mail
-        #assert_mail_body_match "View all issues (#{mail.bcc.include?('dlopper@somenet.foo') ? 3 : 2} open)", mail
-        assert_mail_body_match "#{I18n.t(:label_issue_view_all)} (#{I18n.t(:label_x_open_issues_abbr, count: (mail.bcc.include?('dlopper@somenet.foo') ? 3 : 2))}", mail
+        assert_mail_body_match "View all issues (#{mail.bcc.include?('dlopper@somenet.foo') ? 3 : 2} open)", mail
       end
     end
   end

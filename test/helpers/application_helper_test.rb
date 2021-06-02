@@ -312,8 +312,7 @@ class ApplicationHelperTest < Redmine::HelperTest
                          'Bug #3: Error 281 when updating a recipe',
                          {:controller => 'issues', :action => 'show', :id => 3},
                          :class => Issue.find(3).css_classes,
-                           #:title => 'Status: New')
-                           :title => "#{I18n.t(:field_status)}: New")
+                         :title => 'Status: New')
     note_link = link_to(
                          '#3-14',
                          {:controller => 'issues', :action => 'show',
@@ -325,8 +324,7 @@ class ApplicationHelperTest < Redmine::HelperTest
                          {:controller => 'issues', :action => 'show',
                           :id => 3, :anchor => 'note-14'},
                          :class => Issue.find(3).css_classes,
-                           #:title => 'Status: New')
-                           :title => "#{I18n.t(:field_status)}: New")
+                         :title => 'Status: New')
     note_link2 = link_to(
                          '#3#note-14',
                          {:controller => 'issues', :action => 'show',
@@ -338,8 +336,7 @@ class ApplicationHelperTest < Redmine::HelperTest
                          {:controller => 'issues', :action => 'show',
                           :id => 3, :anchor => 'note-14'},
                          :class => Issue.find(3).css_classes,
-                           #:title => 'Status: New')
-                           :title => "#{I18n.t(:field_status)}: New")
+                         :title => 'Status: New')
 
     revision_link = link_to(
                          'r1',
@@ -459,6 +456,7 @@ class ApplicationHelperTest < Redmine::HelperTest
       'user:JSMITH'                 => link_to_user(User.find_by_id(2)),
       'user#2'                      => link_to_user(User.find_by_id(2)),
       '@jsmith'                     => link_to_user(User.find_by_id(2)),
+      '@jsmith.'                    => "#{link_to_user(User.find_by_id(2))}.",
       '@JSMITH'                     => link_to_user(User.find_by_id(2)),
       '@abcd@example.com'           => link_to_user(User.find_by_id(u_email_id)),
       'user:abcd@example.com'       => link_to_user(User.find_by_id(u_email_id)),
