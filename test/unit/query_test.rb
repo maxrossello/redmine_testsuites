@@ -981,7 +981,8 @@ class QueryTest < ActiveSupport::TestCase
     result = query.results_scope
 
     bookmarks = User.current.bookmarked_project_ids
-    assert_equal Project.where(parent_id: bookmarks).ids, result.map(&:id).sort
+    #assert_equal Project.where(parent_id: bookmarks).ids, result.map(&:id).sort
+    assert_equal Project.where(parent_id: bookmarks).ids.sort, result.map(&:id).sort
   end
 
   def test_filter_watched_issues

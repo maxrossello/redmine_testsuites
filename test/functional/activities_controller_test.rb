@@ -160,7 +160,8 @@ class ActivitiesControllerTest < Redmine::ControllerTest
         }
       assert_response :success
 
-      assert_select 'title', :text => /Issues/
+      #assert_select 'title', :text => /Issues/
+      assert_select 'title', :text => /#{I18n.t(:label_issue_plural)}/
     end
   end
 
