@@ -5683,21 +5683,6 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
   end
 
-  def test_get_edit_with_me_assigned_to_id
-    @request.session[:user_id] = 2
-    get(
-      :edit,
-      :params => {
-        :id => 1,
-        :issue => {:assigned_to_id => 'me'}
-      }
-    )
-    assert_response :success
-    assert_select 'select[name=?]', 'issue[assigned_to_id]' do
-      assert_select 'option[value="2"][selected=selected]'
-    end
-  end
-
   def test_get_edit_for_issue_with_transition_warning_should_show_the_warning
     @request.session[:user_id] = 2
 
