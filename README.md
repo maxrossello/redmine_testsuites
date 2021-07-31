@@ -1,10 +1,12 @@
 # Redmine Test Suites
 
-The plugin version corresponds to minimum version of Redmine required. Look at dedicated branch for each Redmine version.
-
 Allows to run the Redmine test suite along with plugin tests, considering the different behaviors introduced by supported plugins over the Redmine default behavior.
 
 Furthermore, the plugin adds tasks to run byebug and minitest_bisect over the very same test list and test order as the plain test task.
+
+## Version
+
+The plugin version corresponds to minimum version of Redmine required. Look at dedicated branch for each Redmine version.
 
 ## Overview
 
@@ -25,7 +27,7 @@ This plugin installs itself only if RAILS_ENV="test", but like other plugins, it
     - **redmine:test:routing** : run core routing tests along with plugins routing tests
     - **redmine:test:units** : run core unit tests along with plugins unit tests
     - **redmine:test:system** : run core system tests along with plugins system tests
-    
+
 Example:
     *RAILS_ENV="test" bundle exec rails redmine:test:units TESTOPTS="--seed 45334"*
     

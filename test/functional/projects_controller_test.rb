@@ -1079,7 +1079,30 @@ class ProjectsControllerTest < Redmine::ControllerTest
       delete(:destroy, :params => {:id => 2})
       assert_response :success
     end
-    assert_select '.warning', :text => /Are you sure you want to delete this project/
+    #assert_select '.warning', :text => /Are you sure you want to delete this project/
+    assert_select '.warning', :text => /#{I18n.t(:text_project_destroy_confirmation)}/
+  end
+
+  def test_destroy_leaf_project_with_wrong_confirmation_should_show_confirmation
+    @request.session[:user_id] = 1 # admin
+
+    assert_no_difference 'Project.count' do
+      delete(:destroy, :params => {:id => 2, :confirm => 'wrong'})
+      assert_response :success
+    end
+    #assert_select '.warning', :text => /Are you sure you want to delete this project/
+    assert_select '.warning', :text => /#{I18n.t(:text_project_destroy_confirmation)}/
+  end
+
+  def test_destroy_leaf_project_with_wrong_confirmation_should_show_confirmation
+    @request.session[:user_id] = 1 # admin
+
+    assert_no_difference 'Project.count' do
+      delete(:destroy, :params => {:id => 2, :confirm => 'wrong'})
+      assert_response :success
+    end
+    #assert_select '.warning', :text => /Are you sure you want to delete this project/
+    assert_select '.warning', :text => /#{I18n.t(:text_project_destroy_confirmation)}/
   end
 
   def test_destroy_leaf_project_with_wrong_confirmation_should_show_confirmation
