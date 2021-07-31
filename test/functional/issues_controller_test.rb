@@ -2382,7 +2382,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'div#issue_tree span.issues-stat' do
       assert_select 'span.badge', text: '4'
       #assert_select 'span.open a', text: '3 open'
-      assert_select 'span.open a', text: l(:label_x_open_issues_abbr, :count => 3)
+      assert_select 'span.open a', text: I18n.t(:label_x_open_issues_abbr, :count => 3)
       assert_equal CGI.unescape(css_select('span.open a').first.attr('href')),
                    "/issues?parent_id=~1&set_filter=true&status_id=o"
 
@@ -2694,18 +2694,16 @@ class IssuesControllerTest < Redmine::ControllerTest
     issue = Issue.find(4)
     issue.add_watcher User.find(4)
 
-    if Redmine::Plugin.installed? :redmine_extended_watchers
-      with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
-        get :show, :params => {:id => issue.id}
-      end
-    else
-      get :show, :params => {:id => issue.id}
-    end
+    get :show, :params => {:id => issue.id}
 
     assert_response :success
     assert_select 'div#watchers ul' do
       assert_select 'li.user-4' do
-        assert_select 'span.icon-warning[title=?]', l(:notice_invalid_watcher), text: l(:notice_invalid_watcher)
+        if Redmine::Plugin.installed? :redmine_extended_watchers
+          assert_select 'span.icon-warning[title=?]', l(:notice_invalid_watcher), text: l(:notice_invalid_watcher), :count => 0
+        else
+          assert_select 'span.icon-warning[title=?]', l(:notice_invalid_watcher), text: l(:notice_invalid_watcher)
+        end
       end
     end
   end
@@ -6265,7 +6263,6 @@ class IssuesControllerTest < Redmine::ControllerTest
         end
       end
     end
-
     assert_redirected_to :action => 'show', :id => '1'
     j = Issue.find(1).journals.reorder('id DESC').first
     assert j.notes.blank?
@@ -7113,8 +7110,8 @@ class IssuesControllerTest < Redmine::ControllerTest
           }
         }
         )
-        assert_response 302
       end
+      assert_response 302
       # 4 emails for 2 members and 2 issues
       # 1 email for a watcher of issue #2
       assert_equal 5, ActionMailer::Base.deliveries.size
@@ -7471,8 +7468,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     )
     assert_response :success
     #assert_select '#errorExplanation span', :text => 'Failed to save 2 issue(s) on 2 selected: #1, #2.'
-    assert_select '#errorExplanation span', :text => l(:notice_failed_to_save_issues, :count => 2,
-                                                       :total => 2, :ids => "#1, #2")
+    assert_select '#errorExplanation span', :text => I18n.t(:notice_failed_to_save_issues, :count => 2, :total => 2, :ids => "#1, #2")
     assert_select '#errorExplanation ul li', :text => 'Start date is not a valid date: #1, #2'
   end
 
@@ -7492,7 +7488,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     )
     assert_response :success
     assert_select '#errorExplanation span',
-              :text => I18n.t(:notice_failed_to_save_issues, { count: 2, total: 3, ids: "##{issue1.id}, ##{issue2.id}"})
+                  #:text => "Failed to save 2 issue(s) on 3 selected: ##{issue1.id}, ##{issue2.id}."
+                  :text => I18n.t(:notice_failed_to_save_issues, { count: 2, total: 3, ids: "##{issue1.id}, ##{issue2.id}"})
     assert_select '#errorExplanation ul li',
                   :text => "Due date must be greater than start date: ##{issue1.id}, ##{issue2.id}"
     assert_select '#bulk-selection li', 2
@@ -7882,8 +7879,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
     copy = Issue.order(:id => :desc).first
     assert_equal 2, copy.watchers.count
-    #assert_equal [3, 10], copy.watcher_user_ids
-    assert_equal [3, 10], copy.watcher_user_ids.sort
+    assert_equal [3, 10], copy.watcher_user_ids
   end
 
   def test_bulk_copy_should_not_copy_selected_subtasks_twice

@@ -928,6 +928,28 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_select 'select#project_custom_field_values_3', :count => 0
   end
 
+  def test_settings_issue_tracking
+    @request.session[:user_id] = 1
+    project = Project.find(1)
+    project.default_version_id = 3
+    project.save!
+
+    get(
+      :settings,
+      :params => {
+        :id => 'ecookbook',
+        :tab => 'issues',
+      }
+    )
+    assert_response :success
+
+    assert_select 'form[id=?]', 'project_issue_tracking', 1
+    assert_select 'input[name=?]', 'project[tracker_ids][]'
+    assert_select 'input[name=?]', 'project[issue_custom_field_ids][]'
+    assert_select 'select[name=?]', 'project[default_version_id]', 1
+    assert_select 'select[name=?]', 'project[default_assigned_to_id]', 1
+  end
+
   def test_update
     @request.session[:user_id] = 2 # manager
     post(
@@ -1055,6 +1077,17 @@ class ProjectsControllerTest < Redmine::ControllerTest
 
     assert_no_difference 'Project.count' do
       delete(:destroy, :params => {:id => 2})
+      assert_response :success
+    end
+    #assert_select '.warning', :text => /Are you sure you want to delete this project/
+    assert_select '.warning', :text => /#{I18n.t(:text_project_destroy_confirmation)}/
+  end
+
+  def test_destroy_leaf_project_with_wrong_confirmation_should_show_confirmation
+    @request.session[:user_id] = 1 # admin
+
+    assert_no_difference 'Project.count' do
+      delete(:destroy, :params => {:id => 2, :confirm => 'wrong'})
       assert_response :success
     end
     #assert_select '.warning', :text => /Are you sure you want to delete this project/

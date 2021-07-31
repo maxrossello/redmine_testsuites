@@ -524,6 +524,7 @@ class ApplicationHelperTest < Redmine::HelperTest
       'user:JSMITH'                 => link_to_user(User.find_by_id(2)),
       'user#2'                      => link_to_user(User.find_by_id(2)),
       '@jsmith'                     => link_to_user(User.find_by_id(2)),
+      '@jsmith.'                    => "#{link_to_user(User.find_by_id(2))}.",
       '@JSMITH'                     => link_to_user(User.find_by_id(2)),
       '@abcd@example.com'           => link_to_user(User.find_by_id(u_email_id)),
       'user:abcd@example.com'       => link_to_user(User.find_by_id(u_email_id)),
@@ -534,14 +535,6 @@ class ApplicationHelperTest < Redmine::HelperTest
     }
     @project = Project.find(1)
     to_test.each {|text, result| assert_equal "<p>#{result}</p>", textilizable(text), "#{text} failed"}
-  end
-
-  def test_link_to_note_within_the_same_page
-    issue = Issue.find(1)
-    assert_equal '<p><a href="#note-14">#note-14</a></p>', textilizable('#note-14', :object => issue)
-
-    journal = Journal.find(2)
-    assert_equal '<p><a href="#note-2">#note-2</a></p>', textilizable('#note-2', :object => journal)
   end
 
   def test_link_to_note_within_the_same_page

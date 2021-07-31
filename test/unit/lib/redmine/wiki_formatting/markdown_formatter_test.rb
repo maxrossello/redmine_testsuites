@@ -185,11 +185,6 @@ class Redmine::WikiFormatting::MarkdownFormatterTest < ActionView::TestCase
     assert_equal '<p>This <u>text</u> should be underlined</p>', @formatter.new(text).to_html.strip
   end
 
-  def test_should_support_underlined_text
-    text = 'This _text_ should be underlined'
-    assert_equal '<p>This <u>text</u> should be underlined</p>', @formatter.new(text).to_html.strip
-  end
-
   private
 
   def assert_section_with_hash(expected, text, index)

@@ -623,6 +623,7 @@ class MailerTest < ActiveSupport::TestCase
       assert_mail_body_match /^\* Author: /, mail
       #assert_mail_body_match /^\* Status: /, mail
       assert_mail_body_match /^\* #{I18n.t(:field_status)}: /, mail
+      #assert_mail_body_match /^\* Priority: /, mail
       assert_mail_body_match /^\* #{I18n.t(:field_priority)}: /, mail
 
       assert_mail_body_no_match /^\* Assignee: /, mail
@@ -748,12 +749,12 @@ class MailerTest < ActiveSupport::TestCase
         "status_id%5D=o&set_filter=1&sort=due_date%3Aasc&v%5B" \
         "assigned_to_id%5D%5B%5D=me&v%5Bdue_date%5D%5B%5D=#{days}"
     assert_select_email do
-      #assert_select 'a[href=?]',
-      #              'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
-      #              :text => 'View all issues'
       assert_select 'a[href=?]',
                     url,
                     :text => '1'
+      #assert_select 'a[href=?]',
+      #              'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
+      #              :text => 'View all issues'
       assert_select 'a[href=?]',
                     'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
                     #:text => 'View all issues'
