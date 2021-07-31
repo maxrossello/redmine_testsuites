@@ -5659,8 +5659,9 @@ class IssuesControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     get(:edit, :params => {:id => 1})
     assert_response :success
-
-    assert_select '#issue-form select.cf_10', 0
+    assert_select 'select[name=?]', 'issue[assigned_to_id]' do
+      assert_select 'option[value="2"][selected=selected]'
+    end
   end
 
   def test_get_edit_with_me_assigned_to_id
