@@ -5659,8 +5659,12 @@ class IssuesControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     get(:edit, :params => {:id => 1})
     assert_response :success
-    assert_select 'select[name=?]', 'issue[assigned_to_id]' do
-      assert_select 'option[value="2"][selected=selected]'
+
+    assert_select 'select[name=?][multiple=multiple]', 'issue[custom_field_values][1][]' do
+      assert_select 'option', 3
+      assert_select 'option[value=MySQL][selected=selected]'
+      assert_select 'option[value=Oracle][selected=selected]'
+      assert_select 'option[value=PostgreSQL]:not([selected])'
     end
   end
 
