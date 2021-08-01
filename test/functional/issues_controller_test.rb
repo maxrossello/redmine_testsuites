@@ -5687,6 +5687,29 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'input[name=?][value=?]', 'time_entry[comments]', 'this is my comment'
   end
 
+  def test_put_with_spent_time_when_assigned_to_of_private_issue_is_update_at_the_same_time
+    @request.session[:user_id] = 3
+    Role.find(2).update! :issues_visibility => 'own'
+    private_issue = Issue.find(3)
+
+    assert_difference('TimeEntry.count', 1) do
+      put(
+        :update,
+        params: {
+          id: private_issue.id,
+          issue: { assigned_to_id: nil },
+          time_entry: {
+            comments: "add spent time", activity_id: TimeEntryActivity.first.id, hours: 1
+          }
+        }
+      )
+    end
+    assert_select '#errorExplanation', {text: /Log time is invalid/, count: 0}
+    assert_select '#errorExplanation', {text: /Issue is invalid/, count: 0}
+    assert_redirected_to action: 'show', id: private_issue.id
+    assert_not private_issue.reload.visible?
+  end
+
   def test_put_update_should_allow_fixed_version_to_be_set_to_a_subproject
     issue = Issue.find(2)
     @request.session[:user_id] = 2
@@ -6473,9 +6496,6 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       }
     assert_response :success
-
-    #assert_select '#errorExplanation span',
-    #          :text => "Failed to save 2 issue(s) on 3 selected: ##{issue1.id}, ##{issue2.id}."
     assert_select '#errorExplanation span',
               :text => I18n.t(:notice_failed_to_save_issues, { count: 2, total: 3, ids: "##{issue1.id}, ##{issue2.id}"})
     assert_select '#errorExplanation ul li',
