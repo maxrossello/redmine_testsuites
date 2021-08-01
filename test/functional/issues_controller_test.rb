@@ -5705,7 +5705,8 @@ class IssuesControllerTest < Redmine::ControllerTest
       )
     end
     assert_select '#errorExplanation', {text: /Log time is invalid/, count: 0}
-    assert_select '#errorExplanation', {text: /Issue is invalid/, count: 0}
+    #assert_select '#errorExplanation', {text: /Issue is invalid/, count: 0}
+    assert_select '#errorExplanation', {text: /#{I18n.t(:field_issue)} #{I18n.t('activerecord.errors.messages.invalid')}/, count: 0}
     assert_redirected_to action: 'show', id: private_issue.id
     assert_not private_issue.reload.visible?
   end
