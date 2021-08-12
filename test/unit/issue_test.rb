@@ -1123,7 +1123,8 @@ class IssueTest < ActiveSupport::TestCase
     assert_equal [cf.id.to_s, "category_id", "due_date"],
                  issue.required_attribute_names(user).sort
     assert !issue.save, "Issue was saved"
-    assert_equal ["Category cannot be blank", "Due date cannot be blank", "Foo cannot be blank"],
+    #assert_equal ["Category cannot be blank", "Due date cannot be blank", "Foo cannot be blank"],
+    assert_equal ["#{I18n.t(:field_category)} cannot be blank", "Due date cannot be blank", "Foo cannot be blank"].sort,
                  issue.errors.full_messages.sort
 
     issue.tracker_id = 2
@@ -1943,7 +1944,8 @@ class IssueTest < ActiveSupport::TestCase
     parent.project_id = project.id
     assert !parent.save
     assert_include(
-      "Subtask ##{child.id} could not be moved to the new project: Tracker is not included in the list",
+    #"Subtask ##{child.id} could not be moved to the new project: Tracker is not included in the list",
+    I18n.t(:error_move_of_child_not_possible, :child => "##{child.id}", :errors => "#{I18n.t(:field_tracker)} #{I18n.t('activerecord.errors.messages.inclusion')}"),
       parent.errors[:base])
   end
 

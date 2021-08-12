@@ -150,8 +150,6 @@ class ApplicationHelperTest < Redmine::HelperTest
       'with title !http://foo.bar/image.jpg(This is a double-quoted "title")!' =>
         'with title <img src="http://foo.bar/image.jpg" title="This is a double-quoted &quot;title&quot;" ' \
           'alt="This is a double-quoted &quot;title&quot;" />',
-      'with query string !http://foo.bar/image.cgi?a=1&b=2!' =>
-        'with query string <img src="http://foo.bar/image.cgi?a=1&#38;b=2" alt="" />'
     }
     to_test.each {|text, result| assert_equal "<p>#{result}</p>", textilizable(text)}
   end
@@ -361,7 +359,8 @@ class ApplicationHelperTest < Redmine::HelperTest
         'Bug #3: Error 281 when updating a recipe',
         {:controller => 'issues', :action => 'show', :id => 3},
         :class => Issue.find(3).css_classes,
-        :title => 'Status: New'
+        #:title => 'Status: New'
+        :title => "#{I18n.t(:field_status)}: New"
       )
     note_link =
       link_to(
@@ -377,7 +376,8 @@ class ApplicationHelperTest < Redmine::HelperTest
         {:controller => 'issues', :action => 'show',
          :id => 3, :anchor => 'note-14'},
         :class => Issue.find(3).css_classes,
-        :title => 'Status: New'
+        #:title => 'Status: New'
+        :title => "#{I18n.t(:field_status)}: New"
       )
     note_link2 =
       link_to(
@@ -393,7 +393,8 @@ class ApplicationHelperTest < Redmine::HelperTest
         {:controller => 'issues', :action => 'show',
          :id => 3, :anchor => 'note-14'},
         :class => Issue.find(3).css_classes,
-        :title => 'Status: New'
+        #:title => 'Status: New'
+        :title => "#{I18n.t(:field_status)}: New"
       )
     revision_link =
       link_to(
@@ -2041,34 +2042,6 @@ class ApplicationHelperTest < Redmine::HelperTest
 
   def test_labelled_form_for_includes_name_attribute
     assert_match(/name="new_issue-[a-z0-9]{8}"/, labelled_form_for(Issue.new){})
-  end
-
-  def test_redner_if_exist_should_be_render_partial
-    controller.prepend_view_path "test/fixtures/views"
-    assert_equal "partial html\n", render_if_exist(:partial => 'partial')
-  end
-
-  def test_redner_if_exist_should_be_render_nil
-    controller.prepend_view_path "test/fixtures/views"
-    assert_nil render_if_exist(:partial => 'non_exist_partial')
-  end
-
-  def test_export_csv_encoding_select_tag_should_return_nil_when_general_csv_encoding_is_UTF8
-    with_locale 'az' do
-      assert_equal l(:general_csv_encoding), 'UTF-8'
-      assert_nil export_csv_encoding_select_tag
-    end
-  end
-
-  def test_export_csv_encoding_select_tag_should_have_two_option_when_general_csv_encoding_is_not_UTF8
-    with_locale 'en' do
-      assert_not_equal l(:general_csv_encoding), 'UTF-8'
-      result = export_csv_encoding_select_tag
-      assert_select_in result,
-                       "option[selected='selected'][value=#{l(:general_csv_encoding)}]",
-                       :text => l(:general_csv_encoding)
-      assert_select_in result, "option[value='UTF-8']", :text => 'UTF-8'
-    end
   end
 
   def test_redner_if_exist_should_be_render_partial

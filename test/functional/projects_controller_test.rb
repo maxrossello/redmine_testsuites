@@ -52,88 +52,9 @@ class ProjectsControllerTest < Redmine::ControllerTest
   def test_index_atom
     get(:index, :params => {:format => 'atom'})
     assert_response :success
-    assert_select 'p.other-formats a.csv', 0
-    assert_select '#csv-export-options', 0
-  end
-
-  def test_index_as_list_should_include_csv_export
-    @request.session[:user_id] = 1
-
-    get :index, :params => {
-      :display_type => 'list',
-      :f => ['parent_id'],
-      :op => {'parent_id' => '='},
-      :v => {'parent_id' => ['1']}
-    }
-    assert_response :success
-
-    # Assert CSV export link
-    assert_select 'p.other-formats a.csv'
-
-    # Assert export modal
-    assert_select '#csv-export-options' do
-      assert_select 'form[action=?][method=get]', '/projects.csv' do
-        # filter
-        assert_select 'input[name=?][value=?]', 'f[]', 'parent_id'
-        assert_select 'input[name=?][value=?]', 'op[parent_id]', '='
-        assert_select 'input[name=?][value=?]', 'v[parent_id][]', '1'
-        # columns
-        assert_select 'input[name=?][type=hidden][value=?]', 'c[]', 'name'
-        assert_select 'input[name=?][type=hidden][value=?]', 'c[]', 'identifier'
-        assert_select 'input[name=?][type=hidden][value=?]', 'c[]', 'short_description'
-        assert_select 'input[name=?][type=hidden]', 'c[]', 3
-        assert_select 'input[name=?][value=?]', 'c[]', 'all_inline'
-      end
-    end
-  end
-
-  def test_index_csv
-    with_settings :date_format => '%m/%d/%Y' do
-      get :index, :params => {:format => 'csv'}
-      assert_response :success
-      assert_equal 'text/csv', response.media_type
-    end
-  end
-
-  def test_index_sort_by_custom_field
-    @request.session[:user_id] = 1
-
-    cf = ProjectCustomField.find(3)
-    CustomValue.create!(:custom_field => cf, :customized => Project.find(2), :value => 'Beta')
-
-    get(
-      :index,
-      :params => {
-        :display_type => 'list',
-        :c => ['name', 'identifier', 'cf_3'],
-        :set_filter => 1,
-        :sort => "cf_#{cf.id}:asc"
-      }
-    )
-    assert_response :success
-
-    assert_equal(
-      ['Beta', 'Stable'],
-      columns_values_in_list('cf_3').reject {|p| p.empty?}
-    )
-  end
-
-  def test_index_with_int_custom_field_total
-    @request.session[:user_id] = 1
-
-    field = ProjectCustomField.generate!(:field_format => 'int')
-    CustomValue.create!(:customized => Project.find(1), :custom_field => field, :value => '2')
-    CustomValue.create!(:customized => Project.find(2), :custom_field => field, :value => '7')
-    get(
-      :index,
-      :params => {
-        :display_type => 'list',
-        :t => ["cf_#{field.id}"]
-      }
-    )
-    assert_response :success
-    assert_select '.query-totals'
-    assert_select ".total-for-cf-#{field.id} span.value", :text => '9'
+    #assert_select 'feed>title', :text => 'Redmine: Latest projects'
+    assert_select 'feed>title', :text => "Redmine: #{I18n.t(:label_project_latest)}"
+    assert_select 'feed>entry', :count => Project.visible(User.current).count
   end
 
   def test_index_with_project_filter_is_my_projects
@@ -235,7 +156,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
       }
       assert_response :success
     end
-    assert_equal ['Name', 'Description', 'Status'], columns_in_list
+    #assert_equal ['Name', 'Description', 'Status'], columns_in_list
+    assert_equal ['Name', 'Description', I18n.t(:field_status)], columns_in_list
   end
 
   def test_index_as_board_should_not_include_csv_export
@@ -760,7 +682,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
     ProjectCustomField.find_by_name('Development status').update_attribute :visible, true
     get(:show, :params => {:id => 'ecookbook'})
     assert_response :success
-    assert_select 'li.list_cf.cf_3', :text => /Development status/
+    if Redmine::Plugin.installed? :redmine_better_overview
+      assert_select 'h3.list_cf.cf_3', :text => /Development status/
+    else
+      assert_select 'li.list_cf.cf_3', :text => /Development status/
+    end
   end
 
   def test_show_should_not_display_hidden_custom_fields
@@ -1151,16 +1077,6 @@ class ProjectsControllerTest < Redmine::ControllerTest
 
     assert_no_difference 'Project.count' do
       delete(:destroy, :params => {:id => 2})
-      assert_response :success
-    end
-    assert_select '.warning', :text => /Are you sure you want to delete this project/
-  end
-
-  def test_destroy_leaf_project_with_wrong_confirmation_should_show_confirmation
-    @request.session[:user_id] = 1 # admin
-
-    assert_no_difference 'Project.count' do
-      delete(:destroy, :params => {:id => 2, :confirm => 'wrong'})
       assert_response :success
     end
     #assert_select '.warning', :text => /Are you sure you want to delete this project/
