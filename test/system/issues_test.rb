@@ -347,8 +347,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     find('tr#issue-4 input[type=checkbox]').click
     find('tr#issue-1 td.updated_on').right_click
     within('#context-menu') do
-      #click_link 'Status'
-      click_link I18n.t(:field_status)
+      click_link 'Status'
       click_link 'Closed'
     end
     assert page.has_css?('#flash_notice')
@@ -551,8 +550,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     visit '/issues/1'
     page.driver.execute_script('$.fx.off = true;')
     page.first(:link, 'Edit').click
-    #page.click_link('View all trackers description')
-    page.click_link(I18n.t(:label_open_trackers_description))
+    page.click_link('View all trackers description')
     assert page.has_css?('#trackers_description')
     within('#trackers_description') do
       click_link('Feature')

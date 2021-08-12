@@ -718,6 +718,41 @@ class TimelogControllerTest < Redmine::ControllerTest
     assert_equal 6.0, entry.hours
   end
 
+  def test_update_should_fail_when_changing_user_without_permission
+    Role.find_by_name('Manager').remove_permission! :log_time_for_other_users
+    @request.session[:user_id] = 2
+
+    put :update, :params => {
+      :id => 3,
+      :time_entry => {
+        :user_id => '3'
+      }
+    }
+
+    assert_response :success
+    assert_select_error /User is invalid/
+  end
+
+  def test_update_should_allow_updating_existing_entry_logged_on_a_locked_user
+    entry = TimeEntry.generate!(:user_id => 2, :hours => 4, :comments => "Time entry on a future locked user")
+    Role.find_by_name('Manager').add_permission! :log_time_for_other_users
+    @request.session[:user_id] = 2
+
+    put :update, :params => {
+      :id => entry.id,
+      :time_entry => {
+        :hours => '6'
+      }
+    }
+
+    assert_response :redirect
+
+    entry.reload
+    # Ensure user didn't change
+    assert_equal 2, entry.user_id
+    assert_equal 6.0, entry.hours
+  end
+
   def test_get_bulk_edit
     @request.session[:user_id] = 2
 

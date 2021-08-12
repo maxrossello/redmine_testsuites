@@ -376,24 +376,13 @@ class WatchersControllerTest < Redmine::ControllerTest
 
   def test_autocomplete_for_user_should_not_return_users_without_object_visibility
     @request.session[:user_id] = 1
-    if Redmine::Plugin.installed? :redmine_extended_watchers
-      with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
-        get :autocomplete_for_user, :params => {
-          q: 'rober',
-          project_id: 'onlinestore',
-          object_id: '4',
-          object_type: 'issue'
-        }, :xhr => true
-      end
-    else
-      get :autocomplete_for_user, :params => {
-        q: 'rober',
-        project_id: 'onlinestore',
-        object_id: '4',
-        object_type: 'issue'
-      }, :xhr => true
-    end
-          
+    get :autocomplete_for_user, :params => {
+      q: 'rober',
+      project_id: 'onlinestore',
+      object_id: '4',
+      object_type: 'issue'
+    }, :xhr => true
+
     assert_response :success
 
     assert response.body.blank?
