@@ -208,14 +208,14 @@ class UsersControllerTest < Redmine::ControllerTest
     assert_select 'table.list.issue-report>tbody' do
       assert_select 'tr:nth-of-type(1)' do
         #assert_select 'td:nth-of-type(1)>a', :text => 'Assigned issues'
-          assert_select 'td:nth-of-type(1)>a', :text => I18n.t(:label_assigned_issues)
+        assert_select 'td:nth-of-type(1)>a', :text => I18n.t(:label_assigned_issues)
         assert_select 'td:nth-of-type(2)>a', :text => '1'   # open
         assert_select 'td:nth-of-type(3)>a', :text => '0'   # closed
         assert_select 'td:nth-of-type(4)>a', :text => '1'   # total
       end
       assert_select 'tr:nth-of-type(2)' do
         #assert_select 'td:nth-of-type(1)>a', :text => 'Reported issues'
-          assert_select 'td:nth-of-type(1)>a', :text => I18n.t(:label_reported_issues)
+        assert_select 'td:nth-of-type(1)>a', :text => I18n.t(:label_reported_issues)
         assert_select 'td:nth-of-type(2)>a', :text => '11'  # open
         assert_select 'td:nth-of-type(3)>a', :text => '2'   # closed
         assert_select 'td:nth-of-type(4)>a', :text => '13'  # total
@@ -239,6 +239,7 @@ class UsersControllerTest < Redmine::ControllerTest
     get :new
     assert_response :success
     assert_select 'input[name=?]', 'user[login]'
+    assert_select 'label[for=?]>span.required', 'user_password', 1
   end
 
   def test_create
@@ -429,6 +430,7 @@ class UsersControllerTest < Redmine::ControllerTest
     assert_response :success
     assert_select 'h2>a+img.gravatar'
     assert_select 'input[name=?][value=?]', 'user[login]', 'jsmith'
+    assert_select 'label[for=?]>span.required', 'user_password', 0
   end
 
   def test_edit_registered_user
