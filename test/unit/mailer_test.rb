@@ -740,9 +740,6 @@ class MailerTest < ActiveSupport::TestCase
       assert_select 'a[href=?]',
                     url,
                     :text => '1'
-      #assert_select 'a[href=?]',
-      #              'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
-      #              :text => 'View all issues'
       assert_select 'a[href=?]',
                     'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
                     #:text => 'View all issues'
