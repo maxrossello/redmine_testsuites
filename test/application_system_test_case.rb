@@ -24,7 +24,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
   driven_by :selenium, using: :chrome, screen_size: [1024, 900], options: {
       desired_capabilities: Selenium::WebDriver::Remote::Capabilities.chrome(
-        'chromeOptions' => {
+        'goog:chromeOptions' => {
           'prefs' => {
             'download.default_directory' => DOWNLOADS_PATH,
             'download.prompt_for_download' => false,
