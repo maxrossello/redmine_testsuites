@@ -30,10 +30,10 @@ if ENV["RAILS_ENV"] == "test"
     description 'Allows to run the Redmine test suite along with plugin tests, considering the different behaviors 
                  introduced by supported plugins over the Redmine default behavior. 
                  Unsupported plugins are signaled in the logs.'
-    version '4.2.2'
+    version '4.2.3'
     url 'https://github.com/maxrossello/redmine_testsuites.git'
     author_url 'https://github.com/maxrossello'
-    requires_redmine :version => '4.2.2'
+    requires_redmine :version => '4.2.3'
 
   end 
 
@@ -42,13 +42,13 @@ if ENV["RAILS_ENV"] == "test"
   # each hash contains conditions in AND; plugin is supported if any hash in array matches 
   supported_plugins = {
     redmine_testsuites:        {},
-    redmine_translation_terms: [{ version:           '4.2.2' }],
+    redmine_translation_terms: { tilde_greater_than: '4.2.3' },
     redmine_base_deface:       {},
     redmine_better_overview:   { tilde_greater_than: '4.2.0' },
     redmine_extended_watchers: { tilde_greater_than: '4.2.0' },
     redmine_pluggable_themes:  { tilde_greater_than: '4.2.0' },
     redmine_themes:            { tilde_greater_than: '4.2.0' },
-    redwine:                   { version:            '4.2.2' },
+    redwine:                   { version:            '4.2.3' },
     sidebar_hide:              { version_or_higher: '4.2.0' }
   }
   
