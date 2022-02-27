@@ -172,6 +172,41 @@ class QueriesControllerTest < Redmine::ControllerTest
     assert_select 'fieldset#columns'
   end
 
+  def test_new_with_gantt_params
+    @request.session[:user_id] = 2
+    get :new, :params => {:gantt => 1}
+    assert_response :success
+
+    assert_select 'input[type="hidden"]#gantt', 1
+    assert_select 'fieldset#options'
+    assert_select 'fieldset#filters'
+    assert_select 'fieldset legend', {:text => 'Sort', :count => 0}
+    assert_select 'fieldset#columns'
+  end
+
+  def test_new_with_calendar_params
+    @request.session[:user_id] = 2
+    get :new, :params => {:calendar => 1}
+    assert_response :success
+
+    assert_select 'input[type="hidden"]#calendar', 1
+    assert_select 'fieldset#options', :count => 0
+    assert_select 'fieldset#filters'
+    assert_select 'fieldset legend', {:text => 'Sort', :count => 0}
+    assert_select 'fieldset#columns', :count => 0
+  end
+
+  def test_new_without_gantt_and_calendar_params
+    @request.session[:user_id] = 2
+    get :new
+    assert_response :success
+
+    assert_select 'fieldset#options'
+    assert_select 'fieldset#filters'
+    assert_select 'fieldset legend', {:text => 'Sort'}
+    assert_select 'fieldset#columns'
+  end
+
   def test_create_project_public_query
     @request.session[:user_id] = 2
     post(
@@ -916,5 +951,29 @@ class QueriesControllerTest < Redmine::ControllerTest
     assert_include ['Dave Lopper', '3', 'active'], json
     assert_include ['Dave2 Lopper2', '5', 'locked'], json
     assert_include ['A Team', '10', 'active'], json
+  end
+
+  def test_activity_filter_should_return_active_and_system_activity_ids
+    TimeEntryActivity.create!(:name => 'Design', :parent_id => 9, :project_id => 1)
+    TimeEntryActivity.create!(:name => 'QA', :active => false, :parent_id => 11, :project_id => 1)
+    TimeEntryActivity.create!(:name => 'Inactive Activity', :active => true, :parent_id => 14, :project_id => 1)
+
+    @request.session[:user_id] = 2
+    get(
+      :filter,
+      :params => {
+        :project_id => 1,
+        :type => 'TimeEntryQuery',
+        :name => 'activity_id'
+      }
+    )
+    assert_response :success
+    assert_equal 'application/json', response.media_type
+    json = ActiveSupport::JSON.decode(response.body)
+
+    assert_equal 3, json.count
+    assert_include ["Design", "9"], json
+    assert_include ["Development", "10"], json
+    assert_include ["Inactive Activity", "14"], json
   end
 end

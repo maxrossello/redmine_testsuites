@@ -2074,6 +2074,34 @@ class ApplicationHelperTest < Redmine::HelperTest
     end
   end
 
+  def test_redner_if_exist_should_be_render_partial
+    controller.prepend_view_path "test/fixtures/views"
+    assert_equal "partial html\n", render_if_exist(:partial => 'partial')
+  end
+
+  def test_redner_if_exist_should_be_render_nil
+    controller.prepend_view_path "test/fixtures/views"
+    assert_nil render_if_exist(:partial => 'non_exist_partial')
+  end
+
+  def test_export_csv_encoding_select_tag_should_return_nil_when_general_csv_encoding_is_UTF8
+    with_locale 'az' do
+      assert_equal l(:general_csv_encoding), 'UTF-8'
+      assert_nil export_csv_encoding_select_tag
+    end
+  end
+
+  def test_export_csv_encoding_select_tag_should_have_two_option_when_general_csv_encoding_is_not_UTF8
+    with_locale 'en' do
+      assert_not_equal l(:general_csv_encoding), 'UTF-8'
+      result = export_csv_encoding_select_tag
+      assert_select_in result,
+                       "option[selected='selected'][value=#{l(:general_csv_encoding)}]",
+                       :text => l(:general_csv_encoding)
+      assert_select_in result, "option[value='UTF-8']", :text => 'UTF-8'
+    end
+  end
+
   def test_form_for_includes_name_attribute
     assert_match(/name="new_issue-[a-z0-9]{8}"/, form_for(Issue.new){})
   end
