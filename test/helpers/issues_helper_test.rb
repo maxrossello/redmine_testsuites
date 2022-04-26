@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ class IssuesHelperTest < Redmine::HelperTest
            :enabled_modules,
            :custom_fields,
            :attachments,
-           :versions
+           :versions, :workflows
 
   def test_issue_heading
     assert_equal "Bug #1", issue_heading(Issue.find(1))
@@ -204,8 +204,8 @@ class IssuesHelperTest < Redmine::HelperTest
   test 'show_detail should show old and new values with a estimated hours attribute' do
     detail = JournalDetail.new(:property => 'attr', :prop_key => 'estimated_hours',
                                :old_value => '5', :value => '6.3')
-    assert_match '5.00', show_detail(detail, true)
-    assert_match '6.30', show_detail(detail, true)
+    assert_match '5:00', show_detail(detail, true)
+    assert_match '6:18', show_detail(detail, true)
   end
 
   test 'show_detail should not show values with a description attribute' do
@@ -382,7 +382,7 @@ class IssuesHelperTest < Redmine::HelperTest
         TimeEntry.generate!(:issue => Issue.generate!(:parent_issue_id => 1), :hours => 3)
         TimeEntry.generate!(:issue => Issue.generate!(:parent_issue_id => 1), :hours => 4)
 
-        assert_match "href=\"/projects/ecookbook/time_entries?issue_id=~1\"", CGI.unescape(issue_spent_hours_details(Issue.find(1)))
+        assert_match "href=\"/projects/ecookbook/time_entries?issue_id=~1\"", issue_spent_hours_details(Issue.find(1))
       end
     end
   end
@@ -393,8 +393,46 @@ class IssuesHelperTest < Redmine::HelperTest
         TimeEntry.generate!(:issue => Issue.generate!(:parent_issue_id => 1), :hours => 3)
         TimeEntry.generate!(:issue => Issue.generate!(:parent_issue_id => 1), :hours => 4)
 
-        assert_match "href=\"/time_entries?issue_id=~1\"", CGI.unescape(issue_spent_hours_details(Issue.find(1)))
+        assert_match "href=\"/time_entries?issue_id=~1\"", issue_spent_hours_details(Issue.find(1))
       end
     end
+  end
+
+  def test_render_issues_stats
+    html = render_issues_stats(1, 1, {:issue_id => '15,16'})
+
+    assert_include '<a href="/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=%2A">2</a>', html
+    assert_include '<a href="/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=o">1 open</a>', html
+    assert_include '<a href="/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=c">1 closed</a>', html
+  end
+
+  def test_render_descendants_stats
+    parent = Issue.generate!(:status_id => 1)
+    child = Issue.generate!(:parent_issue_id => parent.id, :status_id => 1)
+    Issue.generate!(:parent_issue_id => child.id, :status_id => 5)
+    parent.reload
+    html = render_descendants_stats(parent)
+
+    assert_include "<a href=\"/issues?parent_id=~#{parent.id}&amp;set_filter=true&amp;status_id=%2A\">2</a>", html
+    assert_include "<a href=\"/issues?parent_id=~#{parent.id}&amp;set_filter=true&amp;status_id=o\">1 open</a>", html
+    assert_include "<a href=\"/issues?parent_id=~#{parent.id}&amp;set_filter=true&amp;status_id=c\">1 closed</a>", html
+  end
+
+  def test_render_relations_stats
+    issue = Issue.generate!(:status_id => 1)
+    relations = []
+    open_issue = Issue.generate!(:status_id => 1)
+    relations << IssueRelation.create!(:issue_from => open_issue,
+                                       :issue_to => issue,
+                                       :relation_type => IssueRelation::TYPE_RELATES)
+    closed_issue = Issue.generate!(:status_id => 5)
+    relations << IssueRelation.create!(:issue_from => closed_issue,
+                                       :issue_to => issue,
+                                       :relation_type => IssueRelation::TYPE_FOLLOWS)
+    html = render_relations_stats(issue, relations)
+
+    assert_include "<a href=\"/issues?issue_id=#{open_issue.id}%2C#{closed_issue.id}&amp;set_filter=true&amp;status_id=%2A\">2</a></span>", html
+    assert_include "<a href=\"/issues?issue_id=#{open_issue.id}%2C#{closed_issue.id}&amp;set_filter=true&amp;status_id=o\">1 open</a>", html
+    assert_include "<a href=\"/issues?issue_id=#{open_issue.id}%2C#{closed_issue.id}&amp;set_filter=true&amp;status_id=c\">1 closed</a>", html
   end
 end

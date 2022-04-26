@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,7 +25,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
            :trackers, :projects_trackers, :issue_statuses,
            :enabled_modules, :enumerations, :boards, :messages,
            :attachments, :custom_fields, :custom_values, :time_entries,
-           :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions
+           :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions,
+           :roles, :queries
 
   include Redmine::I18n
 
@@ -95,26 +96,28 @@ class ProjectsControllerTest < Redmine::ControllerTest
   end
 
   def test_index_as_list_should_format_column_value
-    get :index, :params => {
-      :c => ['name', 'status', 'short_description', 'homepage', 'parent_id', 'identifier', 'is_public', 'created_on', 'cf_3'],
-      :display_type => 'list'
-    }
-    assert_response :success
+    with_settings :text_formatting => 'textile' do
+      get :index, :params => {
+        :c => ['name', 'status', 'short_description', 'homepage', 'parent_id', 'identifier', 'is_public', 'created_on', 'cf_3'],
+        :display_type => 'list'
+      }
+      assert_response :success
 
-    project = Project.find(1)
-    assert_select 'table.projects' do
-      assert_select 'tr[id=?]', 'project-1' do
-        assert_select 'td.name a[href=?]', '/projects/ecookbook', :text => 'eCookbook'
-        assert_select 'td.status', :text => 'active'
-        assert_select 'td.short_description', :text => 'Recipes management application'
-        assert_select 'td.homepage a.external', :text => 'http://ecookbook.somenet.foo/'
-        assert_select 'td.identifier', :text => 'ecookbook'
-        assert_select 'td.is_public', :text => 'Yes'
-        assert_select 'td.created_on', :text => format_time(project.created_on)
-        assert_select 'td.cf_3.list', :text => 'Stable'
-      end
-      assert_select 'tr[id=?]', 'project-4' do
-        assert_select 'td.parent_id a[href=?]', '/projects/ecookbook', :text => 'eCookbook'
+      project = Project.find(1)
+      assert_select 'table.projects' do
+        assert_select 'tr[id=?]', 'project-1' do
+          assert_select 'td.name a[href=?]', '/projects/ecookbook', :text => 'eCookbook'
+          assert_select 'td.status', :text => 'active'
+          assert_select 'td.short_description', :text => 'Recipes management application'
+          assert_select 'td.homepage a.external', :text => 'http://ecookbook.somenet.foo/'
+          assert_select 'td.identifier', :text => 'ecookbook'
+          assert_select 'td.is_public', :text => 'Yes'
+          assert_select 'td.created_on', :text => format_time(project.created_on)
+          assert_select 'td.cf_3.list', :text => 'Stable'
+        end
+        assert_select 'tr[id=?]', 'project-4' do
+          assert_select 'td.parent_id a[href=?]', '/projects/ecookbook', :text => 'eCookbook'
+        end
       end
     end
   end
@@ -138,8 +141,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
     }
     assert_response :success
 
-    child_level1 = css_select('tr#project-5').map {|e| e.attr('class')}.first.split(' ')
-    child_level2 = css_select('tr#project-6').map {|e| e.attr('class')}.first.split(' ')
+    child_level1 = css_select('tr#project-5').map {|e| e.attr(:class)}.first.split(' ')
+    child_level2 = css_select('tr#project-6').map {|e| e.attr(:class)}.first.split(' ')
 
     assert_include 'idnt', child_level1
     assert_include 'idnt-1', child_level1
@@ -203,7 +206,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     with_settings :date_format => '%m/%d/%Y' do
       get :index, :params => {:format => 'csv'}
       assert_response :success
-      assert_equal 'text/csv', response.media_type
+      assert_equal 'text/csv; header=present', response.media_type
     end
   end
 
@@ -246,6 +249,28 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response :success
     assert_select '.query-totals'
     assert_select ".total-for-cf-#{field.id} span.value", :text => '9'
+  end
+
+  def test_index_should_retrieve_default_query
+    query = ProjectQuery.find(11)
+    ProjectQuery.stubs(:default).returns query
+
+    [nil, 1].each do |user_id|
+      @request.session[:user_id] = user_id
+      get :index
+      assert_select 'h2', text: query.name
+    end
+  end
+
+  def test_index_should_ignore_default_query_with_without_default
+    query = ProjectQuery.find(11)
+    ProjectQuery.stubs(:default).returns query
+
+    [nil, 1].each do |user_id|
+      @request.session[:user_id] = user_id
+      get :index, params: { set_filter: '1', without_default: '1' }
+      assert_select 'h2', text: I18n.t(:label_project_plural)
+    end
   end
 
   def test_autocomplete_js
@@ -773,8 +798,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 1
     get(:show, :params => {:id => 'ecookbook'})
     assert_select 'div.spent_time.box>ul' do
-      assert_select '>li:nth-child(1)', :text => 'Estimated time: 203.50 hours'
-      assert_select '>li:nth-child(2)', :text => 'Spent time: 162.90 hours'
+      assert_select '>li:nth-child(1)', :text => 'Estimated time: 203:30 hours'
+      assert_select '>li:nth-child(2)', :text => 'Spent time: 162:54 hours'
     end
   end
 

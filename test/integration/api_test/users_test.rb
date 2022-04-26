@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,7 +25,11 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
   test "GET /users.xml should return users" do
     users = User.active.order('login')
     users.last.update(twofa_scheme: 'totp')
-    get '/users.xml', :headers => credentials('admin')
+    Redmine::Configuration.with 'avatar_server_url' => 'https://gravatar.com' do
+      with_settings :gravatar_enabled => '1', :gravatar_default => 'mm' do
+        get '/users.xml', :headers => credentials('admin')
+      end
+    end
 
     assert_response :success
     assert_equal 'application/xml', response.media_type
@@ -38,6 +42,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
 
           # No one has changed password.
           assert_select user_element, 'passwd_changed_on', :text => ''
+          assert_select user_element, 'avatar_url', :text => %r|\Ahttps://gravatar.com/avatar/\h{32}\?default=mm|
 
           if user == users.last
             assert_select user_element, 'twofa_scheme', :text => 'totp'
@@ -78,12 +83,17 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
   end
 
   test "GET /users/:id.xml should return the user" do
-    get '/users/2.xml'
+    Redmine::Configuration.with 'avatar_server_url' => 'https://gravatar.com' do
+      with_settings :gravatar_enabled => '1', :gravatar_default => 'robohash' do
+        get '/users/2.xml'
+      end
+    end
 
     assert_response :success
     assert_select 'user id', :text => '2'
     assert_select 'user updated_on', :text => Time.zone.parse('2006-07-19T20:42:15Z').iso8601
     assert_select 'user passwd_changed_on', :text => ''
+    assert_select 'user avatar_url', :text => %r|\Ahttps://gravatar.com/avatar/\h{32}\?default=robohash|
   end
 
   test "GET /users/:id.json should return the user" do
@@ -174,8 +184,13 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
   end
 
   test "GET /users/:id should not return twofa_scheme for standard user" do
-    User.find(2).update(twofa_scheme: 'totp')
-    get '/users/3.xml', :headers => credentials('jsmith')
+    # User and password authentication is disabled when twofa is enabled
+    # Use token authentication
+    user = User.find(2)
+    token = Token.create!(:user => user, :action => 'api')
+    user.update(twofa_scheme: 'totp')
+
+    get '/users/3.xml', :headers => credentials(token.value, 'X')
     assert_response :success
     assert_select 'twofa_scheme', 0
   end

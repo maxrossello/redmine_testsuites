@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -445,7 +445,7 @@ class AccountControllerTest < Redmine::ControllerTest
       end
     end
     mail = ActionMailer::Base.deliveries.last
-    assert_equal ['jsmith@somenet.foo'], mail.bcc
+    assert_equal ['jsmith@somenet.foo'], mail.to
   end
 
   def test_lost_password_using_additional_email_address_should_send_email_to_the_address
@@ -463,7 +463,7 @@ class AccountControllerTest < Redmine::ControllerTest
       end
     end
     mail = ActionMailer::Base.deliveries.last
-    assert_equal ['anotherAddress@foo.bar'], mail.bcc
+    assert_equal ['anotherAddress@foo.bar'], mail.to
   end
 
   def test_lost_password_for_unknown_user_should_fail

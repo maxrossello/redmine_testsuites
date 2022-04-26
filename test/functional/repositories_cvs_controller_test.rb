@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -283,13 +283,13 @@ class RepositoriesCvsControllerTest < Redmine::RepositoryControllerTest
 
       # 1.1 line
       assert_select 'tr' do
-        assert_select 'th.line-num', :text => '21'
+        assert_select 'th.line-num a[data-txt=?]', '21'
         assert_select 'td.revision', :text => /1.1/
         assert_select 'td.author', :text => /LANG/
       end
       # 1.2 line
       assert_select 'tr' do
-        assert_select 'th.line-num', :text => '32'
+        assert_select 'th.line-num a[data-txt=?]', '32'
         assert_select 'td.revision', :text => /1.2/
         assert_select 'td.author', :text => /LANG/
       end

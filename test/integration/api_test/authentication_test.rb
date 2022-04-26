@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -45,6 +45,15 @@ class Redmine::ApiTest::AuthenticationTest < Redmine::ApiTest::Base
       user.password = 'my_password'
     end
     get '/users/current.xml', :headers => credentials(user.login, 'wrong_password')
+    assert_response 401
+  end
+
+  def test_api_should_deny_http_basic_auth_if_twofa_is_active
+    user = User.generate! do |user|
+      user.password = 'my_password'
+      user.update(twofa_scheme: 'totp')
+    end
+    get '/users/current.xml', :headers => credentials(user.login, 'my_password')
     assert_response 401
   end
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -71,33 +71,33 @@ class TimelogReportTest < Redmine::ControllerTest
   def test_report_all_projects_one_criteria
     get :report, :params => {:columns => 'week', :from => "2007-04-01", :to => "2007-04-30", :criteria => ['project']}
     assert_response :success
-    assert_select 'tr.total td:last', :text => '8.65'
+    assert_select 'tr.total td:last', :text => '8:39'
     assert_select 'tr td.name a[href=?]', '/projects/ecookbook', :text => 'eCookbook'
   end
 
   def test_report_all_time
     get :report, :params => {:project_id => 1, :criteria => ['project', 'issue']}
     assert_response :success
-    assert_select 'tr.total td:last', :text => '162.90'
+    assert_select 'tr.total td:last', :text => '162:54'
   end
 
   def test_report_all_time_by_day
     get :report, :params => {:project_id => 1, :criteria => ['project', 'issue'], :columns => 'day'}
     assert_response :success
-    assert_select 'tr.total td:last', :text => '162.90'
+    assert_select 'tr.total td:last', :text => '162:54'
     assert_select 'th', :text => '2007-03-12'
   end
 
   def test_report_one_criteria
     get :report, :params => {:project_id => 1, :columns => 'week', :from => "2007-04-01", :to => "2007-04-30", :criteria => ['project']}
     assert_response :success
-    assert_select 'tr.total td:last', :text => '8.65'
+    assert_select 'tr.total td:last', :text => '8:39'
   end
 
   def test_report_two_criteria
     get :report, :params => {:project_id => 1, :columns => 'month', :from => "2007-01-01", :to => "2007-12-31", :criteria => ["user", "activity"]}
     assert_response :success
-    assert_select 'tr.total td:last', :text => '162.90'
+    assert_select 'tr.total td:last', :text => '162:54'
   end
 
   def test_report_should_show_locked_users
@@ -151,7 +151,7 @@ class TimelogReportTest < Redmine::ControllerTest
   def test_report_one_day
     get :report, :params => {:project_id => 1, :columns => 'day', :from => "2007-03-23", :to => "2007-03-23", :criteria => ["user", "activity"]}
     assert_response :success
-    assert_select 'tr.total td:last', :text => '4.25'
+    assert_select 'tr.total td:last', :text => '4:15'
   end
 
   def test_report_by_week_should_use_commercial_year
@@ -173,10 +173,10 @@ class TimelogReportTest < Redmine::ControllerTest
     end
     assert_select '#time-report tbody tr' do
       assert_select 'td:nth-child(1)', :text => 'eCookbook'
-      assert_select 'td:nth-child(2)', :text => '2.00'
-      assert_select 'td:nth-child(3)', :text => '12.00'
-      assert_select 'td:nth-child(4)', :text => '16.00'
-      assert_select 'td:nth-child(5)', :text => '30.00' # Total
+      assert_select 'td:nth-child(2)', :text => '2:00'
+      assert_select 'td:nth-child(3)', :text => '12:00'
+      assert_select 'td:nth-child(4)', :text => '16:00'
+      assert_select 'td:nth-child(5)', :text => '30:00' # Total
     end
   end
 
@@ -195,7 +195,7 @@ class TimelogReportTest < Redmine::ControllerTest
     get :report, :params => {:criteria => ['cf_1', 'cf_3', 'cf_7']}
     assert_response :success
 
-    assert_select 'tr.total td:last', :text => '162.90'
+    assert_select 'tr.total td:last', :text => '162:54'
 
     # Custom fields columns
     assert_select 'th', :text => 'Database'
@@ -205,7 +205,7 @@ class TimelogReportTest < Redmine::ControllerTest
     # Custom field row
     assert_select 'tr' do
       assert_select 'td', :text => 'MySQL'
-      assert_select 'td.hours', :text => '1.00'
+      assert_select 'td.hours', :text => '1:00'
     end
   end
 
@@ -233,7 +233,7 @@ class TimelogReportTest < Redmine::ControllerTest
 
     assert_select 'tr.last-level:first' do
       assert_select 'td.name', :text => 'Design'
-      assert_select 'td.hours:last', :text => '165.25'
+      assert_select 'td.hours:last', :text => '165:15'
     end
   end
 
@@ -246,7 +246,7 @@ class TimelogReportTest < Redmine::ControllerTest
       :format => "csv"
     }
     assert_response :success
-    assert_equal 'text/csv', @response.media_type
+    assert_equal 'text/csv; header=present', @response.media_type
     lines = @response.body.chomp.split("\n")
     # Headers
     assert_equal 'Project,User,Activity,2007-3,2007-4,Total time', lines.first
@@ -264,7 +264,7 @@ class TimelogReportTest < Redmine::ControllerTest
       :format => "csv"
     }
     assert_response :success
-    assert_equal 'text/csv', @response.media_type
+    assert_equal 'text/csv; header=present', @response.media_type
     lines = @response.body.chomp.split("\n")
     # Headers
     assert_equal 'Project,User,Overtime,2007-3,2007-4,Total time', lines.first
@@ -317,7 +317,7 @@ class TimelogReportTest < Redmine::ControllerTest
       }
     end
     assert_response :success
-    assert_equal 'text/csv', @response.media_type
+    assert_equal 'text/csv; header=present', @response.media_type
     lines = @response.body.chomp.split("\n")
     # Headers
     s1 = (+"\xa5\xce\xa4\xe1,2011-11-11,\xa4u\xae\xc9\xc1`\xadp").force_encoding('Big5')
@@ -362,7 +362,7 @@ class TimelogReportTest < Redmine::ControllerTest
       }
     end
     assert_response :success
-    assert_equal 'text/csv', @response.media_type
+    assert_equal 'text/csv; header=present', @response.media_type
     lines = @response.body.chomp.split("\n")
     # Headers
     s1 = (+"\xa5\xce\xa4\xe1,2011-11-11,\xa4u\xae\xc9\xc1`\xadp").force_encoding('Big5')
@@ -397,7 +397,7 @@ class TimelogReportTest < Redmine::ControllerTest
         :format => "csv"
       }
       assert_response :success
-      assert_equal 'text/csv', @response.media_type
+      assert_equal 'text/csv; header=present', @response.media_type
       lines = @response.body.chomp.split("\n")
       # Headers
       s1 = (+"Utilisateur;2011-11-11;Temps total").force_encoding('ISO-8859-1')

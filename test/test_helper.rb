@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -29,7 +29,6 @@ $redmine_test_ldap_server = ENV['REDMINE_TEST_LDAP_SERVER'] || '127.0.0.1'
 ENV["RAILS_ENV"] = "test"
 require File.expand_path(File.dirname(__FILE__) + "/../config/environment")
 require 'rails/test_help'
-require Rails.root.join('test', 'mocks', 'open_id_authentication_mock.rb').to_s
 
 require File.expand_path(File.dirname(__FILE__) + '/object_helpers')
 include ObjectHelpers
@@ -53,13 +52,15 @@ class ActionView::TestCase
 end
 
 class ActiveSupport::TestCase
+  parallelize(workers: 1)
+
   include ActionDispatch::TestProcess
 
   self.use_transactional_tests = true
   self.use_instantiated_fixtures  = false
 
   def uploaded_test_file(name, mime)
-    fixture_file_upload("files/#{name}", mime, true)
+    fixture_file_upload(name.to_s, mime, true)
   end
 
   def mock_file(options=nil)
@@ -374,9 +375,7 @@ module Redmine
     def save_pdf
       assert_equal 'application/pdf', response.media_type
       filename = "#{self.class.name.underscore}__#{method_name}.pdf"
-      File.open(File.join($redmine_tmp_pdf_directory, filename), "wb") do |f|
-        f.write response.body
-      end
+      File.binwrite(File.join($redmine_tmp_pdf_directory, filename), response.body)
     end
   end
 
@@ -392,6 +391,11 @@ module Redmine
   end
 
   class IntegrationTest < ActionDispatch::IntegrationTest
+    def setup
+      ActionMailer::MailDeliveryJob.disable_test_adapter
+      super
+    end
+
     def log_user(login, password)
       User.anonymous
       get "/login"

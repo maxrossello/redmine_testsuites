@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -59,8 +59,8 @@ class ApplicationTest < Redmine::IntegrationTest
     get '/issues/4.atom'
     assert_response 302
 
-    rss_key = User.find(2).rss_key
-    get "/issues/4.atom?key=#{rss_key}"
+    atom_key = User.find(2).atom_key
+    get "/issues/4.atom?key=#{atom_key}"
     assert_response 200
     assert_nil session[:user_id]
   end

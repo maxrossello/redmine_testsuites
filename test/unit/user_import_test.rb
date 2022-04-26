@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -128,6 +128,24 @@ class UserImportTest < ActiveSupport::TestCase
     assert_equal '000-1111-2222', first.custom_field_value(phone_number_cf)
     assert_equal '333-4444-5555', second.custom_field_value(phone_number_cf)
     assert_equal '666-7777-8888', third.custom_field_value(phone_number_cf)
+  end
+
+  def test_deliver_account_information
+    import = generate_import_with_mapping
+    import.settings['notifications'] = '1'
+    %w(admin language auth_source).each do |key|
+      import.settings['mapping'].delete(key)
+    end
+    import.save!
+
+    ActionMailer::Base.deliveries.clear
+    first, = new_records(User, 3){import.run}
+    assert_equal 3, ActionMailer::Base.deliveries.size
+
+    mail = ActionMailer::Base.deliveries.first
+    assert_equal 'Your Redmine account activation', mail.subject
+    assert_equal 'user1', first.login
+    assert_mail_body_match "Login: #{first.login}", mail
   end
 
   protected

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -267,16 +267,18 @@ class IssueRelationsControllerTest < Redmine::ControllerTest
   end
 
   def test_bulk_create_should_show_errors
-    assert_difference 'IssueRelation.count', +3 do
-      post :create, :params => {
-        :issue_id => 1,
-        :relation => {
-          :issue_to_id => '1,2,3,4,5,7',
-          :relation_type => 'relates',
-          :delay => ''
-        }
-      },
-      :xhr => true
+    with_settings :cross_project_issue_relations => '0' do
+      assert_difference 'IssueRelation.count', +3 do
+        post :create, :params => {
+          :issue_id => 1,
+          :relation => {
+            :issue_to_id => '1,2,3,4,5,7',
+            :relation_type => 'relates',
+            :delay => ''
+          }
+        },
+        :xhr => true
+      end
     end
 
     assert_response :success

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -104,7 +104,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
 
   test "PUT /projects/:project_id/wiki/:title.xml should update wiki page" do
     assert_no_difference 'WikiPage.count' do
-      assert_difference 'WikiContent::Version.count' do
+      assert_difference 'WikiContentVersion.count' do
         put(
           '/projects/ecookbook/wiki/CookBook_documentation.xml',
           :params => {
@@ -139,7 +139,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
 
   test "PUT /projects/:project_id/wiki/:title.xml with current versino should update wiki page" do
     assert_no_difference 'WikiPage.count' do
-      assert_difference 'WikiContent::Version.count' do
+      assert_difference 'WikiContentVersion.count' do
         put(
           '/projects/ecookbook/wiki/CookBook_documentation.xml',
           :params => {
@@ -164,7 +164,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
 
   test "PUT /projects/:project_id/wiki/:title.xml with stale version should respond with 409" do
     assert_no_difference 'WikiPage.count' do
-      assert_no_difference 'WikiContent::Version.count' do
+      assert_no_difference 'WikiContentVersion.count' do
         put(
           '/projects/ecookbook/wiki/CookBook_documentation.xml',
           :params => {
@@ -183,7 +183,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
 
   test "PUT /projects/:project_id/wiki/:title.xml should create the page if it does not exist" do
     assert_difference 'WikiPage.count' do
-      assert_difference 'WikiContent::Version.count' do
+      assert_difference 'WikiContentVersion.count' do
         put(
           '/projects/ecookbook/wiki/New_page_from_API.xml',
           :params => {
@@ -211,7 +211,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
     set_tmp_attachments_directory
     attachment = Attachment.create!(:file => uploaded_test_file("testfile.txt", "text/plain"), :author_id => 2)
     assert_difference 'WikiPage.count' do
-      assert_difference 'WikiContent::Version.count' do
+      assert_difference 'WikiContentVersion.count' do
         put(
           '/projects/ecookbook/wiki/New_page_from_API.xml',
           :params => {
@@ -239,7 +239,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
 
   test "PUT /projects/:project_id/wiki/:title.xml with parent" do
     assert_difference 'WikiPage.count' do
-      assert_difference 'WikiContent::Version.count' do
+      assert_difference 'WikiContentVersion.count' do
         put(
           '/projects/ecookbook/wiki/New_subpage_from_API.xml',
           :params => {

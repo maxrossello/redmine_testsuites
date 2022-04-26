@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -151,5 +151,18 @@ class RoleTest < ActiveSupport::TestCase
       assert role.builtin?
       assert_equal Role::BUILTIN_NON_MEMBER, role.builtin
     end
+  end
+
+  def test_destroy
+    role = Role.generate!
+
+    # generate some dependent objects
+    query = IssueQuery.generate!(:project => @ecookbook, :visibility => Query::VISIBILITY_ROLES, :roles => Role.where(:id => [1, 3, role.id]).to_a)
+
+    role.destroy
+
+    # make sure some related data was removed
+    assert_nil ActiveRecord::Base.connection.select_value("SELECT 1 FROM queries_roles WHERE role_id = #{role.id}")
+    assert [1, 3], query.roles
   end
 end

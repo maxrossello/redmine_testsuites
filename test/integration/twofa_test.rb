@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,6 +24,53 @@ class TwofaTest < Redmine::IntegrationTest
 
   test "should require twofa setup when configured" do
     with_settings twofa: "2" do
+      assert Setting.twofa_required?
+      log_user('jsmith', 'jsmith')
+      follow_redirect!
+      assert_redirected_to "/my/twofa/totp/activate/confirm"
+    end
+  end
+
+  test "should require twofa setup when required for administrators" do
+    admin = User.find_by_login 'admin'
+    user = User.find_by_login 'jsmith'
+
+    assert_not admin.must_activate_twofa?
+    assert_not user.must_activate_twofa?
+
+    with_settings twofa: "3" do
+      assert_not Setting.twofa_required?
+
+      assert Setting.twofa_optional?
+      assert Setting.twofa_required_for_administrators?
+      assert admin.must_activate_twofa?
+      assert_not user.must_activate_twofa?
+
+      log_user('admin', 'admin')
+      follow_redirect!
+      assert_redirected_to "/my/twofa/totp/activate/confirm"
+    end
+  end
+
+  test "should require twofa setup when required by group" do
+    user = User.find_by_login 'jsmith'
+    assert_not user.must_activate_twofa?
+
+    group = Group.all.first
+    group.update_column :twofa_required, true
+    group.users << user
+    user.reload
+
+    with_settings twofa: "0" do
+      assert_not Setting.twofa_optional?
+      assert_not Setting.twofa_required?
+      assert_not user.must_activate_twofa?
+    end
+
+    with_settings twofa: "1" do
+      assert Setting.twofa_optional?
+      assert_not Setting.twofa_required?
+      assert user.must_activate_twofa?
       log_user('jsmith', 'jsmith')
       follow_redirect!
       assert_redirected_to "/my/twofa/totp/activate/confirm"
