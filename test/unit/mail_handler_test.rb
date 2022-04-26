@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -407,27 +407,25 @@ class MailHandlerTest < ActiveSupport::TestCase
   def test_add_issue_by_created_user
     Setting.default_language = 'en'
     assert_difference 'User.count' do
-      perform_enqueued_jobs do  # redmine_testsuites
-        issue =
+      issue =
         submit_email(
-        'ticket_by_unknown_user.eml',
-        :issue => {:project => 'ecookbook'},
-        :unknown_user => 'create'
+          'ticket_by_unknown_user.eml',
+          :issue => {:project => 'ecookbook'},
+          :unknown_user => 'create'
         )
-        assert issue.is_a?(Issue)
-        assert issue.author.active?
-        assert_equal 'john.doe@somenet.foo', issue.author.mail
-        assert_equal 'John', issue.author.firstname
-        assert_equal 'Doe', issue.author.lastname
+      assert issue.is_a?(Issue)
+      assert issue.author.active?
+      assert_equal 'john.doe@somenet.foo', issue.author.mail
+      assert_equal 'John', issue.author.firstname
+      assert_equal 'Doe', issue.author.lastname
 
-        # account information
-        email = ActionMailer::Base.deliveries.first
-        assert_not_nil email
-        assert email.subject.include?('account activation')
-        login = mail_body(email).match(/\* Login: (.*)$/)[1].strip
-        password = mail_body(email).match(/\* Password: (.*)$/)[1].strip
-        assert_equal issue.author, User.try_to_login(login, password)
-      end
+      # account information
+      email = ActionMailer::Base.deliveries.first
+      assert_not_nil email
+      assert email.subject.include?('account activation')
+      login = mail_body(email).match(/\* Login: (.*)$/)[1].strip
+      password = mail_body(email).match(/\* Password: (.*)$/)[1].strip
+      assert_equal issue.author, User.try_to_login(login, password)
     end
   end
 
@@ -439,10 +437,19 @@ class MailHandlerTest < ActiveSupport::TestCase
     assert issue.is_a?(Issue)
     assert !issue.new_record?
 
-    mail = ActionMailer::Base.deliveries.last
-    assert_not_nil mail
-    assert mail.subject.include?("##{issue.id}")
-    assert mail.subject.include?('New ticket on a given project')
+    assert_equal 4, issue.parent_issue_id
+    assert_equal 2, ActionMailer::Base.deliveries.size
+
+    [
+      [issue.id, 'New ticket on a given project'],
+      [4, 'Issue on project 2'],
+    ].each do |issue_id, issue_subject|
+      mail =
+        ActionMailer::Base.deliveries.detect do |m|
+          /##{issue_id}/.match?(m.subject) && /#{issue_subject}/.match?(m.subject)
+        end
+      assert_not_nil mail
+    end
   end
 
   def test_created_user_should_be_added_to_groups

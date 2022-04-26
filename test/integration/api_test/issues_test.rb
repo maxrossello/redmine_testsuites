@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -139,6 +139,44 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
   def test_index_should_include_issue_attributes
     get '/issues.xml'
     assert_select 'issues>issue>is_private', :text => 'false'
+  end
+
+  def test_index_should_include_issue_status_is_closed_false
+    get '/issues.xml'
+    assert_select 'issues>issue>status[is_closed=false]'
+  end
+
+  def test_index_should_include_issue_status_is_closed_true
+    get '/issues.xml?status_id=5'
+    assert_select 'issues>issue>status[is_closed=true]'
+  end
+
+  def test_index_should_include_spent_hours
+    Issue.delete_all
+    parent = Issue.generate!(:estimated_hours => 2.0)
+    child = Issue.generate!(:parent_id => parent.id, :estimated_hours => 3.0)
+    TimeEntry.create!(:project => parent.project, :issue => parent, :user => parent.author, :spent_on => parent.author.today,
+                      :hours => '2.5', :comments => '', :activity_id => TimeEntryActivity.first.id)
+    TimeEntry.create!(:project => child.project, :issue => child, :user => child.author, :spent_on => child.author.today,
+                      :hours => '2.5', :comments => '', :activity_id => TimeEntryActivity.first.id)
+
+    get '/issues.xml'
+
+    assert_select 'issues issue', 2
+    assert_select 'issues>issue>spent_hours', '2.5'
+    assert_select 'issues>issue>total_spent_hours', '5.0'
+  end
+
+  def test_index_should_not_include_spent_hours
+    r = Role.anonymous
+    r.permissions.delete(:view_time_entries)
+    r.permissions_will_change!
+    r.save
+
+    get '/issues.xml'
+
+    assert_select 'issues>issue>spent_hours', false
+    assert_select 'issues>issue>total_spent_hours', false
   end
 
   def test_index_should_allow_timestamp_filtering
@@ -363,6 +401,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
   def test_show_should_include_issue_attributes
     get '/issues/1.xml'
     assert_select 'issue>is_private', :text => 'false'
+    assert_select 'issue>status[is_closed=false]'
   end
 
   test "GET /issues/:id.xml?include=watchers should include watchers" do
@@ -391,6 +430,29 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     # the user jsmith has no permission to view the associated changeset
     assert_select 'issue changesets[type=array]' do
       assert_select 'changeset', 0
+    end
+  end
+
+  test "GET /issues/:id.xml?include=allowed_statuses should include available statuses" do
+    issue = Issue.find(1)
+    assert_equal 1, issue.tracker_id  # Bug
+    issue.update(:status_id => 2)     # Assigned
+    member = Member.find_by(:project => issue.project, :user => User.find_by(:login => 'dlopper'))
+    assert_equal [2], member.role_ids # Developer
+
+    get '/issues/1.xml?include=allowed_statuses', :headers => credentials('dlopper', 'foo')
+    assert_response :ok
+    assert_equal 'application/xml', response.media_type
+
+    allowed_statuses = [[1, 'New', 'false'], [2, 'Assigned', 'false'], [4, 'Feedback', 'false'], [5, 'Closed', 'true'], [6, 'Rejected', 'true']]
+    assert_select 'issue allowed_statuses[type=array]' do
+      assert_select 'status', allowed_statuses.length
+      assert_select('status').each_with_index do |status, idx|
+        id, name, is_closed = allowed_statuses[idx]
+        assert_equal id.to_s, status['id']
+        assert_equal name, status['name']
+        assert_equal is_closed, status['is_closed']
+      end
     end
   end
 

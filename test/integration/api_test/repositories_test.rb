@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -71,8 +71,7 @@ class Redmine::ApiTest::RepositoriesTest < Redmine::ApiTest::Base
       post '/projects/1/repository/10/revisions/4/issues.xml', :headers => credentials('jsmith'), :params => {:issue_id => '9999'}
     end
     assert_response :unprocessable_entity
-    #assert_select 'errors error', :text => 'Issue is invalid'
-    assert_select 'errors error', :text => "#{I18n.t(:field_issue)} is invalid"
+    assert_select 'errors error', :text => 'Issue is invalid'
   end
 
   test 'POST /projects/:id/repository/:repository_id/revisions/:rev/issues.json with invalid issue_id' do
@@ -81,8 +80,7 @@ class Redmine::ApiTest::RepositoriesTest < Redmine::ApiTest::Base
     end
     assert_response :unprocessable_entity
     json = ActiveSupport::JSON.decode(response.body)
-    #assert json['errors'].include?('Issue is invalid')
-    assert json['errors'].include?("#{I18n.t(:field_issue)} is invalid")
+    assert json['errors'].include?('Issue is invalid')
   end
 
   test 'DELETE /projects/:id/repository/:repository_id/revisions/:rev/issues/:issue_id.xml should remove related issue' do

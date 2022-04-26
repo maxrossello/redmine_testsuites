@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -38,7 +38,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
                   'goog:chromeOptions' => {
                     'args' => GOOGLE_CHROME_OPTS_ARGS,
                     'prefs' => {
-                      'download.default_directory' => DOWNLOADS_PATH,
+                      'download.default_directory' => DOWNLOADS_PATH.gsub(File::SEPARATOR, File::ALT_SEPARATOR || File::SEPARATOR),
                       'download.prompt_for_download' => false,
                       'plugins.plugins_disabled' => ["Chrome PDF Viewer"]
                     }
@@ -79,6 +79,12 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
       find('input[name=login]').click
     end
     assert_equal '/my/page', current_path
+  end
+
+  def wait_for_ajax
+    Timeout.timeout(Capybara.default_max_wait_time) do
+      loop until page.evaluate_script("jQuery.active").zero?
+    end
   end
 
   def clear_downloaded_files

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,7 +25,10 @@ class ProjectsControllerTest < Redmine::ControllerTest
            :trackers, :projects_trackers, :issue_statuses,
            :enabled_modules, :enumerations, :boards, :messages,
            :attachments, :custom_fields, :custom_values, :time_entries,
-           :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions
+           :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions,
+           :roles, :queries
+
+  include Redmine::I18n
 
   include Redmine::I18n
 
@@ -51,120 +54,6 @@ class ProjectsControllerTest < Redmine::ControllerTest
 
   def test_index_atom
     get(:index, :params => {:format => 'atom'})
-    assert_response :success
-    #assert_select 'feed>title', :text => 'Redmine: Latest projects'
-    assert_select 'feed>title', :text => "Redmine: #{I18n.t(:label_project_latest)}"
-    assert_select 'feed>entry', :count => Project.visible(User.current).count
-  end
-
-  def test_index_with_project_filter_is_my_projects
-    @request.session[:user_id] = 2
-
-    get :index, :params => {
-      :f => ['id'],
-      :op => {'id' => '='},
-      :v => {'id' => ['mine']}
-    }
-
-    assert_response :success
-
-    assert_select 'div#projects-index ul' do
-      assert_select 'a.project',  3
-      assert_select 'a', :text => 'eCookbook'
-      assert_select 'a', :text => 'OnlineStore'
-      assert_select 'a', :text => 'Private child of eCookbook'
-    end
-  end
-
-  def test_index_with_subproject_filter
-    @request.session[:user_id] = 1
-
-    get :index, :params => {
-      :f => ['parent_id'],
-      :op => {'parent_id' => '='},
-      :v => {'parent_id' => ['1']}
-    }
-
-    assert_response :success
-
-    assert_select 'div#projects-index ul' do
-      assert_select 'a.project',  3
-      assert_select 'a', :text => 'eCookbook Subproject 1'
-      assert_select 'a', :text => 'eCookbook Subproject 2'
-      assert_select 'a', :text => 'Private child of eCookbook'
-    end
-  end
-
-  def test_index_as_list_should_format_column_value
-    get :index, :params => {
-      :c => ['name', 'status', 'short_description', 'homepage', 'parent_id', 'identifier', 'is_public', 'created_on', 'cf_3'],
-      :display_type => 'list'
-    }
-    assert_response :success
-
-    project = Project.find(1)
-    assert_select 'table.projects' do
-      assert_select 'tr[id=?]', 'project-1' do
-        assert_select 'td.name a[href=?]', '/projects/ecookbook', :text => 'eCookbook'
-        assert_select 'td.status', :text => 'active'
-        assert_select 'td.short_description', :text => 'Recipes management application'
-        assert_select 'td.homepage a.external', :text => 'http://ecookbook.somenet.foo/'
-        assert_select 'td.identifier', :text => 'ecookbook'
-        assert_select 'td.is_public', :text => 'Yes'
-        assert_select 'td.created_on', :text => format_time(project.created_on)
-        assert_select 'td.cf_3.list', :text => 'Stable'
-      end
-      assert_select 'tr[id=?]', 'project-4' do
-        assert_select 'td.parent_id a[href=?]', '/projects/ecookbook', :text => 'eCookbook'
-      end
-    end
-  end
-
-  def test_index_as_list_should_show_my_favourite_projects
-    @request.session[:user_id] = 1
-    get :index, :params => {
-      :display_type => 'list'
-    }
-
-    assert_response :success
-    assert_select 'tr[id=?] td.name span[class=?]', 'project-5', 'icon icon-user my-project'
-  end
-
-  def test_index_as_list_should_indent_projects
-    @request.session[:user_id] = 1
-    get :index, :params => {
-      :c => ['name', 'short_description'],
-      :sort => 'parent_id:desc,lft:desc',
-      :display_type => 'list'
-    }
-    assert_response :success
-
-    child_level1 = css_select('tr#project-5').map {|e| e.attr('class')}.first.split(' ')
-    child_level2 = css_select('tr#project-6').map {|e| e.attr('class')}.first.split(' ')
-
-    assert_include 'idnt', child_level1
-    assert_include 'idnt-1', child_level1
-
-    assert_include 'idnt', child_level2
-    assert_include 'idnt-2', child_level2
-  end
-
-  def test_index_with_default_query_setting
-    with_settings :project_list_defaults => {'column_names' => %w(name short_description status)} do
-      get :index, :params => {
-        :display_type => 'list'
-      }
-      assert_response :success
-    end
-    #assert_equal ['Name', 'Description', 'Status'], columns_in_list
-    assert_equal ['Name', 'Description', I18n.t(:field_status)], columns_in_list
-  end
-
-  def test_index_as_board_should_not_include_csv_export
-    @request.session[:user_id] = 1
-
-    get :index
-
     assert_response :success
     assert_select 'p.other-formats a.csv', 0
     assert_select '#csv-export-options', 0
@@ -248,6 +137,222 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response :success
     assert_select '.query-totals'
     assert_select ".total-for-cf-#{field.id} span.value", :text => '9'
+  end
+
+  def test_index_with_project_filter_is_my_projects
+    @request.session[:user_id] = 2
+
+    get :index, :params => {
+      :f => ['id'],
+      :op => {'id' => '='},
+      :v => {'id' => ['mine']}
+    }
+
+    assert_response :success
+
+    assert_select 'div#projects-index ul' do
+      assert_select 'a.project',  3
+      assert_select 'a', :text => 'eCookbook'
+      assert_select 'a', :text => 'OnlineStore'
+      assert_select 'a', :text => 'Private child of eCookbook'
+    end
+  end
+
+  def test_index_with_subproject_filter
+    @request.session[:user_id] = 1
+
+    get :index, :params => {
+      :f => ['parent_id'],
+      :op => {'parent_id' => '='},
+      :v => {'parent_id' => ['1']}
+    }
+
+    assert_response :success
+
+    assert_select 'div#projects-index ul' do
+      assert_select 'a.project',  3
+      assert_select 'a', :text => 'eCookbook Subproject 1'
+      assert_select 'a', :text => 'eCookbook Subproject 2'
+      assert_select 'a', :text => 'Private child of eCookbook'
+    end
+  end
+
+  def test_index_as_list_should_format_column_value
+    with_settings :text_formatting => 'textile' do
+      get :index, :params => {
+        :c => ['name', 'status', 'short_description', 'homepage', 'parent_id', 'identifier', 'is_public', 'created_on', 'cf_3'],
+        :display_type => 'list'
+      }
+      assert_response :success
+
+      project = Project.find(1)
+      assert_select 'table.projects' do
+        assert_select 'tr[id=?]', 'project-1' do
+          assert_select 'td.name a[href=?]', '/projects/ecookbook', :text => 'eCookbook'
+          assert_select 'td.status', :text => 'active'
+          assert_select 'td.short_description', :text => 'Recipes management application'
+          assert_select 'td.homepage a.external', :text => 'http://ecookbook.somenet.foo/'
+          assert_select 'td.identifier', :text => 'ecookbook'
+          assert_select 'td.is_public', :text => 'Yes'
+          assert_select 'td.created_on', :text => format_time(project.created_on)
+          assert_select 'td.cf_3.list', :text => 'Stable'
+        end
+        assert_select 'tr[id=?]', 'project-4' do
+          assert_select 'td.parent_id a[href=?]', '/projects/ecookbook', :text => 'eCookbook'
+        end
+      end
+    end
+  end
+
+  def test_index_as_list_should_show_my_favourite_projects
+    @request.session[:user_id] = 1
+    get :index, :params => {
+      :display_type => 'list'
+    }
+
+    assert_response :success
+    assert_select 'tr[id=?] td.name span[class=?]', 'project-5', 'icon icon-user my-project'
+  end
+
+  def test_index_as_list_should_indent_projects
+    @request.session[:user_id] = 1
+    get :index, :params => {
+      :c => ['name', 'short_description'],
+      :sort => 'parent_id:desc,lft:desc',
+      :display_type => 'list'
+    }
+    assert_response :success
+
+    child_level1 = css_select('tr#project-5').map {|e| e.attr(:class)}.first.split(' ')
+    child_level2 = css_select('tr#project-6').map {|e| e.attr(:class)}.first.split(' ')
+
+    assert_include 'idnt', child_level1
+    assert_include 'idnt-1', child_level1
+
+    assert_include 'idnt', child_level2
+    assert_include 'idnt-2', child_level2
+  end
+
+  def test_index_with_default_query_setting
+    with_settings :project_list_defaults => {'column_names' => %w(name short_description status)} do
+      get :index, :params => {
+        :display_type => 'list'
+      }
+      assert_response :success
+    end
+    assert_equal ['Name', 'Description', 'Status'], columns_in_list
+  end
+
+  def test_index_as_board_should_not_include_csv_export
+    @request.session[:user_id] = 1
+
+    get :index
+
+    assert_response :success
+    assert_select 'p.other-formats a.csv', 0
+    assert_select '#csv-export-options', 0
+  end
+
+  def test_index_as_list_should_include_csv_export
+    @request.session[:user_id] = 1
+
+    get :index, :params => {
+      :display_type => 'list',
+      :f => ['parent_id'],
+      :op => {'parent_id' => '='},
+      :v => {'parent_id' => ['1']}
+    }
+    assert_response :success
+
+    # Assert CSV export link
+    assert_select 'p.other-formats a.csv'
+
+    # Assert export modal
+    assert_select '#csv-export-options' do
+      assert_select 'form[action=?][method=get]', '/projects.csv' do
+        # filter
+        assert_select 'input[name=?][value=?]', 'f[]', 'parent_id'
+        assert_select 'input[name=?][value=?]', 'op[parent_id]', '='
+        assert_select 'input[name=?][value=?]', 'v[parent_id][]', '1'
+        # columns
+        assert_select 'input[name=?][type=hidden][value=?]', 'c[]', 'name'
+        assert_select 'input[name=?][type=hidden][value=?]', 'c[]', 'identifier'
+        assert_select 'input[name=?][type=hidden][value=?]', 'c[]', 'short_description'
+        assert_select 'input[name=?][type=hidden]', 'c[]', 3
+        assert_select 'input[name=?][value=?]', 'c[]', 'all_inline'
+      end
+    end
+  end
+
+  def test_index_csv
+    with_settings :date_format => '%m/%d/%Y' do
+      get :index, :params => {:format => 'csv'}
+      assert_response :success
+      assert_equal 'text/csv; header=present', response.media_type
+    end
+  end
+
+  def test_index_sort_by_custom_field
+    @request.session[:user_id] = 1
+
+    cf = ProjectCustomField.find(3)
+    CustomValue.create!(:custom_field => cf, :customized => Project.find(2), :value => 'Beta')
+
+    get(
+      :index,
+      :params => {
+        :display_type => 'list',
+        :c => ['name', 'identifier', 'cf_3'],
+        :set_filter => 1,
+        :sort => "cf_#{cf.id}:asc"
+      }
+    )
+    assert_response :success
+
+    assert_equal(
+      ['Beta', 'Stable'],
+      columns_values_in_list('cf_3').reject {|p| p.empty?}
+    )
+  end
+
+  def test_index_with_int_custom_field_total
+    @request.session[:user_id] = 1
+
+    field = ProjectCustomField.generate!(:field_format => 'int')
+    CustomValue.create!(:customized => Project.find(1), :custom_field => field, :value => '2')
+    CustomValue.create!(:customized => Project.find(2), :custom_field => field, :value => '7')
+    get(
+      :index,
+      :params => {
+        :display_type => 'list',
+        :t => ["cf_#{field.id}"]
+      }
+    )
+    assert_response :success
+    assert_select '.query-totals'
+    assert_select ".total-for-cf-#{field.id} span.value", :text => '9'
+  end
+
+  def test_index_should_retrieve_default_query
+    query = ProjectQuery.find(11)
+    ProjectQuery.stubs(:default).returns query
+
+    [nil, 1].each do |user_id|
+      @request.session[:user_id] = user_id
+      get :index
+      assert_select 'h2', text: query.name
+    end
+  end
+
+  def test_index_should_ignore_default_query_with_without_default
+    query = ProjectQuery.find(11)
+    ProjectQuery.stubs(:default).returns query
+
+    [nil, 1].each do |user_id|
+      @request.session[:user_id] = user_id
+      get :index, params: { set_filter: '1', without_default: '1' }
+      assert_select 'h2', text: I18n.t(:label_project_plural)
+    end
   end
 
   def test_autocomplete_js
@@ -682,11 +787,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     ProjectCustomField.find_by_name('Development status').update_attribute :visible, true
     get(:show, :params => {:id => 'ecookbook'})
     assert_response :success
-    if Redmine::Plugin.installed? :redmine_better_overview
-      assert_select 'h3.list_cf.cf_3', :text => /Development status/
-    else
-      assert_select 'li.list_cf.cf_3', :text => /Development status/
-    end
+    assert_select 'li.list_cf.cf_3', :text => /Development status/
   end
 
   def test_show_should_not_display_hidden_custom_fields
@@ -786,8 +887,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 1
     get(:show, :params => {:id => 'ecookbook'})
     assert_select 'div.spent_time.box>ul' do
-      assert_select '>li:nth-child(1)', :text => 'Estimated time: 203.50 hours'
-      assert_select '>li:nth-child(2)', :text => 'Spent time: 162.90 hours'
+      assert_select '>li:nth-child(1)', :text => 'Estimated time: 203:30 hours'
+      assert_select '>li:nth-child(2)', :text => 'Spent time: 162:54 hours'
     end
   end
 
@@ -1077,6 +1178,16 @@ class ProjectsControllerTest < Redmine::ControllerTest
 
     assert_no_difference 'Project.count' do
       delete(:destroy, :params => {:id => 2})
+      assert_response :success
+    end
+    assert_select '.warning', :text => /Are you sure you want to delete this project/
+  end
+
+  def test_destroy_leaf_project_with_wrong_confirmation_should_show_confirmation
+    @request.session[:user_id] = 1 # admin
+
+    assert_no_difference 'Project.count' do
+      delete(:destroy, :params => {:id => 2, :confirm => 'wrong'})
       assert_response :success
     end
     #assert_select '.warning', :text => /Are you sure you want to delete this project/

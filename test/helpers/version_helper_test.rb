@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -78,8 +78,7 @@ class VersionsHelperTest < Redmine::HelperTest
       '[href=?]',
       '/projects/ecookbook/issues/new?back_url=' \
         '%2Fversions%2F3&issue%5Bfixed_version_id%5D=3&issue%5Btracker_id%5D=1',
-      #:text => 'New issue'
-      :text => I18n.t(:label_issue_new)
+      :text => 'New issue'
     )
   end
 

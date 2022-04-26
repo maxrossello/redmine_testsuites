@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -158,6 +158,28 @@ class IssuesSystemTest < ApplicationSystemTestCase
     assert_equal 'Some description', issue.attachments.first.description
   end
 
+  def test_create_issue_with_attachment_when_user_is_not_a_member
+    set_tmp_attachments_directory
+    # Set no permission to non-member role
+    non_member_role = Role.where(:builtin => Role::BUILTIN_NON_MEMBER).first
+    non_member_role.permissions = []
+    non_member_role.save
+    # Set role "Reporter" to non-member users on project ecookbook
+    membership = Member.find_or_create_by(user_id: Group.non_member.id, project_id: 1)
+    membership.roles = [Role.find(3)] # Reporter
+    membership.save
+    log_user('someone', 'foo')
+    issue = new_record(Issue) do
+      visit '/projects/ecookbook/issues/new'
+      fill_in 'Subject', :with => 'Issue with attachment'
+      attach_file 'attachments[dummy][file]', Rails.root.join('test/fixtures/files/testfile.txt')
+      fill_in 'attachments[1][description]', :with => 'Some description'
+      click_on 'Create'
+    end
+    assert_equal 1, issue.attachments.count
+    assert_equal 'Some description', issue.attachments.first.description
+  end
+
   def test_create_issue_with_new_target_version
     log_user('jsmith', 'jsmith')
 
@@ -232,7 +254,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     log_user('jsmith', 'jsmith')
     visit "/issues/#{issue.id}"
     page.first(:link, 'Edit').click
-    assert page.has_select?("issue_status_id", {:selected => "New"})
+    assert page.has_select?("issue_status_id", selected: "New")
     page.find("#issue_status_id").select("Closed")
     assert_no_difference 'Issue.count' do
       page.first(:button, 'Submit').click
@@ -307,6 +329,21 @@ class IssuesSystemTest < ApplicationSystemTestCase
     assert issue1.reload.watched_by?(jsmith)
   end
 
+  def test_change_watch_or_unwatch_icon_from_sidebar
+    user = User.find(2)
+    log_user('jsmith', 'jsmith')
+    visit '/issues/1'
+    assert page.has_css?('#content .contextual .issue-1-watcher.icon-fav-off')
+    # add watcher 'jsmith' from sidebar
+    page.find('#watchers .contextual a', :text => 'Add').click
+    page.find('#users_for_watcher label', :text => 'John Smith').click
+    page.find('#new-watcher-form p.buttons input[type=submit]').click
+    assert page.has_css?('#content .contextual .issue-1-watcher.icon-fav')
+    # remove watcher 'jsmith' from sidebar
+    page.find('#watchers ul li.user-2 a.delete').click
+    assert page.has_css?('#content .contextual .issue-1-watcher.icon-fav-off')
+  end
+
   def test_bulk_watch_issues_via_context_menu
     log_user('jsmith', 'jsmith')
     visit '/issues'
@@ -347,8 +384,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     find('tr#issue-4 input[type=checkbox]').click
     find('tr#issue-1 td.updated_on').right_click
     within('#context-menu') do
-      #click_link 'Status'
-      click_link I18n.t(:field_status)
+      click_link 'Status'
       click_link 'Closed'
     end
     assert page.has_css?('#flash_notice')
@@ -369,7 +405,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     find('tr#issue-4 input[type=checkbox]').click
     find('tr#issue-1 td.updated_on').right_click
     within('#context-menu') do
-      click_link 'Edit'
+      click_link 'Bulk edit'
     end
     assert_current_path '/issues/bulk_edit', :ignore_query => true
     submit_buttons = page.all('input[type=submit]')
@@ -392,7 +428,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     find('tr#issue-4 input[type=checkbox]').click
     find('tr#issue-1 td.updated_on').right_click
     within('#context-menu') do
-      click_link 'Edit'
+      click_link 'Bulk edit'
     end
     assert_current_path '/issues/bulk_edit', :ignore_query => true
     submit_buttons = page.all('input[type=submit]')
@@ -401,7 +437,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     page.find('#issue_project_id').select('OnlineStore')
     # wait for ajax response
-    assert page.has_select?('issue_project_id', {:selected => 'OnlineStore'})
+    assert page.has_select?('issue_project_id', selected: 'OnlineStore')
 
     submit_buttons = page.all('input[type=submit]')
     assert_equal 2, submit_buttons.size
@@ -465,7 +501,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     page.find('#issue_project_id').select('OnlineStore')
     # wait for ajax response
-    assert page.has_select?('issue_project_id', {:selected => 'OnlineStore'})
+    assert page.has_select?('issue_project_id', selected: 'OnlineStore')
 
     submit_buttons = page.all('input[type=submit]')
     assert_equal 2, submit_buttons.size
@@ -551,8 +587,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     visit '/issues/1'
     page.driver.execute_script('$.fx.off = true;')
     page.first(:link, 'Edit').click
-    #page.click_link('View all trackers description')
-    page.click_link(I18n.t(:label_open_trackers_description))
+    page.click_link('View all trackers description')
     assert page.has_css?('#trackers_description')
     within('#trackers_description') do
       click_link('Feature')
@@ -591,5 +626,42 @@ class IssuesSystemTest < ApplicationSystemTestCase
       assert page.has_text? 'Related to Bug #12'
       assert page.has_text? 'Related to Bug #7'
     end
+  end
+
+  def test_update_issue_form_should_include_time_entry_form_only_for_users_with_permission
+    log_user('jsmith', 'jsmith')
+
+    visit '/issues/2'
+    page.first(:link, 'Edit').click
+
+    # assert log time form exits for user with required permissions on the current project
+    assert page.has_css?('#log_time')
+
+    # Change project to trigger an update on issue form
+    page.find('#issue_project_id').select('» Private child of eCookbook')
+    wait_for_ajax
+
+    # assert log time form does not exist anymore for user without required permissions on the new project
+    assert_not page.has_css?('#log_time')
+  end
+
+  def test_update_issue_form_should_include_add_notes_form_only_for_users_with_permission
+    log_user('jsmith', 'jsmith')
+
+    visit '/issues/2'
+    page.first(:link, 'Edit').click
+
+    # assert add notes form exits for user with required permissions on the current project
+    assert page.has_css?('#add_notes')
+
+    # remove add issue notes permission from Manager role
+    Role.find_by_name('Manager').remove_permission! :add_issue_notes
+
+    # Change project to trigger an update on issue form
+    page.find('#issue_project_id').select('» Private child of eCookbook')
+    wait_for_ajax
+
+    # assert add notes form does not exist anymore for user without required permissions on the new project
+    assert_not page.has_css?('#add_notes')
   end
 end

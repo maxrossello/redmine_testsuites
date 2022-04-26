@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -184,7 +184,11 @@ class Redmine::Hook::ManagerTest < ActionView::TestCase
     @hook_helper ||= TestHookHelperController.new
   end
 
+  def lookup_context
+    @lookup_context ||= ActionView::LookupContext.new(ActionView::PathSet.new([Rails.root.join('app/views')]))
+  end
+
   def view_hook_helper
-    @view_hook_helper ||= TestHookHelperView.new(Rails.root.to_s + '/app/views')
+    @view_hook_helper ||= TestHookHelperView.new(lookup_context, {}, hook_helper)
   end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -213,8 +213,7 @@ class IssueRelationsControllerTest < Redmine::ControllerTest
       assert_response :success
       assert_equal 'text/javascript', response.media_type
     end
-    #assert_include 'Related issue cannot be blank', response.body
-    assert_include "#{I18n.t(:field_issue_to)} #{I18n.t('activerecord.errors.messages.blank')}", response.body
+    assert_include 'Related issue cannot be blank', response.body
   end
 
   def test_create_duplicated_follows_relations_should_not_raise_exception
@@ -268,28 +267,27 @@ class IssueRelationsControllerTest < Redmine::ControllerTest
   end
 
   def test_bulk_create_should_show_errors
-    assert_difference 'IssueRelation.count', +3 do
-      post :create, :params => {
-        :issue_id => 1,
-        :relation => {
-          :issue_to_id => '1,2,3,4,5,7',
-          :relation_type => 'relates',
-          :delay => ''
-        }
-      },
-      :xhr => true
+    with_settings :cross_project_issue_relations => '0' do
+      assert_difference 'IssueRelation.count', +3 do
+        post :create, :params => {
+          :issue_id => 1,
+          :relation => {
+            :issue_to_id => '1,2,3,4,5,7',
+            :relation_type => 'relates',
+            :delay => ''
+          }
+        },
+        :xhr => true
+      end
     end
 
     assert_response :success
     assert_equal 'text/javascript', response.media_type
     # issue #1 is invalid
-    #assert_include 'Related issue is invalid: #1', response.body
-    assert_include "#{I18n.t(:field_issue_to)} #{I18n.t('activerecord.errors.messages.invalid')}: #1", response.body
+    assert_include 'Related issue is invalid: #1', response.body
     # issues #4 and #5 can't be related by default
-    #assert_include 'Related issue cannot be blank', response.body
-    assert_include "#{I18n.t(:field_issue_to)} #{I18n.t('activerecord.errors.messages.blank')}", response.body
-    #assert_include 'Related issue doesn&#39;t belong to the same project', response.body
-    assert_include "#{I18n.t(:field_issue_to)} #{CGI::escapeHTML(I18n.t('activerecord.errors.messages.not_same_project'))}", response.body
+    assert_include 'Related issue cannot be blank', response.body
+    assert_include 'Related issue doesn&#39;t belong to the same project', response.body
   end
 
   def test_destroy

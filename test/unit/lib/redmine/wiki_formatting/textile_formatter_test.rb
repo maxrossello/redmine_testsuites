@@ -2,7 +2,7 @@
 
 #
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -169,6 +169,24 @@ class Redmine::WikiFormatting::TextileFormatterTest < ActionView::TestCase
           </ul>
         </li>
       </ol>
+    EXPECTED
+    assert_equal expected.gsub(%r{\s+}, ''), to_html(raw).gsub(%r{\s+}, '')
+
+    raw = <<~RAW
+      * Item-1
+
+        * Item-1a
+        * Item-1b
+    RAW
+    expected = <<~EXPECTED
+      <ul>
+        <li>Item-1
+          <ul>
+            <li>Item-1a</li>
+            <li>Item-1b</li>
+          </ul>
+        </li>
+      </ul>
     EXPECTED
     assert_equal expected.gsub(%r{\s+}, ''), to_html(raw).gsub(%r{\s+}, '')
 
@@ -596,12 +614,16 @@ class Redmine::WikiFormatting::TextileFormatterTest < ActionView::TestCase
   end
 
   def test_should_not_allow_arbitrary_class_attribute_on_offtags
-    %w(code pre kbd).each do |tag|
-      assert_html_output({"<#{tag} class=\"foo\">test</#{tag}>" => "<#{tag}>test</#{tag}>"}, false)
-      assert_html_output({"<#{tag} class='foo'>test</#{tag}>" => "<#{tag}>test</#{tag}>"}, false)
-      assert_html_output({"<#{tag} class=\"ruby foo\">test</#{tag}>" => "<#{tag}>test</#{tag}>"}, false)
-      assert_html_output({"<#{tag} class='ruby foo'>test</#{tag}>" => "<#{tag}>test</#{tag}>"}, false)
-      assert_html_output({"<#{tag} class=\"ruby \"foo\" bar\">test</#{tag}>" => "<#{tag}>test</#{tag}>"}, false)
+    {
+      "class=\"foo\"" => "data-language=\"foo\"",
+      "class='foo'" => "data-language=\"foo\"",
+      "class=\"ruby foo\"" => "data-language=\"ruby foo\"",
+      "class='ruby foo'" => "data-language=\"ruby foo\"",
+      "class=\"ruby \"foo\" bar\"" => "data-language=\"ruby \"",
+    }.each do |classattr, codeattr|
+      assert_html_output({"<code #{classattr}>test</code>" => "<code #{codeattr}>test</code>"}, false)
+      assert_html_output({"<pre #{classattr}>test</pre>" => "<pre>test</pre>"}, false)
+      assert_html_output({"<kbd #{classattr}>test</kbd>" => "<kbd>test</kbd>"}, false)
     end
 
     assert_html_output({"<notextile class=\"foo\">test</notextile>" => "test"}, false)
@@ -615,13 +637,25 @@ class Redmine::WikiFormatting::TextileFormatterTest < ActionView::TestCase
     # language name is double-quoted
     assert_html_output(
       {"<code class=\"ruby\">test</code>" =>
-         "<code class=\"ruby syntaxhl\"><span class=\"nb\">test</span></code>"},
+         "<code class=\"ruby syntaxhl\" data-language=\"ruby\"><span class=\"nb\">test</span></code>"},
       false
     )
     # language name is single-quoted
     assert_html_output(
       {"<code class='ruby'>test</code>" =>
-         "<code class=\"ruby syntaxhl\"><span class=\"nb\">test</span></code>"},
+         "<code class=\"ruby syntaxhl\" data-language=\"ruby\"><span class=\"nb\">test</span></code>"},
+      false
+    )
+  end
+
+  def test_should_preserve_code_language_class_attribute_in_data_language
+    assert_html_output(
+      {
+        "<code class=\"foolang\">unsupported language</code>" =>
+          "<code data-language=\"foolang\">unsupported language</code>",
+        "<code class=\"c-k&r\">special-char language</code>" =>
+          "<code data-language=\"c-k&#38;r\">special-char language</code>",
+      },
       false
     )
   end
@@ -699,6 +733,38 @@ class Redmine::WikiFormatting::TextileFormatterTest < ActionView::TestCase
       <p>&lt;pree&gt;<br />
         This is some text<br />
       &lt;/pree&gt;</p>
+    EXPECTED
+    assert_equal expected.gsub(%r{[\r\n\t]}, ''), to_html(text).gsub(%r{[\r\n\t]}, '')
+  end
+
+  def test_should_remove_html_comments
+    text = <<~STR
+      <!-- begin -->
+      Hello <!-- comment between words -->world.
+
+      <!--
+        multi-line
+      comment -->Foo
+
+      <pre>
+      This is a code block.
+      <p>
+      <!-- comments in a code block should be preserved -->
+      </p>
+      </pre>
+    STR
+    expected = <<~EXPECTED
+      <p>Hello world.</p>
+
+      <p>Foo</p>
+
+      <pre>
+      This is a code block.
+      &lt;p&gt;
+      &lt;!-- comments in a code block should be preserved --&gt;
+      &lt;/p&gt;
+      </pre>
+
     EXPECTED
     assert_equal expected.gsub(%r{[\r\n\t]}, ''), to_html(text).gsub(%r{[\r\n\t]}, '')
   end

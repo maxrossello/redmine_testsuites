@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -199,7 +199,7 @@ class WikiPageTest < ActiveSupport::TestCase
   end
 
   def test_diff_for_page_with_deleted_version_should_pick_the_previous_available_version
-    WikiContent::Version.find_by_page_id_and_version(1, 2).destroy
+    WikiContentVersion.find_by_page_id_and_version(1, 2).destroy
 
     page = WikiPage.find(1)
     diff = page.diff(3)

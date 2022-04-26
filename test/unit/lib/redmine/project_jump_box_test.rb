@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 require File.expand_path('../../../../test_helper', __FILE__)
 
 class Redmine::ProjectJumpBoxTest < ActiveSupport::TestCase
-  fixtures :users, :projects, :user_preferences
+  fixtures :users, :projects, :user_preferences, :members, :roles, :member_roles
 
   def setup
     @user = User.find_by_login 'jsmith'

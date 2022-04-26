@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -233,6 +233,12 @@ class ProjectTest < ActiveSupport::TestCase
     # some boards
     assert @ecookbook.boards.any?
 
+    # generate some dependent objects
+    overridden_activity = TimeEntryActivity.new({:name => "Project", :project => @ecookbook})
+    assert overridden_activity.save!
+
+    query = IssueQuery.generate!(:project => @ecookbook, :visibility => Query::VISIBILITY_ROLES, :roles => Role.where(:id => [1, 3]).to_a)
+
     @ecookbook.destroy
     # make sure that the project non longer exists
     assert_raise(ActiveRecord::RecordNotFound) {Project.find(@ecookbook.id)}
@@ -240,12 +246,16 @@ class ProjectTest < ActiveSupport::TestCase
     assert_not Member.where(:project_id => @ecookbook.id).exists?
     assert_not Board.where(:project_id => @ecookbook.id).exists?
     assert_not Issue.where(:project_id => @ecookbook.id).exists?
+    assert_not Enumeration.where(:project_id => @ecookbook.id).exists?
+
+    assert_not Query.where(:project_id => @ecookbook.id).exists?
+    assert_nil ActiveRecord::Base.connection.select_value("SELECT 1 FROM queries_roles WHERE query_id = #{query.id}")
   end
 
   def test_destroy_should_destroy_subtasks
     issues =
       (0..2).to_a.map do
-        Issue.create!(:project_id => 1, :tracker_id => 1,
+        Issue.generate!(:project_id => 1, :tracker_id => 1,
                       :author_id => 1, :subject => 'test')
       end
     issues[0].update! :parent_issue_id => issues[1].id
@@ -287,7 +297,7 @@ class ProjectTest < ActiveSupport::TestCase
     assert_equal 0, Wiki.count
     assert_equal 0, WikiPage.count
     assert_equal 0, WikiContent.count
-    assert_equal 0, WikiContent::Version.count
+    assert_equal 0, WikiContentVersion.count
     assert_equal 0, Project.connection.select_all("SELECT * FROM projects_trackers").count
     assert_equal 0, Project.connection.select_all("SELECT * FROM custom_fields_projects").count
     assert_equal 0, CustomValue.where(:customized_type => ['Project', 'Issue', 'TimeEntry', 'Version']).count
@@ -346,6 +356,13 @@ class ProjectTest < ActiveSupport::TestCase
     parent.reload
     assert_equal 4, parent.children.size
     assert_equal parent.children.sort_by(&:name), parent.children.to_a
+  end
+
+  def test_validate_custom_field_values_of_project
+    User.current = User.find(3)
+    ProjectCustomField.generate!(:name => 'CustomFieldTest', :field_format => 'int', :is_required => true, :visible => false, :role_ids => [1])
+    p = Project.new(:name => 'Project test', :identifier => 'project-t')
+    assert p.save!
   end
 
   def test_set_parent_should_update_issue_fixed_version_associations_when_a_fixed_version_is_moved_out_of_the_hierarchy
@@ -1126,5 +1143,21 @@ class ProjectTest < ActiveSupport::TestCase
     )
     assert_equal 'valuea', project.custom_field_value(cf1)
     assert_nil project.custom_field_value(cf2)
+  end
+
+  def test_like_scope_should_escape_query
+    project = Project.find 'ecookbook'
+    r = Project.like('eco_k')
+    assert_not_include project, r
+    r = Project.like('eco%k')
+    assert_not_include project, r
+
+    project.update_column :name, 'Eco%kbook'
+    r = Project.like('eco%k')
+    assert_include project, r
+
+    project.update_column :name, 'Eco_kbook'
+    r = Project.like('eco_k')
+    assert_include project, r
   end
 end

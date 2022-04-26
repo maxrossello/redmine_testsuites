@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -29,7 +29,8 @@ class UserTest < ActiveSupport::TestCase
            :groups_users,
            :enabled_modules,
            :tokens,
-           :user_preferences
+           :user_preferences,
+           :custom_fields, :custom_fields_projects, :custom_fields_trackers, :custom_values
 
   include Redmine::I18n
 
@@ -305,7 +306,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_destroy_should_update_journals
-    issue = Issue.create!(:project_id => 1, :author_id => 2,
+    issue = Issue.generate!(:project_id => 1, :author_id => 2,
                           :tracker_id => 1, :subject => 'foo')
     issue.init_journal(User.find(2), "update")
     issue.save!
@@ -316,7 +317,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_destroy_should_update_journal_details_old_value
-    issue = Issue.create!(:project_id => 1, :author_id => 1,
+    issue = Issue.generate!(:project_id => 1, :author_id => 1,
                           :tracker_id => 1, :subject => 'foo', :assigned_to_id => 2)
     issue.init_journal(User.find(1), "update")
     issue.assigned_to_id = nil
@@ -332,7 +333,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_destroy_should_update_journal_details_value
-    issue = Issue.create!(:project_id => 1, :author_id => 1,
+    issue = Issue.generate!(:project_id => 1, :author_id => 1,
                           :tracker_id => 1, :subject => 'foo')
     issue.init_journal(User.find(1), "update")
     issue.assigned_to_id = 2
@@ -425,7 +426,7 @@ class UserTest < ActiveSupport::TestCase
                                                       :start_page => 'Start'))
     )
     wiki_content.text = 'bar'
-    assert_difference 'WikiContent::Version.count' do
+    assert_difference 'WikiContentVersion.count' do
       wiki_content.save!
     end
 
@@ -797,19 +798,19 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 1, anon2.errors.count
   end
 
-  def test_rss_key
-    assert_nil @jsmith.rss_token
-    key = @jsmith.rss_key
+  def test_atom_key
+    assert_nil @jsmith.atom_token
+    key = @jsmith.atom_key
     assert_equal 40, key.length
 
     @jsmith.reload
-    assert_equal key, @jsmith.rss_key
+    assert_equal key, @jsmith.atom_key
   end
 
-  def test_rss_key_should_not_be_generated_twice
+  def test_atom_key_should_not_be_generated_twice
     assert_difference 'Token.count', 1 do
-      key1 = @jsmith.rss_key
-      key2 = @jsmith.rss_key
+      key1 = @jsmith.atom_key
+      key2 = @jsmith.atom_key
       assert_equal key1, key2
     end
   end
@@ -1313,36 +1314,48 @@ class UserTest < ActiveSupport::TestCase
     assert_equal [], User.find(2).bookmarked_project_ids
   end
 
-  if Object.const_defined?(:OpenID)
-    def test_setting_identity_url
-      normalized_open_id_url = 'http://example.com/'
-      u = User.new(:identity_url => 'http://example.com/')
-      assert_equal normalized_open_id_url, u.identity_url
+  def test_remove_custom_field_references_upon_destroy
+    cf1 = IssueCustomField.create(field_format: 'user', name: 'user cf', is_for_all: true, tracker_ids: Tracker.pluck(:id))
+    cf2 = IssueCustomField.create(field_format: 'user', name: 'users cf', is_for_all: true, multiple: true, tracker_ids: Tracker.pluck(:id))
+
+    issue = Issue.first
+    issue.init_journal(@admin)
+    assert_difference ->{cf1.custom_values.count} do
+      assert_difference ->{cf2.custom_values.count}, 2 do
+        issue.update(custom_field_values:
+        {
+          cf1.id => @jsmith.id,
+          cf2.id => [@dlopper.id, @jsmith.id]
+        })
+      end
+    end
+    assert cv1 = cf1.custom_values.where(customized_id: issue.id).last
+    assert_equal @jsmith.id.to_s, cv1.value
+
+    assert cv2 = cf2.custom_values.where(customized_id: issue.id)
+    assert_equal 2, cv2.size
+    assert cv2a = cv2.detect{|cv| cv.value == @dlopper.id.to_s}
+    assert cv2b = cv2.detect{|cv| cv.value == @jsmith.id.to_s}
+
+    # 2 custom values from the issue and 1 custom value from the user (CustomValue#3)
+    assert_difference ->{CustomValue.count}, -3 do
+      @jsmith.destroy
     end
 
-    def test_setting_identity_url_without_trailing_slash
-      normalized_open_id_url = 'http://example.com/'
-      u = User.new(:identity_url => 'http://example.com')
-      assert_equal normalized_open_id_url, u.identity_url
-    end
+    assert_raise(ActiveRecord::RecordNotFound){cv1.reload}
+    assert_raise(ActiveRecord::RecordNotFound){cv2b.reload}
 
-    def test_setting_identity_url_without_protocol
-      normalized_open_id_url = 'http://example.com/'
-      u = User.new(:identity_url => 'example.com')
-      assert_equal normalized_open_id_url, u.identity_url
-    end
+    cv2a.reload
+    assert_equal @dlopper.id.to_s, cv2a.value
+  end
 
-    def test_setting_blank_identity_url
-      u = User.new(:identity_url => 'example.com')
-      u.identity_url = ''
-      assert u.identity_url.blank?
-    end
+  def test_prune_should_destroy_unactivated_old_users
+    User.generate!(:status => User::STATUS_REGISTERED, :created_on => 6.days.ago)
+    User.generate!(:status => User::STATUS_REGISTERED, :created_on => 7.days.ago)
+    User.generate!(:status => User::STATUS_REGISTERED)
 
-    def test_setting_invalid_identity_url
-      u = User.new(:identity_url => 'this is not an openid url')
-      assert u.identity_url.blank?
+    assert_difference 'User.count', -2 do
+      User.prune(7)
     end
-  else
-    puts "Skipping openid tests."
   end
 end

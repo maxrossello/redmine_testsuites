@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -298,6 +298,22 @@ class VersionTest < ActiveSupport::TestCase
     assert_includes Version.like('VERSION FOR LIKE SCOPE TEST'), version
     assert_includes Version.like('version for like scope test'), version
     assert_includes Version.like('like scope'), version
+  end
+
+  def test_like_scope_should_escape_query
+    version = Version.create!(:project => Project.find(1), :name => 'Version for like scope test')
+    r = Version.like('Ver_ion')
+    assert_not_include version, r
+    r = Version.like('Ver%ion')
+    assert_not_include version, r
+
+    version.update_column :name, 'Ver%ion'
+    r = Version.like('ver%i')
+    assert_include version, r
+
+    version.update_column :name, 'Ver_ion'
+    r = Version.like('ver_i')
+    assert_include version, r
   end
 
   def test_safe_attributes_should_include_only_custom_fields_visible_to_user

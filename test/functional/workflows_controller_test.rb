@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -51,8 +51,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
     # used status only
     statuses = IssueStatus.where(:id => [2, 3, 5]).sorted.pluck(:name)
     assert_equal(
-      #["New issue"] + statuses,
-      [I18n.t(:label_issue_new)] + statuses,
+      ["New issue"] + statuses,
       css_select('table.workflows.transitions-always tbody tr td:first').map(&:text).map(&:strip)
     )
     # allowed transitions
@@ -79,8 +78,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
     # statuses 1 and 5 not displayed
     statuses = IssueStatus.where(:id => [2, 3]).sorted.pluck(:name)
     assert_equal(
-      #["New issue"] + statuses,
-      [I18n.t(:label_issue_new)] + statuses,
+      ["New issue"] + statuses,
       css_select('table.workflows.transitions-always tbody tr td:first').map(&:text).map(&:strip)
     )
   end
@@ -116,8 +114,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
 
     statuses = IssueStatus.all.sorted.pluck(:name)
     assert_equal(
-      #["New issue"] + statuses,
-      [I18n.t(:label_issue_new)] + statuses,
+      ["New issue"] + statuses,
       css_select('table.workflows.transitions-always tbody tr td:first').map(&:text).map(&:strip)
     )
     assert_select 'input[type=checkbox][name=?]', 'transitions[0][1][always]'
@@ -138,7 +135,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
   def test_post_edit
     WorkflowTransition.delete_all
 
-    post :edit, :params => {
+    patch :update, :params => {
       :role_id => 2,
       :tracker_id => 1,
       :transitions => {
@@ -156,7 +153,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
   def test_post_edit_with_allowed_statuses_for_new_issues
     WorkflowTransition.delete_all
 
-    post :edit, :params => {
+    patch :update, :params => {
       :role_id => 2,
       :tracker_id => 1,
       :transitions => {
@@ -173,7 +170,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
   def test_post_edit_with_additional_transitions
     WorkflowTransition.delete_all
 
-    post :edit, :params => {
+    patch :update, :params => {
       :role_id => 2,
       :tracker_id => 1,
       :transitions => {
@@ -350,7 +347,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
   def test_post_permissions
     WorkflowPermission.delete_all
 
-    post :permissions, :params => {
+    patch :update_permissions, :params => {
       :role_id => 1,
       :tracker_id => 2,
       :permissions => {
@@ -393,7 +390,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
   def test_post_copy_one_to_one
     source_transitions = status_transitions(:tracker_id => 1, :role_id => 2)
 
-    post :copy, :params => {
+    post :duplicate, :params => {
       :source_tracker_id => '1', :source_role_id => '2',
       :target_tracker_ids => ['3'], :target_role_ids => ['1']
     }
@@ -404,7 +401,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
   def test_post_copy_one_to_many
     source_transitions = status_transitions(:tracker_id => 1, :role_id => 2)
 
-    post :copy, :params => {
+    post :duplicate, :params => {
       :source_tracker_id => '1', :source_role_id => '2',
       :target_tracker_ids => ['2', '3'], :target_role_ids => ['1', '3']
     }
@@ -419,7 +416,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
     source_t2 = status_transitions(:tracker_id => 2, :role_id => 2)
     source_t3 = status_transitions(:tracker_id => 3, :role_id => 2)
 
-    post :copy, :params => {
+    post :duplicate, :params => {
       :source_tracker_id => 'any', :source_role_id => '2',
       :target_tracker_ids => ['2', '3'], :target_role_ids => ['1', '3']
     }
@@ -432,7 +429,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
 
   def test_post_copy_with_incomplete_source_specification_should_fail
     assert_no_difference 'WorkflowRule.count' do
-      post :copy, :params => {
+      post :duplicate, :params => {
         :source_tracker_id => '', :source_role_id => '2',
         :target_tracker_ids => ['2', '3'], :target_role_ids => ['1', '3']
       }
@@ -444,7 +441,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
 
   def test_post_copy_with_incomplete_target_specification_should_fail
     assert_no_difference 'WorkflowRule.count' do
-      post :copy, :params => {
+      post :duplicate, :params => {
         :source_tracker_id => '1', :source_role_id => '2',
         :target_tracker_ids => ['2', '3']
       }

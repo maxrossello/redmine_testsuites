@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -146,5 +146,21 @@ class PrincipalTest < ActiveSupport::TestCase
     results = Principal.like('Собо')
     assert_equal 1, results.count
     assert_equal user, results.first
+  end
+
+  def test_like_scope_should_escape_query
+    user = User.generate!(:firstname => 'Leonardo', :lastname => 'da Vinci')
+    r = Principal.like('Vi_ci')
+    assert_not_include user, r
+    r = Principal.like('Vi%ci')
+    assert_not_include user, r
+
+    user.update_column :lastname, 'da Vi%ci'
+    r = Principal.like('vi%ci')
+    assert_include user, r
+
+    user.update_column :lastname, 'da Vi_ci'
+    r = Principal.like('vi_ci')
+    assert_include user, r
   end
 end

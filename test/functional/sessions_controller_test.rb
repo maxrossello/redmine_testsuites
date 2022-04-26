@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -43,6 +43,19 @@ class SessionsControllerTest < Redmine::ControllerTest
     assert_equal created.to_i, token.created_on.to_i
     assert_not_equal created.to_i, token.updated_on.to_i
     assert token.updated_on > created
+  end
+
+  def test_session_token_should_be_updated_only_once_per_minute
+    token = Token.create!(:user_id => 2, :action => 'session', :created_on => 1.second.ago, :updated_on => 1.second.ago)
+    updated = token.reload.updated_on
+
+    get :index, :session => {
+      :user_id => 2,
+      :tk => token.value
+    }
+    assert_response :success
+    token.reload
+    assert_equal updated.to_i, token.updated_on.to_i
   end
 
   def test_user_session_should_not_be_reset_if_lifetime_and_timeout_disabled

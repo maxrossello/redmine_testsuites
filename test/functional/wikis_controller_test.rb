@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -40,7 +40,7 @@ class WikisControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 1
     post :destroy, :params => {:id => 1, :confirm => 1}
     assert_redirected_to :controller => 'projects',
-                         :action => 'settings', :id => 'ecookbook', :tab => 'wiki'
+                         :action => 'show', :id => 'ecookbook'
     assert_nil Project.find(1).wiki
   end
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -1123,8 +1123,7 @@ class IssueTest < ActiveSupport::TestCase
     assert_equal [cf.id.to_s, "category_id", "due_date"],
                  issue.required_attribute_names(user).sort
     assert !issue.save, "Issue was saved"
-    #assert_equal ["Category cannot be blank", "Due date cannot be blank", "Foo cannot be blank"],
-    assert_equal ["#{I18n.t(:field_category)} cannot be blank", "Due date cannot be blank", "Foo cannot be blank"].sort,
+    assert_equal ["Category cannot be blank", "Due date cannot be blank", "Foo cannot be blank"],
                  issue.errors.full_messages.sort
 
     issue.tracker_id = 2
@@ -1447,7 +1446,7 @@ class IssueTest < ActiveSupport::TestCase
     copy = issue.reload.copy
     assert_difference 'Issue.count', 1+issue.descendants.count do
       assert copy.save
-      assert copy.save
+      assert copy.reload.save
     end
   end
 
@@ -1944,8 +1943,7 @@ class IssueTest < ActiveSupport::TestCase
     parent.project_id = project.id
     assert !parent.save
     assert_include(
-    #"Subtask ##{child.id} could not be moved to the new project: Tracker is not included in the list",
-    I18n.t(:error_move_of_child_not_possible, :child => "##{child.id}", :errors => "#{I18n.t(:field_tracker)} #{I18n.t('activerecord.errors.messages.inclusion')}"),
+      "Subtask ##{child.id} could not be moved to the new project: Tracker is not included in the list",
       parent.errors[:base])
   end
 
@@ -2520,6 +2518,7 @@ class IssueTest < ActiveSupport::TestCase
     relation = new_record(IssueRelation) do
       copy.save!
     end
+    copy.reload
 
     copy.parent_issue_id = parent.id
     assert_save copy
@@ -2703,7 +2702,7 @@ class IssueTest < ActiveSupport::TestCase
       issue.assigned_to = nil
       issue.save!
 
-      assert_include [user.mail], ActionMailer::Base.deliveries.map(&:bcc)
+      assert_include [user.mail], ActionMailer::Base.deliveries.map(&:to)
     end
   end
 
@@ -2774,7 +2773,7 @@ class IssueTest < ActiveSupport::TestCase
                                      :possible_values => ['value1', 'value2', 'value3'],
                                      :multiple => true)
 
-    issue = Issue.create!(:project_id => 1, :tracker_id => 1,
+    issue = Issue.generate!(:project_id => 1, :tracker_id => 1,
                           :subject => 'Test', :author_id => 1)
 
     assert_difference 'Journal.count' do
@@ -2905,8 +2904,8 @@ class IssueTest < ActiveSupport::TestCase
 
     groups = Issue.by_version(project)
     groups_containing_subprojects = Issue.by_version(project, true)
-    assert_equal 3, groups.inject(0) {|sum, group| sum + group['total'].to_i}
-    assert_equal 4, groups_containing_subprojects.inject(0) {|sum, group| sum + group['total'].to_i}
+    assert_equal 7, groups.inject(0) {|sum, group| sum + group['total'].to_i}
+    assert_equal 14, groups_containing_subprojects.inject(0) {|sum, group| sum + group['total'].to_i}
   end
 
   test "#by_priority" do
@@ -2926,8 +2925,8 @@ class IssueTest < ActiveSupport::TestCase
 
     groups = Issue.by_category(project)
     groups_containing_subprojects = Issue.by_category(project, true)
-    assert_equal 3, groups.inject(0) {|sum, group| sum + group['total'].to_i}
-    assert_equal 4, groups_containing_subprojects.inject(0) {|sum, group| sum + group['total'].to_i}
+    assert_equal 7, groups.inject(0) {|sum, group| sum + group['total'].to_i}
+    assert_equal 14, groups_containing_subprojects.inject(0) {|sum, group| sum + group['total'].to_i}
   end
 
   test "#by_assigned_to" do
@@ -2937,8 +2936,8 @@ class IssueTest < ActiveSupport::TestCase
 
     groups = Issue.by_assigned_to(project)
     groups_containing_subprojects = Issue.by_assigned_to(project, true)
-    assert_equal 2, groups.inject(0) {|sum, group| sum + group['total'].to_i}
-    assert_equal 3, groups_containing_subprojects.inject(0) {|sum, group| sum + group['total'].to_i}
+    assert_equal 7, groups.inject(0) {|sum, group| sum + group['total'].to_i}
+    assert_equal 14, groups_containing_subprojects.inject(0) {|sum, group| sum + group['total'].to_i}
   end
 
   test "#by_author" do
@@ -3427,5 +3426,26 @@ class IssueTest < ActiveSupport::TestCase
     assert_equal [5, 6], issue2.filter_projects_scope('descendants').ids.sort
 
     assert_equal [5], issue2.filter_projects_scope('').ids.sort
+  end
+
+  def test_like_should_escape_query
+    issue = Issue.generate!(:subject => "asdf")
+    r = Issue.like('as_f')
+    assert_not_include issue, r
+    r = Issue.like('as%f')
+    assert_not_include issue, r
+
+    issue = Issue.generate!(:subject => "as%f")
+    r = Issue.like('as%f')
+    assert_include issue, r
+
+    issue = Issue.generate!(:subject => "as_f")
+    r = Issue.like('as_f')
+    assert_include issue, r
+  end
+
+  def test_like_should_tokenize
+    r = Issue.like('issue today')
+    assert_include Issue.find(7), r
   end
 end

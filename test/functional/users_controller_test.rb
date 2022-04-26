@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -66,6 +66,50 @@ class UsersControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_index_should_not_show_2fa_filter_and_column_if_disabled
+    with_settings twofa: "0" do
+      get :index
+      assert_response :success
+
+      assert_select "select#twofa", 0
+      assert_select 'td.twofa', 0
+    end
+  end
+
+  def test_index_filter_by_twofa_yes
+    with_settings twofa: "1" do
+      user = User.find(1)
+      user.twofa_totp_key = "AVYA3RARZ3GY3VWT7MIEJ72I5TTJRO3X"
+      user.twofa_scheme = "totp"
+      user.save
+
+      get :index, :params => {:twofa => '1'}
+      assert_response :success
+
+      assert_select "select#twofa", 1
+
+      assert_select 'tr.user', 1
+      assert_select 'td.twofa.tick .icon-checked'
+    end
+  end
+
+  def test_index_filter_by_twofa_no
+    with_settings twofa: "1" do
+      user = User.find(1)
+      user.twofa_totp_key = "AVYA3RARZ3GY3VWT7MIEJ72I5TTJRO3X"
+      user.twofa_scheme = "totp"
+      user.save
+
+      get :index, :params => {:twofa => '0'}
+      assert_response :success
+
+      assert_select "select#twofa", 1
+      assert_select "td.twofa.tick" do
+        assert_select "span.icon-checked", 0
+      end
+    end
+  end
+
   def test_index_csv
     with_settings :default_language => 'en' do
       user = User.logged.status(1).first
@@ -85,7 +129,7 @@ class UsersControllerTest < Redmine::ControllerTest
       assert_include 'Authenticator app', response.body.split("\n").second
       assert_include 'disabled', response.body.split("\n").third
 
-      assert_equal 'text/csv', @response.media_type
+      assert_equal 'text/csv; header=present', @response.media_type
     end
   end
 
@@ -103,7 +147,7 @@ class UsersControllerTest < Redmine::ControllerTest
 
       assert_include 'float field;date field', response.body
       assert_include '2,10;10/01/2020', response.body
-      assert_equal 'text/csv', @response.media_type
+      assert_equal 'text/csv; header=present', @response.media_type
     end
   end
 
@@ -115,7 +159,7 @@ class UsersControllerTest < Redmine::ControllerTest
       assert_equal User.logged.status(3).count, response.body.chomp.split("\n").size - 1
       assert_include 'locked', response.body
       assert_not_include 'active', response.body
-      assert_equal 'text/csv', @response.media_type
+      assert_equal 'text/csv; header=present', @response.media_type
     end
   end
 
@@ -125,7 +169,7 @@ class UsersControllerTest < Redmine::ControllerTest
 
     assert_equal User.logged.like('John').count, response.body.chomp.split("\n").size - 1
     assert_include 'John', response.body
-    assert_equal 'text/csv', @response.media_type
+    assert_equal 'text/csv; header=present', @response.media_type
   end
 
   def test_index_csv_with_group_filter
@@ -133,7 +177,7 @@ class UsersControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_equal Group.find(10).users.count, response.body.chomp.split("\n").size - 1
-    assert_equal 'text/csv', @response.media_type
+    assert_equal 'text/csv; header=present', @response.media_type
   end
 
   def test_show
@@ -236,15 +280,13 @@ class UsersControllerTest < Redmine::ControllerTest
     get :show, :params => {:id => 2}
     assert_select 'table.list.issue-report>tbody' do
       assert_select 'tr:nth-of-type(1)' do
-        #assert_select 'td:nth-of-type(1)>a', :text => 'Assigned issues'
-        assert_select 'td:nth-of-type(1)>a', :text => I18n.t(:label_assigned_issues)
+        assert_select 'td:nth-of-type(1)>a', :text => 'Assigned issues'
         assert_select 'td:nth-of-type(2)>a', :text => '1'   # open
         assert_select 'td:nth-of-type(3)>a', :text => '0'   # closed
         assert_select 'td:nth-of-type(4)>a', :text => '1'   # total
       end
       assert_select 'tr:nth-of-type(2)' do
-        #assert_select 'td:nth-of-type(1)>a', :text => 'Reported issues'
-        assert_select 'td:nth-of-type(1)>a', :text => I18n.t(:label_reported_issues)
+        assert_select 'td:nth-of-type(1)>a', :text => 'Reported issues'
         assert_select 'td:nth-of-type(2)>a', :text => '11'  # open
         assert_select 'td:nth-of-type(3)>a', :text => '2'   # closed
         assert_select 'td:nth-of-type(4)>a', :text => '13'  # total
@@ -286,25 +328,20 @@ class UsersControllerTest < Redmine::ControllerTest
   end
 
   def test_create
-    with_settings :bcc_recipients => '1' do
-      assert_difference 'User.count' do
-        assert_difference 'ActionMailer::Base.deliveries.size' do
-          post(
-            :create,
-            :params => {
-              :user => {
-                :firstname => 'John',
-                :lastname => 'Doe',
-                :login => 'jdoe',
-                :password => 'secret123',
-                :password_confirmation => 'secret123',
-                :mail => 'jdoe@gmail.com',
-                :mail_notification => 'none'
-              },
-              :send_information => '1'
-            }
-          )
-        end
+    assert_difference 'User.count' do
+      assert_difference 'ActionMailer::Base.deliveries.size' do
+        post :create, :params => {
+          :user => {
+            :firstname => 'John',
+            :lastname => 'Doe',
+            :login => 'jdoe',
+            :password => 'secret123',
+            :password_confirmation => 'secret123',
+            :mail => 'jdoe@gmail.com',
+            :mail_notification => 'none'
+          },
+          :send_information => '1'
+        }
       end
     end
 
@@ -320,7 +357,7 @@ class UsersControllerTest < Redmine::ControllerTest
 
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
-    assert_equal [user.mail], mail.bcc
+    assert_equal [user.mail], mail.to
     assert_mail_body_match 'secret', mail
   end
 
@@ -458,7 +495,7 @@ class UsersControllerTest < Redmine::ControllerTest
     User.where(admin: true, status: Principal::STATUS_ACTIVE).each do |admin|
       assert_not_nil(
         ActionMailer::Base.deliveries.detect do |mail|
-          [mail.bcc, mail.cc].flatten.include?(admin.mail)
+          [mail.to].flatten.include?(admin.mail)
         end
       )
     end
@@ -466,6 +503,7 @@ class UsersControllerTest < Redmine::ControllerTest
 
   def test_create_non_admin_should_not_send_security_notification
     ActionMailer::Base.deliveries.clear
+
     post :create, :params => {
       :user => {
         :firstname => 'Edgar',
@@ -477,6 +515,7 @@ class UsersControllerTest < Redmine::ControllerTest
         :admin => '0'
       }
     }
+
     assert_nil ActionMailer::Base.deliveries.last
   end
 
@@ -484,6 +523,7 @@ class UsersControllerTest < Redmine::ControllerTest
     with_settings :gravatar_enabled => '1' do
       get :edit, :params => {:id => 2}
     end
+
     assert_response :success
     assert_select 'h2>a+img.gravatar'
     assert_select 'input[name=?][value=?]', 'user[login]', 'jsmith'
@@ -500,7 +540,9 @@ class UsersControllerTest < Redmine::ControllerTest
 
   def test_edit_should_be_denied_for_anonymous
     assert User.find(6).anonymous?
+
     get :edit, :params => {:id => 6}
+
     assert_response 404
   end
 
@@ -509,16 +551,19 @@ class UsersControllerTest < Redmine::ControllerTest
     field.update_attribute :text_formatting, 'full'
 
     get :edit, :params => {:id => 2}
+
     assert_response :success
   end
 
   def test_update
     ActionMailer::Base.deliveries.clear
+
     put :update, :params => {
       :id => 2,
       :user => {:firstname => 'Changed', :mail_notification => 'only_assigned'},
       :pref => {:hide_mail => '1', :comments_sorting => 'desc'}
     }
+
     user = User.find(2)
     assert_equal 'Changed', user.firstname
     assert_equal 'only_assigned', user.mail_notification
@@ -543,6 +588,7 @@ class UsersControllerTest < Redmine::ControllerTest
       :id => 2,
       :user => {:group_ids => ['10']}
     }
+
     user = User.find(2)
     assert_equal [10], user.group_ids
   end
@@ -554,66 +600,81 @@ class UsersControllerTest < Redmine::ControllerTest
     u.status = User::STATUS_REGISTERED
     u.save!
     ActionMailer::Base.deliveries.clear
-    with_settings :bcc_recipients => '1' do
-      put(
-        :update,
-        :params => {
-          :id => u.id,
-          :user => {:status => User::STATUS_ACTIVE}
-        }
-      )
-    end
+
+    put(
+      :update,
+      :params => {
+        :id => u.id,
+        :user => {:status => User::STATUS_ACTIVE}
+      }
+    )
+
     assert u.reload.active?
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
-    assert_equal ['foo.bar@somenet.foo'], mail.bcc
+    assert_equal ['foo.bar@somenet.foo'], mail.to
     assert_mail_body_match ll('fr', :notice_account_activated), mail
   end
 
   def test_update_with_password_change_should_send_a_notification
     ActionMailer::Base.deliveries.clear
-    with_settings :bcc_recipients => '1' do
-      put(
-        :update,
-        :params => {
-          :id => 2,
-          :user => {
-            :password => 'newpass123',
-            :password_confirmation => 'newpass123'
-          },
-         :send_information => '1'
-        }
-      )
-    end
+
+    put(
+      :update,
+      :params => {
+        :id => 2,
+        :user => {
+          :password => 'newpass123',
+          :password_confirmation => 'newpass123'
+        },
+       :send_information => '1'
+      }
+    )
     u = User.find(2)
     assert u.check_password?('newpass123')
 
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
-    assert_equal [u.mail], mail.bcc
+    assert_equal [u.mail], mail.to
     assert_mail_body_match 'newpass123', mail
+  end
+
+  def test_update_with_password_change_by_admin_should_send_a_security_notification
+    ActionMailer::Base.deliveries.clear
+    user = User.find_by(login: 'jsmith')
+
+    put :update, :params => {
+      :id => user.id,
+      :user => {:password => 'newpass123', :password_confirmation => 'newpass123'}
+    }
+
+    assert_equal 1, ActionMailer::Base.deliveries.size
+    mail = ActionMailer::Base.deliveries.last
+    assert_equal [user.mail], mail.to
+    assert_match 'Security notification', mail.subject
+    assert_mail_body_match 'Your password has been changed.', mail
   end
 
   def test_update_with_generate_password_should_email_the_password
     ActionMailer::Base.deliveries.clear
-    with_settings :bcc_recipients => '1' do
-      put(
-        :update,
-        :params => {
-          :id => 2,
-          :user => {
-            :generate_password => '1',
-            :password => '',
-            :password_confirmation => ''
-          },
-          :send_information => '1'
-        }
-      )
-    end
+
+    put(
+      :update,
+      :params => {
+        :id => 2,
+        :user => {
+          :generate_password => '1',
+          :password => '',
+          :password_confirmation => ''
+        },
+        :send_information => '1'
+      }
+    )
+
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
     u = User.find(2)
-    assert_equal [u.mail], mail.bcc
+    assert_equal [u.mail], mail.to
     m = mail_body(mail).match(/Password: ([a-zA-Z0-9]+)/)
     assert m
     password = m[1]
@@ -706,7 +767,7 @@ class UsersControllerTest < Redmine::ControllerTest
     User.where(admin: true, status: Principal::STATUS_ACTIVE).each do |admin|
       assert_not_nil(
         ActionMailer::Base.deliveries.detect do |mail|
-          [mail.bcc, mail.cc].flatten.include?(admin.mail)
+          [mail.to].flatten.include?(admin.mail)
         end
       )
     end
@@ -736,7 +797,7 @@ class UsersControllerTest < Redmine::ControllerTest
     User.where(admin: true, status: Principal::STATUS_ACTIVE).each do |admin|
       assert_not_nil(
         ActionMailer::Base.deliveries.detect do |mail|
-          [mail.bcc, mail.cc].flatten.include?(admin.mail)
+          [mail.to].flatten.include?(admin.mail)
         end
       )
     end
@@ -766,7 +827,7 @@ class UsersControllerTest < Redmine::ControllerTest
     User.where(admin: true, status: Principal::STATUS_ACTIVE).each do |admin|
       assert_not_nil(
         ActionMailer::Base.deliveries.detect do |mail|
-          [mail.bcc, mail.cc].flatten.include?(admin.mail)
+          [mail.to].flatten.include?(admin.mail)
         end
       )
     end
@@ -802,7 +863,7 @@ class UsersControllerTest < Redmine::ControllerTest
     User.where(admin: true, status: Principal::STATUS_ACTIVE).each do |admin|
       assert_not_nil(
         ActionMailer::Base.deliveries.detect do |mail|
-          [mail.bcc, mail.cc].flatten.include?(admin.mail)
+          [mail.to].flatten.include?(admin.mail)
         end
       )
     end
@@ -914,7 +975,7 @@ class UsersControllerTest < Redmine::ControllerTest
     User.where(admin: true, status: Principal::STATUS_ACTIVE).each do |admin|
       assert_not_nil(
         ActionMailer::Base.deliveries.detect do |mail|
-          [mail.bcc, mail.cc].flatten.include?(admin.mail)
+          [mail.to].flatten.include?(admin.mail)
         end
       )
     end

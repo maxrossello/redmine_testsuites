@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -112,15 +112,8 @@ class WatcherTest < ActiveSupport::TestCase
   end
 
   def test_addable_watcher_users_should_not_include_user_that_cannot_view_the_object
-    if Redmine::Plugin.installed? :redmine_extended_watchers
-      with_settings :plugin_redmine_extended_watchers => { 'policy' => 'default' } do
-        issue = Issue.new(:project => Project.find(1), :is_private => true)
-        assert_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
-      end
-    else
-      issue = Issue.new(:project => Project.find(1), :is_private => true)
-      assert_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
-    end
+    issue = Issue.new(:project => Project.find(1), :is_private => true)
+    assert_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
   end
 
   def test_any_watched_should_return_false_if_no_object_is_watched

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -56,5 +56,12 @@ class Redmine::ApiTest::ApiTest < Redmine::ApiTest::Base
 
     assert_response :no_content
     assert_equal '', response.body
+  end
+
+  def test_api_with_invalid_format_should_return_406
+    get '/users/1', :headers => credentials('admin').merge({'Accept' => 'application/xml', 'Content-type' => 'application/xml'})
+
+    assert_response :not_acceptable
+    assert_equal "We couldn't handle your request, sorry. If you were trying to access the API, make sure to append .json or .xml to your request URL.\n", response.body
   end
 end

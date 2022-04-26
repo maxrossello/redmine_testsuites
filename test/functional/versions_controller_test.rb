@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -47,6 +47,9 @@ class VersionsControllerTest < Redmine::ControllerTest
     # Context menu on issues
     assert_select "form[data-cm-url=?]", '/issues/context_menu'
     assert_select "div#sidebar" do
+      # Tracker checkboxes
+      assert_select 'input[type=hidden][name=?]', 'tracker_ids[]'
+      assert_select 'input[type=checkbox][name=?]', 'tracker_ids[]', 3
       # Links to versions anchors
       assert_select 'a[href=?]', '#2.0'
       # Links to completed versions in the sidebar
@@ -111,8 +114,7 @@ class VersionsControllerTest < Redmine::ControllerTest
 
       assert_select 'table.related-issues' do
         assert_select 'tr.issue', :count => 2 do
-          #assert_select 'img.gravatar[title=?]', 'Assignee: John Smith', :count => 1
-          assert_select 'img.gravatar[title=?]', "#{I18n.t(:field_assigned_to)}: John Smith", :count => 1
+          assert_select 'img.gravatar[title=?]', 'Assignee: John Smith', :count => 1
         end
       end
     end
@@ -138,8 +140,7 @@ class VersionsControllerTest < Redmine::ControllerTest
 
       assert_select 'table.related-issues' do
         assert_select 'tr.issue td.assigned_to', :count => 2 do
-          #assert_select 'img.gravatar[title=?]', 'Assignee: Dave Lopper', :count => 1
-          assert_select 'img.gravatar[title=?]', "#{I18n.t(:field_assigned_to)}: Dave Lopper", :count => 1
+          assert_select 'img.gravatar[title=?]', 'Assignee: Dave Lopper', :count => 1
         end
       end
     end
@@ -168,7 +169,7 @@ class VersionsControllerTest < Redmine::ControllerTest
       assert_select 'a', :text => l(:label_x_open_issues_abbr, :count => 1)
     end
 
-    assert_select '.time-tracking td.total-hours a:first-child', :text => '2.00 hours'
+    assert_select '.time-tracking td.total-hours a:first-child', :text => '2:00 hours'
   end
 
   def test_show_should_link_to_spent_time_on_version
@@ -179,7 +180,7 @@ class VersionsControllerTest < Redmine::ControllerTest
     get :show, :params => {:id => version.id}
     assert_response :success
 
-    assert_select '.total-hours', :text => '7.20 hours'
+    assert_select '.total-hours', :text => '7:12 hours'
     assert_select '.total-hours a[href=?]', "/projects/ecookbook/time_entries?issue.fixed_version_id=#{version.id}&set_filter=1"
   end
 
@@ -207,8 +208,7 @@ class VersionsControllerTest < Redmine::ControllerTest
 
       assert_select 'div.version-overview' do
         assert_select 'table.progress-98' do
-          #assert_select 'td[class=closed][title=?]', 'closed: 98%'
-          assert_select 'td[class=closed][title=?]', "#{I18n.t(:label_closed_issues_plural)}: 98%"
+          assert_select 'td[class=closed][title=?]', 'closed: 98%'
           assert_select 'td[class=done][title=?]', '% Done: 99%'
         end
         assert_select 'p[class=percent]', :text => '99%'
@@ -221,8 +221,7 @@ class VersionsControllerTest < Redmine::ControllerTest
     get :show, :params => {:id => 3}
 
     assert_response :success
-    #assert_select 'a.icon.icon-add', :text => 'New issue'
-    assert_select 'a.icon.icon-add', :text => I18n.t(:label_issue_new)
+    assert_select 'a.icon.icon-add', :text => 'New issue'
   end
 
   def test_new

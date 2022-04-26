@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -60,10 +60,10 @@ class MyControllerTest < Redmine::ControllerTest
     assert_response :success
     assert_select "tr#time-entry-#{with_issue.id}" do
       assert_select 'td.subject a[href="/issues/1"]'
-      assert_select 'td.hours', :text => '2.50'
+      assert_select 'td.hours', :text => '2:30'
     end
     assert_select "tr#time-entry-#{without_issue.id}" do
-      assert_select 'td.hours', :text => '3.50'
+      assert_select 'td.hours', :text => '3:30'
     end
   end
 
@@ -269,7 +269,7 @@ class MyControllerTest < Redmine::ControllerTest
 
     assert_response :success
     assert_select '#block-issuesupdatedbyme' do
-      report_url = CGI.unescape(css_select('h3 a').first.attr('href'))
+      report_url = CGI.unescape(css_select('h3 a').first.attr(:href))
       assert_match 'f[]=project.status', report_url
       assert_match 'v[project.status][]=1', report_url
       assert_match 'f[]=updated_by', report_url
@@ -310,7 +310,7 @@ class MyControllerTest < Redmine::ControllerTest
 
     assert_response :success
     assert_select '#block-issuesassignedtome table.issues tbody' do
-      report_url = css_select('h3 a').map {|e| e.attr('href')}.first
+      report_url = css_select('h3 a').map {|e| e.attr(:href)}.first
       assert_match 'f%5B%5D=project.status', report_url
       assert_match 'v%5Bproject.status%5D%5B%5D=1', report_url
 
@@ -338,7 +338,7 @@ class MyControllerTest < Redmine::ControllerTest
 
     assert_response :success
     assert_select '#block-issuesreportedbyme' do
-      report_url = css_select('h3 a').map {|e| e.attr('href')}.first
+      report_url = css_select('h3 a').map {|e| e.attr(:href)}.first
       assert_match 'f%5B%5D=project.status', report_url
       assert_match 'v%5Bproject.status%5D%5B%5D=1', report_url
 
@@ -370,7 +370,7 @@ class MyControllerTest < Redmine::ControllerTest
 
     assert_response :success
     assert_select '#block-issueswatched table.issues tbody' do
-      report_url = css_select('h3 a').map {|e| e.attr('href')}.first
+      report_url = css_select('h3 a').map {|e| e.attr(:href)}.first
       assert_match 'f%5B%5D=project.status', report_url
       assert_match 'v%5Bproject.status%5D%5B%5D=1', report_url
 
@@ -510,8 +510,47 @@ class MyControllerTest < Redmine::ControllerTest
       assert_select 'a[href^=?]', 'http://localhost:3000/my/account', :text => 'My account'
     end
     # The old email address should be notified about the change for security purposes
-    assert [mail.bcc, mail.cc].flatten.include?(User.find(2).mail)
-    assert [mail.bcc, mail.cc].flatten.include?('foobar@example.com')
+    assert mail.to.include?(User.find(2).mail)
+    assert mail.to.include?('foobar@example.com')
+  end
+
+  def test_my_account_notify_about_high_priority_issues_preference
+    # normally, preference should be shown
+    get :account
+    assert_select 'label[for="pref_notify_about_high_priority_issues"]'
+
+    # preference should be persisted
+    put(
+      :account,
+      :params => {
+        :pref => {
+          notify_about_high_priority_issues: '1'
+        }
+      }
+    )
+    assert User.find(2).notify_about_high_priority_issues?
+
+    # preference should be hidden if there aren't any priorities
+    Issue.destroy_all
+    IssuePriority.destroy_all
+    get :account
+    assert_select 'label[for="pref_notify_about_high_priority_issues"]', false
+
+    # preference should be hidden if there isn't a "high" priority
+    a = IssuePriority.create! name: 'A'
+    get :account
+    assert_select 'label[for="pref_notify_about_high_priority_issues"]', false
+
+    # preference should be shown if there are at least two priorities (one low, one high)
+    b = IssuePriority.create! name: 'B'
+    get :account
+    assert_select 'label[for="pref_notify_about_high_priority_issues"]'
+
+    # preference should be hidden if the highest priority is the default one,
+    # because that means that there is no "high" priority
+    b.update! is_default: true
+    get :account
+    assert_select 'label[for="pref_notify_about_high_priority_issues"]', false
   end
 
   def test_my_account_notify_about_high_priority_issues_preference
@@ -791,22 +830,22 @@ class MyControllerTest < Redmine::ControllerTest
                  User.find(2).pref.my_page_layout)
   end
 
-  def test_reset_rss_key_with_existing_key
-    @previous_token_value = User.find(2).rss_key # Will generate one if it's missing
-    post :reset_rss_key
+  def test_reset_atom_key_with_existing_key
+    @previous_token_value = User.find(2).atom_key # Will generate one if it's missing
+    post :reset_atom_key
 
-    assert_not_equal @previous_token_value, User.find(2).rss_key
-    assert User.find(2).rss_token
+    assert_not_equal @previous_token_value, User.find(2).atom_key
+    assert User.find(2).atom_token
     assert_match /reset/, flash[:notice]
     assert_redirected_to '/my/account'
   end
 
-  def test_reset_rss_key_without_existing_key
+  def test_reset_atom_key_without_existing_key
     Token.delete_all
-    assert_nil User.find(2).rss_token
-    post :reset_rss_key
+    assert_nil User.find(2).atom_token
+    post :reset_atom_key
 
-    assert User.find(2).rss_token
+    assert User.find(2).atom_token
     assert_match /reset/, flash[:notice]
     assert_redirected_to '/my/account'
   end

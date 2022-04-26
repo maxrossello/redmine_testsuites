@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@ class RepositoriesSubversionControllerTest < Redmine::RepositoryControllerTest
            :issue_categories, :enumerations, :custom_fields, :custom_values, :trackers
 
   PRJ_ID = 3
-  NUM_REV = 12
+  NUM_REV = 13
 
   def setup
     super
@@ -204,7 +204,8 @@ class RepositoriesSubversionControllerTest < Redmine::RepositoryControllerTest
       )
       assert_response :success
       assert_select 'table.changesets tbody' do
-        assert_select 'tr', 7
+        assert_select 'tr', 8
+        assert_select 'tr td.id a', :text => '13'
         assert_select 'tr td.id a', :text => '12'
         assert_select 'tr td.id a', :text => '10'
         assert_select 'tr td.id a', :text => '9'
@@ -280,6 +281,32 @@ class RepositoriesSubversionControllerTest < Redmine::RepositoryControllerTest
       assert_select 'audio[src=?]', "/projects/subproject1/repository/#{@repository.id}/raw/subversion_test/folder/subfolder/chords.mp3"
     end
 
+    def text_entry_should_preview_markdown
+      get(
+        :entry,
+        :params => {
+          :id => PRJ_ID,
+          :repository_id => @repository.id,
+          :path => repository_path_hash(['subversion_test', 'folder', 'subfolder', 'testfile.md'])[:param]
+        }
+      )
+      assert_response :success
+      assert_select 'div.wiki', :html => "<h1>Header 1</h1>\n\n<h2>Header 2</h2>\n\n<h3>Header 3</h3>"
+    end
+
+    def text_entry_should_preview_textile
+      get(
+        :entry,
+        :params => {
+          :id => PRJ_ID,
+          :repository_id => @repository.id,
+          :path => repository_path_hash(['subversion_test', 'folder', 'subfolder', 'testfile.textile'])[:param]
+        }
+      )
+      assert_response :success
+      assert_select 'div.wiki', :html => "<h1>Header 1</h1>\n\n\n\t<h2>Header 2</h2>\n\n\n\t<h3>Header 3</h3>"
+    end
+
     def test_entry_at_given_revision
       assert_equal 0, @repository.changesets.count
       @repository.fetch_changesets
@@ -329,7 +356,7 @@ class RepositoriesSubversionControllerTest < Redmine::RepositoryControllerTest
         }
       )
       assert_response :success
-      assert_equal 'attachment; filename="helloworld.c"', @response.headers['Content-Disposition']
+      assert_equal "attachment; filename=\"helloworld.c\"; filename*=UTF-8''helloworld.c", @response.headers['Content-Disposition']
     end
 
     def test_directory_entry
@@ -530,14 +557,14 @@ class RepositoriesSubversionControllerTest < Redmine::RepositoryControllerTest
       assert_response :success
 
       assert_select 'tr' do
-        assert_select 'th.line-num', :text => '1'
+        assert_select 'th.line-num a[data-txt=?]', '1'
         assert_select 'td.revision', :text => '4'
         assert_select 'td.author', :text => 'jp'
         assert_select 'td', :text => /stdio.h/
       end
       # Same revision
       assert_select 'tr' do
-        assert_select 'th.line-num', :text => '2'
+        assert_select 'th.line-num a[data-txt=?]', '2'
         assert_select 'td.revision', :text => ''
         assert_select 'td.author', :text => ''
       end

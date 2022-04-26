@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2022  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -191,8 +191,7 @@ class ActivitiesControllerTest < Redmine::ControllerTest
         }
       )
       assert_response :success
-      #assert_select 'title', :text => /Issues/
-      assert_select 'title', :text => /#{I18n.t(:label_issue_plural)}/
+      assert_select 'title', :text => /Issues/
     end
   end
 
