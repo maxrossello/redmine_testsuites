@@ -981,8 +981,7 @@ class QueryTest < ActiveSupport::TestCase
     result = query.results_scope
 
     bookmarks = User.current.bookmarked_project_ids
-    #assert_equal Project.where(parent_id: bookmarks).ids, result.map(&:id).sort
-    assert_equal Project.where(parent_id: bookmarks).ids.sort, result.map(&:id).sort
+    assert_equal Project.where(parent_id: bookmarks).ids, result.map(&:id).sort
   end
 
   def test_filter_watched_issues
@@ -1138,6 +1137,21 @@ class QueryTest < ActiveSupport::TestCase
     query = IssueQuery.new(:name => '_')
     query.filters = {filter_name => {:operator => '!', :values => ['open', 'closed', 'locked']}, "project_id" => {:operator => '=', :values => [1]}}
     assert_equal [1, 3, 7, 8], find_issues_with_query(query).map(&:id).uniq.sort
+  end
+
+  def test_filter_on_fixed_version_status_respects_sharing
+    issue = Issue.generate!(:project_id => 1, :fixed_version_id => 7)
+
+    filter_name = "fixed_version.status"
+
+    query = IssueQuery.new(:name => '_', :project => Project.find(1))
+    assert_include filter_name, query.available_filters.keys
+    query.filters = {filter_name => {:operator => '=', :values => ['open']}}
+    assert_include issue, find_issues_with_query(query)
+
+    query = IssueQuery.new(:name => '_', :project => Project.find(1))
+    query.filters = {filter_name => {:operator => '=', :values => ['closed']}}
+    assert_not_includes find_issues_with_query(query), issue
   end
 
   def test_filter_on_version_custom_field

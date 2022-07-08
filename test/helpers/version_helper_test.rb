@@ -62,8 +62,7 @@ class VersionsHelperTest < Redmine::HelperTest
     # href should contain the following params:
     # fixed_version_id=3
     # tracker_id=1
-    #assert_select_in link_to_new_issue(version, project), '[href=?]', '/projects/ecookbook/issues/new?back_url=%2Fversions%2F3&issue%5Bfixed_version_id%5D=3&issue%5Btracker_id%5D=1', :text => 'New issue'
-    assert_select_in link_to_new_issue(version, project), '[href=?]', '/projects/ecookbook/issues/new?back_url=%2Fversions%2F3&issue%5Bfixed_version_id%5D=3&issue%5Btracker_id%5D=1', :text => I18n.t(:label_issue_new)
+    assert_select_in link_to_new_issue(version, project), '[href=?]', '/projects/ecookbook/issues/new?back_url=%2Fversions%2F3&issue%5Bfixed_version_id%5D=3&issue%5Btracker_id%5D=1', :text => 'New issue'
   end
 
   def test_link_to_new_issue_should_return_nil_if_version_status_is_not_open

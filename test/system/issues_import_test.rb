@@ -29,8 +29,7 @@ class IssuesImportTest < ApplicationSystemTestCase
     log_user('jsmith', 'jsmith')
     visit '/issues'
     find('div.contextual>span.drdn').click
-    #click_on 'Import'
-    click_on I18n.t(:button_import)
+    click_on 'Import'
 
     attach_file 'file', Rails.root.join('test/fixtures/files/import_issues.csv')
     #click_on 'Next »'
