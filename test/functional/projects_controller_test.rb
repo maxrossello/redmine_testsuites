@@ -158,7 +158,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
       }
       assert_response :success
     end
-    assert_equal ['Name', 'Description', 'Status'], columns_in_list
+    #assert_equal ['Name', 'Description', 'Status'], columns_in_list
+    assert_equal ['Name', 'Description', "#{I18n.t :field_status}"], columns_in_list
   end
 
   def test_index_as_board_should_not_include_csv_export

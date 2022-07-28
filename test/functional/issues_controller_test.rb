@@ -2692,7 +2692,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#history' do
       assert_select 'div.tabs ul a', 2
       assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
+      #assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
+      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => "#{I18n.t :field_notes}"
     end
   end
 
@@ -2724,7 +2725,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#history' do
       assert_select 'div.tabs ul a', 3
       assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
+      #assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
+      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => "#{I18n.t :field_notes}"
       assert_select 'div.tabs a[id=?]', 'tab-properties', :text => 'Property changes'
     end
   end
@@ -3331,7 +3333,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select 'form#issue-form' do
-      assert_select 'a[title=?]', 'View all trackers description', :text => 'View all trackers description'
+      #assert_select 'a[title=?]', 'View all trackers description', :text => 'View all trackers description'
+      assert_select 'a[title=?]', "#{I18n.t :label_open_trackers_description}", :text => "#{I18n.t :label_open_trackers_description}"
       assert_select 'select[name=?][title=?]', 'issue[tracker_id]', 'Description for Bug tracker'
     end
 

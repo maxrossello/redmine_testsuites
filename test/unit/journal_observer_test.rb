@@ -25,6 +25,8 @@ class JournalObserverTest < ActiveSupport::TestCase
            :users, :user_preferences, :email_addresses, :roles, :members, :member_roles,
            :versions
 
+  include ActiveJob::TestHelper  # redmine_testsuites
+
   def setup
     User.current = nil
     ActionMailer::Base.deliveries.clear
@@ -206,7 +208,9 @@ class JournalObserverTest < ActiveSupport::TestCase
       issue.init_journal(user)
       issue.fixed_version = versions(:versions_003)
 
-      assert issue.save
+      perform_enqueued_jobs do  # redmine_testsuites
+        assert issue.save
+      end
       assert_equal 2, ActionMailer::Base.deliveries.size
     end
   end
