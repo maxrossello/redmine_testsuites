@@ -36,7 +36,6 @@ end
 class Redmine::PluginTest < ActiveSupport::TestCase
   def setup
     @klass = Redmine::Plugin
-    @klass.save_plugins  # redmine_testsuites
     # Change plugin directory for testing to default
     # plugins/foo => test/fixtures/plugins/foo
     @klass.directory = Rails.root.join('test/fixtures/plugins')
@@ -205,6 +204,13 @@ class Redmine::PluginTest < ActiveSupport::TestCase
         requires_redmine_plugin(:missing, :version => '0.1.0')
       end
     end
+  end
+
+  def test_default_settings
+    @klass.register(:foo_plugin) {settings :default => {'key1' => 'abc', :key2 => 123}}
+    h = Setting.plugin_foo_plugin
+    assert_equal 'abc', h['key1']
+    assert_equal 123, h[:key2]
   end
 
   def test_settings_warns_about_possible_partial_collision

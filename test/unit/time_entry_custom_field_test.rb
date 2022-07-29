@@ -22,7 +22,7 @@ require File.expand_path('../../test_helper', __FILE__)
 class TimeEntryCustomFieldTest < ActiveSupport::TestCase
   include Redmine::I18n
 
-  fixtures :roles, :users, :members, :member_roles, :projects, :enabled_modules, :issues
+  fixtures :roles
 
   def setup
     User.current = nil

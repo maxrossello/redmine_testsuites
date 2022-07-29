@@ -5775,71 +5775,6 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#issue-form select.cf_10', 0
   end
 
-  def test_get_edit_with_me_assigned_to_id
-    @request.session[:user_id] = 2
-    get(
-      :edit,
-      :params => {
-        :id => 1,
-        :issue => {:assigned_to_id => 'me'}
-      }
-    )
-    assert_response :success
-    assert_select 'select[name=?]', 'issue[assigned_to_id]' do
-      assert_select 'option[value="2"][selected=selected]'
-    end
-  end
-
-  def test_get_edit_for_issue_with_transition_warning_should_show_the_warning
-    @request.session[:user_id] = 2
-
-    get(
-      :edit,
-      :params => {
-        :id => 9,
-      }
-    )
-
-    assert_response :success
-    reason = l(:notice_issue_not_closable_by_blocking_issue)
-    assert_select 'span.icon-warning[title=?]', reason, :text => reason
-  end
-
-  def test_get_edit_should_display_visible_spent_time_custom_field
-    @request.session[:user_id] = 2
-
-    get(
-      :edit,
-      :params => {
-        :id => 13,
-      }
-    )
-
-    assert_response :success
-
-    assert_select '#issue-form select.cf_10', 1
-  end
-
-  def test_get_edit_should_not_display_spent_time_custom_field_not_visible
-    cf = TimeEntryCustomField.find(10)
-    cf.visible = false
-    cf.role_ids = [1]
-    cf.save!
-
-    @request.session[:user_id] = 2
-
-    get(
-      :edit,
-      :params => {
-        :id => 13,
-      }
-    )
-
-    assert_response :success
-
-    assert_select '#issue-form select.cf_10', 0
-  end
-
   def test_update_form_for_existing_issue
     @request.session[:user_id] = 2
     patch(
@@ -6370,6 +6305,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         end
       end
     end
+
     assert_redirected_to :action => 'show', :id => '1'
     j = Issue.find(1).journals.reorder('id DESC').first
     assert j.notes.blank?

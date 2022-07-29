@@ -1123,8 +1123,7 @@ class IssueTest < ActiveSupport::TestCase
     assert_equal [cf.id.to_s, "category_id", "due_date"],
                  issue.required_attribute_names(user).sort
     assert !issue.save, "Issue was saved"
-    #assert_equal ["Category cannot be blank", "Due date cannot be blank", "Foo cannot be blank"],
-    assert_equal ["#{I18n.t(:field_category)} cannot be blank", "Due date cannot be blank", "Foo cannot be blank"].sort,
+    assert_equal ["Category cannot be blank", "Due date cannot be blank", "Foo cannot be blank"],
                  issue.errors.full_messages.sort
 
     issue.tracker_id = 2
@@ -1657,6 +1656,14 @@ class IssueTest < ActiveSupport::TestCase
     assert_equal ['open'], issue.assignable_versions.collect(&:status).uniq
   end
 
+  def test_should_not_be_able_to_set_an_invalid_version_id
+    issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => 1,
+                      :status_id => 1, :fixed_version_id => 424242,
+                      :subject => 'New issue')
+    assert !issue.save
+    assert_not_equal [], issue.errors[:fixed_version_id]
+  end
+
   def test_should_not_be_able_to_assign_a_new_issue_to_a_closed_version
     issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => 1,
                       :status_id => 1, :fixed_version_id => 1,
@@ -1726,6 +1733,14 @@ class IssueTest < ActiveSupport::TestCase
     issue.project_id = 3
     assert_equal 2, issue.fixed_version_id
     assert issue.save
+  end
+
+  def test_should_not_be_able_to_set_an_invalid_category_id
+    issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => 1,
+                      :status_id => 1, :category_id => 3,
+                      :subject => 'New issue')
+    assert !issue.save
+    assert_not_equal [], issue.errors[:category_id]
   end
 
   def test_allowed_target_projects_should_include_projects_with_issue_tracking_enabled
@@ -1944,8 +1959,7 @@ class IssueTest < ActiveSupport::TestCase
     parent.project_id = project.id
     assert !parent.save
     assert_include(
-    #"Subtask ##{child.id} could not be moved to the new project: Tracker is not included in the list",
-    I18n.t(:error_move_of_child_not_possible, :child => "##{child.id}", :errors => "#{I18n.t(:field_tracker)} #{I18n.t('activerecord.errors.messages.inclusion')}"),
+      "Subtask ##{child.id} could not be moved to the new project: Tracker is not included in the list",
       parent.errors[:base])
   end
 
