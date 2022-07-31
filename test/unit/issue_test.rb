@@ -1123,8 +1123,11 @@ class IssueTest < ActiveSupport::TestCase
     assert_equal [cf.id.to_s, "category_id", "due_date"],
                  issue.required_attribute_names(user).sort
     assert !issue.save, "Issue was saved"
-    assert_equal ["Category cannot be blank", "Due date cannot be blank", "Foo cannot be blank"],
-                 issue.errors.full_messages.sort
+    #assert_equal ["Category cannot be blank", "Due date cannot be blank", "Foo cannot be blank"],
+                 #issue.errors.full_messages.sort
+    assert_equal ["#{I18n.t :field_category} #{I18n.t 'activerecord.errors.messages.blank'}", "Due date #{I18n.t 'activerecord.errors.messages.blank'}", 
+                  "Foo #{I18n.t 'activerecord.errors.messages.blank'}"].sort,
+                  issue.errors.full_messages.sort
 
     issue.tracker_id = 2
     assert_equal [cf.id.to_s, "start_date"], issue.required_attribute_names(user).sort
@@ -1958,9 +1961,12 @@ class IssueTest < ActiveSupport::TestCase
     parent.reload
     parent.project_id = project.id
     assert !parent.save
+#    assert_include(
+#      "Subtask ##{child.id} could not be moved to the new project: Tracker is not included in the list",
+#      parent.errors[:base])
     assert_include(
-      "Subtask ##{child.id} could not be moved to the new project: Tracker is not included in the list",
-      parent.errors[:base])
+       %Q|#{I18n.t :error_move_of_child_not_possible, {child: "##{child.id}", errors: "#{I18n.t(:field_tracker)} #{I18n.t('activerecord.errors.messages.inclusion')}"}}|,
+       parent.errors[:base])
   end
 
   def test_copy_to_the_same_project

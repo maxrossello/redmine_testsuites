@@ -399,7 +399,13 @@ class WatchersControllerTest < Redmine::ControllerTest
 
     assert_response :success
 
-    assert response.body.blank?
+    if Redmine::Plugin.installed? :redmine_extended_watchers
+      # being a watcher, the user has visibility
+      assert_select 'input', :count => 1
+      assert_select 'input[name=?][value="4"]', 'watcher[user_ids][]'
+    else
+      assert response.body.blank?
+    end
   end
 
   def test_autocomplete_with_multiple_objects_from_different_projects
@@ -415,7 +421,15 @@ class WatchersControllerTest < Redmine::ControllerTest
     assert_response :success
 
     # All users from two projects eCookbook (7) and Private child of eCookbook (9)
-    assert_select 'input', :count => 5
+    if Redmine::Plugin.installed? :redmine_extended_watchers
+      assert_select 'input', :count => 9
+      assert_select 'input[name=?][value="4"]', 'watcher[user_ids][]'
+      assert_select 'input[name=?][value="7"]', 'watcher[user_ids][]'
+      assert_select 'input[name=?][value="9"]', 'watcher[user_ids][]'
+      assert_select 'input[name=?][value="11"]', 'watcher[user_ids][]'
+    else
+      assert_select 'input', :count => 5
+    end
     assert_select 'input[name=?][value="1"]', 'watcher[user_ids][]'
     assert_select 'input[name=?][value="2"]', 'watcher[user_ids][]'
     assert_select 'input[name=?][value="3"]', 'watcher[user_ids][]'

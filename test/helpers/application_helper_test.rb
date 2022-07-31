@@ -361,7 +361,8 @@ class ApplicationHelperTest < Redmine::HelperTest
         'Bug #3: Error 281 when updating a recipe',
         {:controller => 'issues', :action => 'show', :id => 3},
         :class => Issue.find(3).css_classes,
-        :title => 'Status: New'
+          #:title => 'Status: New'
+          :title => "#{I18n.t :field_status}: New"
       )
     note_link =
       link_to(
@@ -377,7 +378,8 @@ class ApplicationHelperTest < Redmine::HelperTest
         {:controller => 'issues', :action => 'show',
          :id => 3, :anchor => 'note-14'},
         :class => Issue.find(3).css_classes,
-        :title => 'Status: New'
+          #:title => 'Status: New'
+          :title => "#{I18n.t :field_status}: New"
       )
     note_link2 =
       link_to(
@@ -393,7 +395,8 @@ class ApplicationHelperTest < Redmine::HelperTest
         {:controller => 'issues', :action => 'show',
          :id => 3, :anchor => 'note-14'},
         :class => Issue.find(3).css_classes,
-        :title => 'Status: New'
+          #:title => 'Status: New'
+          :title => "#{I18n.t :field_status}: New"
       )
     revision_link =
       link_to(
