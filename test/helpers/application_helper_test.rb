@@ -1854,19 +1854,6 @@ class ApplicationHelperTest < Redmine::HelperTest
     assert_equal result, link_to_group(group)
   end
 
-  def test_link_to_group_should_return_only_group_name_for_non_admin_users
-    User.current = nil
-    group = Group.find(10)
-    assert_equal "A Team", link_to_group(group)
-  end
-
-  def test_link_to_group_should_link_to_group_edit_page_for_admin_users
-    User.current = User.find(1)
-    group = Group.find(10)
-    result = link_to("A Team", "/groups/10/edit")
-    assert_equal result, link_to_group(group)
-  end
-
   def test_link_to_user_should_not_link_to_anonymous
     user = User.anonymous
     assert user.anonymous?
@@ -2190,6 +2177,29 @@ class ApplicationHelperTest < Redmine::HelperTest
   def test_redner_if_exist_should_be_render_partial
     controller.prepend_view_path "test/fixtures/views"
     assert_equal "partial html\n", render_if_exist(:partial => 'partial')
+  end
+
+  def test_redner_if_exist_should_be_render_nil
+    controller.prepend_view_path "test/fixtures/views"
+    assert_nil render_if_exist(:partial => 'non_exist_partial')
+  end
+
+  def test_export_csv_encoding_select_tag_should_return_nil_when_general_csv_encoding_is_UTF8
+    with_locale 'az' do
+      assert_equal l(:general_csv_encoding), 'UTF-8'
+      assert_nil export_csv_encoding_select_tag
+    end
+  end
+
+  def test_export_csv_encoding_select_tag_should_have_two_option_when_general_csv_encoding_is_not_UTF8
+    with_locale 'en' do
+      assert_not_equal l(:general_csv_encoding), 'UTF-8'
+      result = export_csv_encoding_select_tag
+      assert_select_in result,
+                       "option[selected='selected'][value=#{l(:general_csv_encoding)}]",
+                       :text => l(:general_csv_encoding)
+      assert_select_in result, "option[value='UTF-8']", :text => 'UTF-8'
+    end
   end
 
   def test_redner_if_exist_should_be_render_nil

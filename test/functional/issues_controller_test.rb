@@ -1806,6 +1806,28 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select "td.cf_#{field.id} span", :text => 'Long text'
   end
 
+  def test_index_with_full_width_layout_custom_field_column_should_show_column_as_block_column
+    field = IssueCustomField.
+              create!(
+                :name => 'Long text', :field_format => 'text',
+                :full_width_layout => '1',
+                :tracker_ids => [1], :is_for_all => true
+              )
+    issue = Issue.find(1)
+    issue.custom_field_values = {field.id => 'This is a long text'}
+    issue.save!
+    get(
+      :index,
+      :params => {
+        :set_filter => 1,
+        :c => ['subject', 'description', "cf_#{field.id}"]
+      }
+    )
+    assert_response :success
+    assert_select 'td.description[colspan="4"] span', :text => 'Description'
+    assert_select "td.cf_#{field.id} span", :text => 'Long text'
+  end
+
   def test_index_with_parent_column
     Issue.delete_all
     parent = Issue.generate!
@@ -2012,6 +2034,22 @@ class IssuesControllerTest < Redmine::ControllerTest
     get :index
     #assert_select '#content a.new-issue[href="/issues/new"]', :text => 'New issue'
     assert_select '#content a.new-issue[href="/issues/new"]', :text => I18n.t(:label_issue_new)
+  end
+
+  def test_index_should_show_setting_link_with_edit_project_permission
+    role = Role.find(1)
+    role.add_permission! :edit_project
+    @request.session[:user_id] = 2
+    get(:index, :params => {:project_id => 1})
+    assert_select '#content a.icon-settings[href="/projects/ecookbook/settings/issues"]', 1
+  end
+
+  def test_index_should_not_show_setting_link_without_edit_project_permission
+    role = Role.find(1)
+    role.remove_permission! :edit_project
+    @request.session[:user_id] = 2
+    get(:index, :params => {:project_id => 1})
+    assert_select '#content a.icon-settings[href="/projects/ecookbook/settings/issues"]', 0
   end
 
   def test_index_should_show_setting_link_with_edit_project_permission
@@ -2414,28 +2452,6 @@ class IssuesControllerTest < Redmine::ControllerTest
 
     get(:show, params: {:id => 1})
     assert_response :success
-    assert_select 'div#issue_tree' do
-      assert_select 'td.subject', :text => /Child Issue/
-    end
-  end
-
-  def test_show_should_show_subtasks_stats
-    @request.session[:user_id] = 1
-    child1 = Issue.generate!(parent_issue_id: 1, subject: 'Open child issue')
-    Issue.generate!(parent_issue_id: 1, subject: 'Closed child issue', status_id: 5)
-    Issue.generate!(parent_issue_id: child1.id, subject: 'Open child of child')
-    # Issue not visible for anonymous
-    Issue.generate!(parent_issue_id: 1, subject: 'Private child', project_id: 5)
-
-    get(:show, params: {:id => 1})
-    assert_response :success
-
-    assert_select 'div#issue_tree span.issues-stat' do
-      assert_select 'span.badge', text: '4'
-      #assert_select 'span.open a', text: '3 open'
-      assert_select 'span.open a', text: I18n.t(:label_x_open_issues_abbr, :count => 3)
-      assert_equal CGI.unescape(css_select('span.open a').first.attr('href')),
-                   "/issues?parent_id=~1&set_filter=true&status_id=o"
 
     assert_select 'div#issue_tree span.issues-stat' do
       assert_select 'span.badge', text: '4'
@@ -3220,163 +3236,6 @@ class IssuesControllerTest < Redmine::ControllerTest
 
     assert_response :success
     assert_select 'span.badge.badge-status-closed', text: 'closed'
-  end
-
-  def test_show_should_display_private_badge_for_private_issue
-    @request.session[:user_id] = 1
-    get :show, params: {id: 14}
-
-    assert_response :success
-    assert_select 'span.badge.badge-private', text: 'Private'
-  end
-
-  def test_show_should_not_display_edit_attachment_icon_for_user_without_edit_issue_permission_on_tracker
-    role = Role.find(2)
-    role.set_permission_trackers 'edit_issues', [2, 3]
-    role.save!
-
-    @request.session[:user_id] = 2
-
-    get :show, params: {id: 4}
-
-    assert_response :success
-    assert_select 'div.attachments .icon-edit',  0
-  end
-
-  def test_show_should_not_display_delete_attachment_icon_for_user_without_edit_issue_permission_on_tracker
-    role = Role.find(2)
-    role.set_permission_trackers 'edit_issues', [2, 3]
-    role.save!
-
-    @request.session[:user_id] = 2
-
-    get :show, params: {id: 4}
-
-    assert_response :success
-    assert_select 'div.attachments .icon-del', 0
-  end
-
-  def test_show_should_not_display_history_tabs_for_issue_without_journals
-    @request.session[:user_id] = 1
-
-    get :show, :params => {:id => 5}
-    assert_response :success
-    assert_select '#history div.tabs', 0
-    assert_select '#history p.nodata', :text => 'No data to display'
-  end
-
-  def test_show_display_only_all_and_notes_tabs_for_issue_with_notes_only
-    @request.session[:user_id] = 1
-
-    get :show, :params => {:id => 6}
-    assert_response :success
-    assert_select '#history' do
-      assert_select 'div.tabs ul a', 2
-      assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      #assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
-      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => I18n.t(:label_issue_history_notes)
-    end
-  end
-
-  def test_show_display_only_all_and_history_tabs_for_issue_with_history_changes_only
-    journal = Journal.create!(:journalized => Issue.find(5), :user_id => 1)
-    detail =
-      JournalDetail.
-        create!(
-          :journal => journal, :property => 'attr',
-          :prop_key => 'description',
-          :old_value => 'Foo', :value => 'Bar'
-        )
-    @request.session[:user_id] = 1
-
-    get :show, :params => {:id => 5}
-    assert_response :success
-    assert_select '#history' do
-      assert_select 'div.tabs ul a', 2
-      assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      assert_select 'div.tabs a[id=?]', 'tab-properties', :text => 'Property changes'
-    end
-  end
-
-  def test_show_display_all_notes_and_history_tabs_for_issue_with_notes_and_history_changes
-    journal = Journal.create!(:journalized => Issue.find(6), :user_id => 1)
-    detail =
-      JournalDetail.
-        create!(
-          :journal => journal, :property => 'attr',
-          :prop_key => 'description',
-          :old_value => 'Foo', :value => 'Bar'
-        )
-    @request.session[:user_id] = 1
-
-    get :show, :params => {:id => 6}
-    assert_response :success
-    assert_select '#history' do
-      assert_select 'div.tabs ul a', 3
-      assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      #assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
-      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => I18n.t(:label_issue_history_notes)
-      assert_select 'div.tabs a[id=?]', 'tab-properties', :text => 'Property changes'
-    end
-  end
-
-  def test_show_display_changesets_tab_for_issue_with_changesets
-    project = Project.find(2)
-    issue = Issue.find(9)
-    issue.changeset_ids = [102]
-    issue.save!
-
-    @request.session[:user_id] = 2
-    get :show, :params => {:id => issue.id}
-
-    assert_select '#history' do
-      assert_select 'div.tabs ul a', 1
-      assert_select 'div.tabs a[id=?]', 'tab-changesets', :text => 'Associated revisions'
-    end
-  end
-
-  def test_show_should_display_spent_time_tab_for_issue_with_time_entries
-    @request.session[:user_id] = 1
-    get :show, :params => {:id => 3}
-    assert_response :success
-
-    assert_select '#history' do
-      assert_select 'div.tabs ul a', 1
-      assert_select 'div.tabs a[id=?]', 'tab-time_entries', :text => 'Spent time'
-    end
-
-    get(
-      :issue_tab,
-      :params => {
-        :id => 3,
-        :name => 'time_entries'
-      },
-      :xhr => true
-    )
-    assert_response :success
-
-    assert_select 'div[id=?]', 'time-entry-3' do
-      assert_select 'a[title=?][href=?]', 'Edit', '/time_entries/3/edit'
-      assert_select 'a[title=?][href=?]', 'Delete', '/time_entries/3'
-
-      assert_select 'ul[class=?]', 'details', :text => /1.00 h/
-    end
-  end
-
-  def test_show_should_display_open_badge_for_open_issue
-    get :show, params: {id: 1}
-
-    assert_response :success
-    #assert_select 'span.badge.badge-status-open', text: 'open'
-    assert_select 'span.badge.badge-status-open', text: I18n.t(:label_open_issues)
-  end
-
-  def test_show_should_display_closed_badge_for_closed_issue
-    get :show, params: {id: 8}
-
-    assert_response :success
-    #assert_select 'span.badge.badge-status-closed', text: 'closed'
-    assert_select 'span.badge.badge-status-closed', text: I18n.t(:label_closed_issues)
   end
 
   def test_show_should_display_private_badge_for_private_issue
@@ -6979,7 +6838,24 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_equal '', issue.custom_field_value(1)
   end
 
-  def test_get_bulk_edit
+  def test_update_with_me_assigned_to_id
+    @request.session[:user_id] = 2
+    issue = Issue.find(1)
+    assert_not_equal 2, issue.assigned_to_id
+    put(
+      :update,
+      :params => {
+        :id => issue.id,
+        :issue => {
+          :assigned_to_id => 'me'
+        }
+      }
+    )
+    assert_response 302
+    assert_equal 2, issue.reload.assigned_to_id
+  end
+
+  def test_update_with_value_of_none_should_set_the_values_to_blank
     @request.session[:user_id] = 2
     get(:bulk_edit, :params => {:ids => [1, 3]})
     assert_response :success
@@ -8499,6 +8375,32 @@ class IssuesControllerTest < Redmine::ControllerTest
                           :subject => 'Child Issue', :parent_issue_id => parent.id)
     assert child.is_descendant_of?(parent.reload)
     @request.session[:user_id] = 2
+    assert_difference 'Issue.count', -1 do
+      delete :destroy, :params => {:id => child.id}
+    end
+    assert_response :found
+    assert_redirected_to :action => 'index', :project_id => 'ecookbook'
+
+    parent.reload
+    assert_equal 2, parent.journals.count
+
+    get :show, :params => {:id => parent.id}
+    assert_response :success
+
+    assert_select 'div#tab-content-history' do
+      assert_select 'div[id=?]', "change-#{parent.journals.last.id}" do
+        assert_select 'ul.details', :text => "Subtask deleted (##{child.id})"
+      end
+    end
+  end
+
+  def test_destroy_parent_and_child_issues
+    parent = Issue.create!(:project_id => 1, :author_id => 1,
+                           :tracker_id => 1, :subject => 'Parent Issue')
+    child = Issue.create!(:project_id => 1, :author_id => 1, :tracker_id => 1,
+                          :subject => 'Child Issue', :parent_issue_id => parent.id)
+    assert child.is_descendant_of?(parent.reload)
+    @request.session[:user_id] = 2
     assert_difference 'Issue.count', -2 do
       delete(
         :destroy,
@@ -8601,6 +8503,21 @@ class IssuesControllerTest < Redmine::ControllerTest
         assert_select 'img.gravatar', 2
         assert_select 'img.gravatar-child', 1
       end
+    end
+  end
+
+  def test_show_should_be_able_to_link_to_another_journal_attachment_of_the_same_issue
+    @request.session[:user_id] = 1
+    issue = Issue.find(2)
+    attachment = issue.journals.first.attachments.first
+
+    issue.init_journal(User.first, "attachment:#{attachment.filename}")
+    issue.save!
+    issue.reload
+
+    get :show, params: { id: issue.id }
+    assert_select "div#history div#journal-#{issue.journals.last.id}-notes" do
+      assert_select "a[href='/attachments/#{attachment.id}']", :text => 'source.rb'
     end
   end
 
