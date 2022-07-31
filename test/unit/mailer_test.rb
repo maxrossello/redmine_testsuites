@@ -741,9 +741,6 @@ class MailerTest < ActiveSupport::TestCase
       #              'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
       #              :text => 'View all issues'
       assert_select 'a[href=?]',
-                    url,
-                    :text => '1'
-      assert_select 'a[href=?]',
                     'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
                     :text => "#{I18n.t :label_issue_view_all}"
       #assert_select '/p:nth-last-of-type(1)', :text => 'View all issues (2 open)'
