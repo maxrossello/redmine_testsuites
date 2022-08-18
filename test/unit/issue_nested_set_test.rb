@@ -24,7 +24,8 @@ class IssueNestedSetTest < ActiveSupport::TestCase
            :trackers, :projects_trackers,
            :issue_statuses, :issue_categories, :issue_relations,
            :enumerations,
-           :issues
+           :issues,
+           :enabled_modules # redmine_testsuites
 
   def setup
     User.current = nil

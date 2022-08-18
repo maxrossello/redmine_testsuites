@@ -264,6 +264,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
   end
 
   def test_update_issue_with_form_update_should_keep_newly_added_attachments
+    attachments = Issue.find(2).attachments.count # redmine_testsuites
     set_tmp_attachments_directory
     log_user('jsmith', 'jsmith')
 
@@ -280,7 +281,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     click_on 'Submit'
 
-    assert_equal 1, Issue.find(2).attachments.count
+    #assert_equal 1, Issue.find(2).attachments.count
+    assert_equal attachments+1, Issue.find(2).attachments.count
   end
 
   test "removing issue shows confirm dialog" do

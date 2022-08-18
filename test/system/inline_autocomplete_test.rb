@@ -26,6 +26,11 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
            :watchers, :journals, :journal_details, :versions,
            :workflows, :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions
 
+  # redmine_testsuite
+  def teardown
+    click_link('Sign out', match: :first)
+  end
+  
   def test_inline_autocomplete_for_issues
     log_user('jsmith', 'jsmith')
     visit 'issues/new'

@@ -42,6 +42,9 @@ Redmine::SudoMode.disable!
 $redmine_tmp_attachments_directory = "#{Rails.root}/tmp/test/attachments"
 FileUtils.mkdir_p $redmine_tmp_attachments_directory
 
+require "minitest/reporters"
+Minitest::Reporters.use! [Minitest::Reporters::ProgressReporter.new]
+
 $redmine_tmp_pdf_directory = "#{Rails.root}/tmp/test/pdf"
 FileUtils.mkdir_p $redmine_tmp_pdf_directory
 FileUtils.rm Dir.glob('#$redmine_tmp_pdf_directory/*.pdf')

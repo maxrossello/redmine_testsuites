@@ -435,26 +435,28 @@ class MailHandlerTest < ActiveSupport::TestCase
 
   def test_add_issue_by_created_user
     Setting.default_language = 'en'
-    assert_difference 'User.count' do
-      issue =
-        submit_email(
-          'ticket_by_unknown_user.eml',
-          :issue => {:project => 'ecookbook'},
-          :unknown_user => 'create'
-        )
-      assert issue.is_a?(Issue)
-      assert issue.author.active?
-      assert_equal 'john.doe@somenet.foo', issue.author.mail
-      assert_equal 'John', issue.author.firstname
-      assert_equal 'Doe', issue.author.lastname
-
-      # account information
-      email = ActionMailer::Base.deliveries.first
-      assert_not_nil email
-      assert email.subject.include?('account activation')
-      login = mail_body(email).match(/\* Login: (.*)$/)[1].strip
-      password = mail_body(email).match(/\* Password: (.*)$/)[1].strip
-      assert_equal issue.author, User.try_to_login(login, password)
+    perform_enqueued_jobs do  # redmine_testsuites
+      assert_difference 'User.count' do
+        issue =
+          submit_email(
+            'ticket_by_unknown_user.eml',
+            :issue => {:project => 'ecookbook'},
+            :unknown_user => 'create'
+          )
+        assert issue.is_a?(Issue)
+        assert issue.author.active?
+        assert_equal 'john.doe@somenet.foo', issue.author.mail
+        assert_equal 'John', issue.author.firstname
+        assert_equal 'Doe', issue.author.lastname
+  
+        # account information
+        email = ActionMailer::Base.deliveries.first
+        assert_not_nil email
+        assert email.subject.include?('account activation')
+        login = mail_body(email).match(/\* Login: (.*)$/)[1].strip
+        password = mail_body(email).match(/\* Password: (.*)$/)[1].strip
+        assert_equal issue.author, User.try_to_login(login, password)
+      end
     end
   end
 
