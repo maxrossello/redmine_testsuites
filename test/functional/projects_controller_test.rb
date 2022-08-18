@@ -53,6 +53,44 @@ class ProjectsControllerTest < Redmine::ControllerTest
   def test_index_atom
     get(:index, :params => {:format => 'atom'})
     assert_response :success
+    assert_select 'tr[id=?] td.name span[class=?]', 'project-5', 'icon icon-user my-project'
+  end
+
+  def test_index_as_list_should_indent_projects
+    @request.session[:user_id] = 1
+    get :index, :params => {
+      :c => ['name', 'short_description'],
+      :sort => 'parent_id:desc,lft:desc',
+      :display_type => 'list'
+    }
+    assert_response :success
+
+    child_level1 = css_select('tr#project-5').map {|e| e.attr(:class)}.first.split(' ')
+    child_level2 = css_select('tr#project-6').map {|e| e.attr(:class)}.first.split(' ')
+
+    assert_include 'idnt', child_level1
+    assert_include 'idnt-1', child_level1
+
+    assert_include 'idnt', child_level2
+    assert_include 'idnt-2', child_level2
+  end
+
+  def test_index_with_default_query_setting
+    with_settings :project_list_defaults => {'column_names' => %w(name short_description status)} do
+      get :index, :params => {
+        :display_type => 'list'
+      }
+      assert_response :success
+    end
+    assert_equal ['Name', 'Description', 'Status'], columns_in_list
+  end
+
+  def test_index_as_board_should_not_include_csv_export
+    @request.session[:user_id] = 1
+
+    get :index
+
+    assert_response :success
     assert_select 'p.other-formats a.csv', 0
     assert_select '#csv-export-options', 0
   end
@@ -1201,17 +1239,6 @@ class ProjectsControllerTest < Redmine::ControllerTest
       assert_response :success
     end
     assert_select '.warning', :text => /Are you sure you want to delete this project/
-  end
-
-  def test_destroy_leaf_project_with_wrong_confirmation_should_show_confirmation
-    @request.session[:user_id] = 1 # admin
-
-    assert_no_difference 'Project.count' do
-      delete(:destroy, :params => {:id => 2, :confirm => 'wrong'})
-      assert_response :success
-    end
-    #assert_select '.warning', :text => /Are you sure you want to delete this project/
-    assert_select '.warning', :text => /#{I18n.t(:text_project_destroy_confirmation)}/
   end
 
   def test_destroy_leaf_project_with_wrong_confirmation_should_show_confirmation

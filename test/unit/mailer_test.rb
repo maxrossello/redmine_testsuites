@@ -422,6 +422,19 @@ class MailerTest < ActiveSupport::TestCase
         assert_match /^redmine\.issue-3\.20060719190727\.1@example\.net/, Mailer.token_for(issue, user)
       end
     end
+  ensure #redmine_testsuites
+    Time.zone = zone_was
+  end
+
+  def test_timestamp_in_message_id_should_be_utc
+    zone_was = Time.zone
+    issue = Issue.find(3)
+    user = User.find(1)
+    %w(UTC Paris Tokyo).each do |zone|
+      Time.use_zone(zone) do
+        assert_match /^redmine\.issue-3\.20060719190727\.1@example\.net/, Mailer.token_for(issue, user)
+      end
+    end
   ensure
     Time.zone = zone_was
   end
