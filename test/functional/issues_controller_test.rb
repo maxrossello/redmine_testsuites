@@ -1752,26 +1752,22 @@ class IssuesControllerTest < Redmine::ControllerTest
       :index,
       :params => {
         :set_filter => 1,
-        :c => %w(subject last_notes description)
+        :c => %w(subject last_notes)
       }
     )
     assert_response :success
-    assert_select 'td.last_notes[colspan="4"] span', :text => 'Last notes'
-    assert_select 'td.description[colspan="4"] span', :text => 'Description'
-    assert_select "td.cf_#{field.id} span", :text => 'Long text'
-  end
+    assert_select 'td.last_notes[colspan="4"]', :text => 'Privates notes'
 
     Role.find(1).remove_permission! :view_private_notes
     get(
       :index,
       :params => {
         :set_filter => 1,
-        :c => ['subject', 'description', "cf_#{field.id}"]
+        :c => %w(subject last_notes)
       }
     )
     assert_response :success
-    assert_select 'td.description[colspan="4"] span', :text => 'Description'
-    assert_select "td.cf_#{field.id} span", :text => 'Long text'
+    assert_select 'td.last_notes[colspan="4"]', :text => 'Public notes'
   end
 
   def test_index_with_description_and_last_notes_columns_should_display_column_name
@@ -1779,13 +1775,12 @@ class IssuesControllerTest < Redmine::ControllerTest
       :index,
       :params => {
         :set_filter => 1,
-        :c => ['subject', 'description', "cf_#{field.id}"]
+        :c => %w(subject last_notes description)
       }
     )
     assert_response :success
     assert_select 'td.last_notes[colspan="4"] span', :text => 'Last notes'
     assert_select 'td.description[colspan="4"] span', :text => 'Description'
-    assert_select "td.cf_#{field.id} span", :text => 'Long text'
   end
 
   def test_index_with_full_width_layout_custom_field_column_should_show_column_as_block_column
@@ -6336,6 +6331,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         end
       end
     end
+
     assert_redirected_to :action => 'show', :id => '1'
     j = Issue.find(1).journals.reorder('id DESC').first
     assert j.notes.blank?
@@ -6807,51 +6803,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_equal '', issue.custom_field_value(1)
   end
 
-  def test_update_with_me_assigned_to_id
-    @request.session[:user_id] = 2
-    issue = Issue.find(1)
-    assert_not_equal 2, issue.assigned_to_id
-    put(
-      :update,
-      :params => {
-        :id => issue.id,
-        :issue => {
-          :assigned_to_id => 'me'
-        }
-      }
-    )
-    assert_response 302
-    assert_equal 2, issue.reload.assigned_to_id
-  end
-
-  def test_update_with_value_of_none_should_set_the_values_to_blank
-    @request.session[:user_id] = 2
-    issue = Issue.find(1)
-    issue.custom_field_values = {1 => 'MySQL'}
-    issue.assigned_to_id = 2
-    issue.save!
-
-    put(
-      :update,
-      params: {
-        id: issue.id,
-        issue: {
-          assigned_to_id: 'none',
-          category_id: 'none',
-          fixed_version_id: 'none',
-          custom_field_values: { 1 => '__none__' }
-        }
-      }
-    )
-
-    issue.reload
-    assert_nil issue.assigned_to
-    assert_nil issue.category
-    assert_nil issue.fixed_version
-    assert_equal '', issue.custom_field_value(1)
-  end
-
-  def test_update_with_me_assigned_to_id
+  def test_get_bulk_edit
     @request.session[:user_id] = 2
     get(:bulk_edit, :params => {:ids => [1, 3]})
     assert_response :success
@@ -8345,110 +8297,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     parent = Issue.create!(:project_id => 1, :author_id => 1, :tracker_id => 1, :subject => 'Parent Issue')
     child = Issue.create!(:project_id => 1, :author_id => 1, :tracker_id => 1, :subject => 'Child Issue', :parent_issue_id => parent.id)
     assert child.is_descendant_of?(parent.reload)
-    @request.session[:user_id] = 2
-    assert_difference 'Issue.count', -1 do
-      delete :destroy, :params => {:id => child.id}
-    end
-    assert_response :found
-    assert_redirected_to :action => 'index', :project_id => 'ecookbook'
 
-    parent.reload
-    assert_equal 2, parent.journals.count
-
-    get :show, :params => {:id => parent.id}
-    assert_response :success
-
-    assert_select 'div#tab-content-history' do
-      assert_select 'div[id=?]', "change-#{parent.journals.last.id}" do
-        assert_select 'ul.details', :text => "Subtask deleted (##{child.id})"
-      end
-    end
-  end
-
-  def test_destroy_parent_and_child_issues
-    parent = Issue.create!(:project_id => 1, :author_id => 1,
-                           :tracker_id => 1, :subject => 'Parent Issue')
-    child = Issue.create!(:project_id => 1, :author_id => 1, :tracker_id => 1,
-                          :subject => 'Child Issue', :parent_issue_id => parent.id)
-    assert child.is_descendant_of?(parent.reload)
-    @request.session[:user_id] = 2
-    assert_difference 'Issue.count', -1 do
-      delete :destroy, :params => {:id => child.id}
-    end
-    assert_response :found
-    assert_redirected_to :action => 'index', :project_id => 'ecookbook'
-
-    parent.reload
-    assert_equal 2, parent.journals.count
-
-    get :show, :params => {:id => parent.id}
-    assert_response :success
-
-    assert_select 'div#tab-content-history' do
-      assert_select 'div[id=?]', "change-#{parent.journals.last.id}" do
-        assert_select 'ul.details', :text => "Subtask deleted (##{child.id})"
-      end
-    end
-  end
-
-  def test_destroy_parent_and_child_issues
-    parent = Issue.create!(:project_id => 1, :author_id => 1,
-                           :tracker_id => 1, :subject => 'Parent Issue')
-    child = Issue.create!(:project_id => 1, :author_id => 1, :tracker_id => 1,
-                          :subject => 'Child Issue', :parent_issue_id => parent.id)
-    assert child.is_descendant_of?(parent.reload)
-    @request.session[:user_id] = 2
-    assert_difference 'Issue.count', -1 do
-      delete :destroy, :params => {:id => child.id}
-    end
-    assert_response :found
-    assert_redirected_to :action => 'index', :project_id => 'ecookbook'
-
-    parent.reload
-    assert_equal 2, parent.journals.count
-
-    get :show, :params => {:id => parent.id}
-    assert_response :success
-
-    assert_select 'div#tab-content-history' do
-      assert_select 'div[id=?]', "change-#{parent.journals.last.id}" do
-        assert_select 'ul.details', :text => "Subtask deleted (##{child.id})"
-      end
-    end
-  end
-
-  def test_destroy_parent_and_child_issues
-    parent = Issue.create!(:project_id => 1, :author_id => 1,
-                           :tracker_id => 1, :subject => 'Parent Issue')
-    child = Issue.create!(:project_id => 1, :author_id => 1, :tracker_id => 1,
-                          :subject => 'Child Issue', :parent_issue_id => parent.id)
-    assert child.is_descendant_of?(parent.reload)
-    @request.session[:user_id] = 2
-    assert_difference 'Issue.count', -1 do
-      delete :destroy, :params => {:id => child.id}
-    end
-    assert_response :found
-    assert_redirected_to :action => 'index', :project_id => 'ecookbook'
-
-    parent.reload
-    assert_equal 2, parent.journals.count
-
-    get :show, :params => {:id => parent.id}
-    assert_response :success
-
-    assert_select 'div#tab-content-history' do
-      assert_select 'div[id=?]', "change-#{parent.journals.last.id}" do
-        assert_select 'ul.details', :text => "Subtask deleted (##{child.id})"
-      end
-    end
-  end
-
-  def test_destroy_parent_and_child_issues
-    parent = Issue.create!(:project_id => 1, :author_id => 1,
-                           :tracker_id => 1, :subject => 'Parent Issue')
-    child = Issue.create!(:project_id => 1, :author_id => 1, :tracker_id => 1,
-                          :subject => 'Child Issue', :parent_issue_id => parent.id)
-    assert child.is_descendant_of?(parent.reload)
     @request.session[:user_id] = 2
     assert_difference 'Issue.count', -1 do
       delete :destroy, :params => {:id => child.id}
