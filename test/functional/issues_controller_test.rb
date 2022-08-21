@@ -1450,7 +1450,8 @@ class IssuesControllerTest < Redmine::ControllerTest
           :set_filter => 1
         }
       )
-      assert_equal ["#", "Assignee", "Subject", "Status", "Tracker"], columns_in_issues_list
+      #assert_equal ["#", "Assignee", "Subject", "Status", "Tracker"], columns_in_issues_list
+      assert_equal ["#", I18n.t(:field_assigned_to), "Subject", I18n.t(:field_status), I18n.t(:field_tracker)], columns_in_issues_list
     end
   end
 
@@ -1779,7 +1780,8 @@ class IssuesControllerTest < Redmine::ControllerTest
       }
     )
     assert_response :success
-    assert_select 'td.last_notes[colspan="4"] span', :text => 'Last notes'
+    #assert_select 'td.last_notes[colspan="4"] span', :text => 'Last notes'
+    assert_select 'td.last_notes[colspan="4"] span', :text => I18n.t(:label_last_notes)
     assert_select 'td.description[colspan="4"] span', :text => 'Description'
   end
 
@@ -1986,7 +1988,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     get(:index, :params => {:project_id => 1})
     assert_select(
       '#content a.new-issue[href="/projects/ecookbook/issues/new"]',
-      :text => 'New issue'
+      #:text => 'New issue'
+      :text => I18n.t(:label_issue_new)
     )
   end
 
@@ -2043,7 +2046,8 @@ class IssuesControllerTest < Redmine::ControllerTest
       get(:index, :params => {:project_id => 1})
       assert_select(
         '#main-menu a.new-issue[href="/projects/ecookbook/issues/new"]',
-        :text => 'New issue'
+        #:text => 'New issue'
+        :text => I18n.t(:label_issue_new)
       )
     end
   end
@@ -2400,11 +2404,13 @@ class IssuesControllerTest < Redmine::ControllerTest
 
     assert_select 'div#issue_tree span.issues-stat' do
       assert_select 'span.badge', text: '4'
-      assert_select 'span.open a', text: '3 open'
+      #assert_select 'span.open a', text: '3 open'
+      assert_select 'span.open a', text: I18n.t(:label_x_open_issues_abbr, :count => 3)
       assert_equal CGI.unescape(css_select('span.open a').first.attr(:href)),
                    "/issues?parent_id=~1&set_filter=true&status_id=o"
 
-      assert_select 'span.closed a', text: '1 closed'
+      #assert_select 'span.closed a', text: '1 closed'
+      assert_select 'span.closed a', text: I18n.t(:label_x_closed_issues_abbr, :count => 1)
       assert_equal CGI.unescape(css_select('span.closed a').first.attr(:href)),
                    "/issues?parent_id=~1&set_filter=true&status_id=c"
     end
@@ -2417,10 +2423,12 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select 'div#issue_tree span.issues-stat' do
-      assert_select 'span.open a', text: '1 open'
+      #assert_select 'span.open a', text: '1 open'
+      assert_select 'span.open a', text: I18n.t(:label_x_open_issues_abbr, :count => 1)
       assert_equal CGI.unescape(css_select('span.open a').first.attr(:href)),
                    "/issues?parent_id=~1&set_filter=true&status_id=o"
-      assert_select 'span.closed', text: '0 closed'
+      #assert_select 'span.closed', text: '0 closed'
+      assert_select 'span.closed', text: I18n.t(:label_x_closed_issues_abbr, :count => 0)
       assert_select 'span.closed a', 0
     end
   end
@@ -2724,7 +2732,11 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
     assert_select 'div#watchers ul' do
       assert_select 'li.user-4' do
-        assert_select 'span.icon-warning[title=?]', l(:notice_invalid_watcher), text: l(:notice_invalid_watcher)
+        if Redmine::Plugin.installed? :redmine_extended_watchers
+          assert_select 'span.icon-warning[title=?]', l(:notice_invalid_watcher), text: l(:notice_invalid_watcher), :count => 0
+        else
+          assert_select 'span.icon-warning[title=?]', l(:notice_invalid_watcher), text: l(:notice_invalid_watcher)
+        end
       end
     end
   end
@@ -3081,7 +3093,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#history' do
       assert_select 'div.tabs ul a', 2
       assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
+      #assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
+      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => I18n.t(:label_issue_history_notes)
     end
   end
 
@@ -3121,7 +3134,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#history' do
       assert_select 'div.tabs ul a', 3
       assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
+      #assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
+      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => I18n.t(:label_issue_history_notes)
       assert_select 'div.tabs a[id=?]', 'tab-properties', :text => 'Property changes'
     end
   end
@@ -3173,14 +3187,16 @@ class IssuesControllerTest < Redmine::ControllerTest
     get :show, params: {id: 1}
 
     assert_response :success
-    assert_select 'span.badge.badge-status-open', text: 'open'
+    #assert_select 'span.badge.badge-status-open', text: 'open'
+    assert_select 'span.badge.badge-status-open', text: I18n.t(:label_open_issues)
   end
 
   def test_show_should_display_closed_badge_for_closed_issue
     get :show, params: {id: 8}
 
     assert_response :success
-    assert_select 'span.badge.badge-status-closed', text: 'closed'
+    #assert_select 'span.badge.badge-status-closed', text: 'closed'
+    assert_select 'span.badge.badge-status-closed', text: I18n.t(:label_closed_issues)
   end
 
   def test_show_should_display_private_badge_for_private_issue
@@ -3835,7 +3851,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select 'form#issue-form' do
-      assert_select 'a[title=?]', 'View all trackers description', :text => 'View all trackers description'
+      #assert_select 'a[title=?]', 'View all trackers description', :text => 'View all trackers description'
+      assert_select 'a[title=?]', I18n.t(:label_open_trackers_description), :text => I18n.t(:label_open_trackers_description)
       assert_select 'select[name=?][title=?]', 'issue[tracker_id]', 'Description for Bug tracker'
     end
 
@@ -4392,21 +4409,21 @@ class IssuesControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     ActionMailer::Base.deliveries.clear
 
-    with_settings :notified_events => %w(issue_added) do
-      assert_difference 'Watcher.count', 3 do
-        perform_enqueued_jobs do  # redmine_testsuites
+    perform_enqueued_jobs do  # redmine_testsuites
+      with_settings :notified_events => %w(issue_added) do
+        assert_difference 'Watcher.count', 3 do
           post(
-          :create,
-          :params => {
-            :project_id => 1,
-            :issue => {
-            :tracker_id => 1,
-            :subject => 'This is a new issue with watchers',
-            :description => 'This is the description',
-            :priority_id => 5,
-            :watcher_user_ids => ['2', '3', '10']
+            :create,
+            :params => {
+              :project_id => 1,
+              :issue => {
+                :tracker_id => 1,
+                :subject => 'This is a new issue with watchers',
+                :description => 'This is the description',
+                :priority_id => 5,
+                :watcher_user_ids => ['2', '3', '10']
+              }
             }
-          }
           )
         end
       end
@@ -7586,7 +7603,8 @@ class IssuesControllerTest < Redmine::ControllerTest
       }
     )
     assert_response :success
-    assert_select '#errorExplanation span', :text => 'Failed to save 2 issue(s) on 2 selected: #1, #2.'
+    #assert_select '#errorExplanation span', :text => 'Failed to save 2 issue(s) on 2 selected: #1, #2.'
+    assert_select '#errorExplanation span', :text => I18n.t(:notice_failed_to_save_issues, :count => 2, :total => 2, :ids => "#1, #2")
     assert_select '#errorExplanation ul li', :text => 'Start date is not a valid date: #1, #2'
   end
 
