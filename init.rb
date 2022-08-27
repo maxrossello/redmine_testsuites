@@ -43,13 +43,13 @@ if ENV["RAILS_ENV"] == "test"
   supported_plugins = {
     redmine_testsuites:        {},
     redmine_translation_terms: { tilde_greater_than: '5.0.2' },
-    redmine_base_deface:       {},
+    redmine_base_deface:       { version_or_higher:  '1.6.2' },
     redmine_better_overview:   { tilde_greater_than: '5.0.2' },
     redmine_extended_watchers: { tilde_greater_than: '5.0.2' },
     redmine_pluggable_themes:  { tilde_greater_than: '5.0.2' },
     redmine_themes:            { tilde_greater_than: '5.0.2' },
     redwine:                   { version:            '5.0.2' },
-    sidebar_hide:              { version_or_higher: '5.0.2' }
+    sidebar_hide:              { version_or_higher:  '5.0.2' }
   }
   
   require_relative 'lib/testsuites_versions'
