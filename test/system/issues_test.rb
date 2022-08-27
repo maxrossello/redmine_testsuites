@@ -301,7 +301,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
     log_user('jsmith', 'jsmith')
     visit '/issues/1'
     if Redmine::Plugin.installed?(:sidebar_hide)
-        page.execute_script("setSideBarVisible()")
+      page.execute_script("setSideBarVisible()")
+      page.execute_script("setState('visible')")
     end
     #assert page.first('#sidebar').has_content?('Watchers (1)')
     assert page.first('#sidebar').has_content?("#{I18n.t(:label_issue_watchers)} (1)")
@@ -319,7 +320,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
     log_user('jsmith', 'jsmith')
     visit '/issues/1'
     if Redmine::Plugin.installed?(:sidebar_hide)
-        page.execute_script("setSideBarVisible()")
+      page.execute_script("setSideBarVisible()")
+      page.execute_script("setState('visible')")
     end
     #assert page.first('#sidebar').has_content?('Watchers (0)')
     assert page.first('#sidebar').has_content?("#{I18n.t(:label_issue_watchers)} (0)")
@@ -357,6 +359,10 @@ class IssuesSystemTest < ApplicationSystemTestCase
     visit '/issues/1'
     assert page.has_css?('#content .contextual .issue-1-watcher.icon-fav-off')
     # add watcher 'jsmith' from sidebar
+    if Redmine::Plugin.installed?(:sidebar_hide)
+        page.execute_script("setSideBarVisible()")
+        page.execute_script("setState('visible')")
+    end
     page.find('#watchers .contextual a', :text => 'Add').click
     page.find('#users_for_watcher label', :text => 'John Smith').click
     page.find('#new-watcher-form p.buttons input[type=submit]').click
@@ -406,7 +412,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
     find('tr#issue-4 input[type=checkbox]').click
     find('tr#issue-1 td.updated_on').right_click
     within('#context-menu') do
-      click_link 'Status'
+      #click_link 'Status'
+      click_link I18n.t(:field_status)
       click_link 'Closed'
     end
     assert page.has_css?('#flash_notice')
@@ -609,7 +616,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
     visit '/issues/1'
     page.driver.execute_script('$.fx.off = true;')
     page.first(:link, 'Edit').click
-    page.click_link('View all trackers description')
+    #page.click_link('View all trackers description')
+    page.click_link(I18n.t :label_open_trackers_description)
     assert page.has_css?('#trackers_description')
     within('#trackers_description') do
       click_link('Feature')
