@@ -2107,7 +2107,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       assert_select 'a', {:count => 0, :text => 'Copy'}
       assert_select 'div.drdn-items a', {:count => 1, :text => 'Copy link'}
       #assert_select 'div.drdn-items a', {:count => 0, :text => 'Delete issue'}
-      assert_select 'div.drdn-items a', {:count => 0, :text => "Delete #{I18n.t :field_issue}"}
+      assert_select 'div.drdn-items a', {:count => 0, :text => "#{I18n.t(:button_delete_object, object_name: I18n.t(:label_issue).downcase)}"}
     end
     # anonymous role is allowed to add a note
     assert_select 'form#issue-form' do
@@ -3066,7 +3066,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
     assert_select 'a', :text => 'Edit'
     #assert_select 'a', :text => 'Delete issue'
-    assert_select 'a', :text => "Delete #{I18n.t :field_issue}"
+    assert_select 'a', :text => "#{I18n.t(:button_delete_object, object_name: I18n.t(:label_issue).downcase)}"
   end
 
   def test_show_on_closed_project_should_not_display_edit_links
@@ -3076,7 +3076,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
     assert_select 'a', :text => 'Edit', :count => 0
     #assert_select 'a', :text => 'Delete issue', :count => 0
-    assert_select 'a', :text => "Delete #{I18n.t :field_issue}", :count => 0
+    assert_select 'a', :text => "#{I18n.t(:button_delete_object, object_name: I18n.t(:label_issue).downcase)}", :count => 0
   end
 
   def test_show_should_not_display_history_tabs_for_issue_without_journals
