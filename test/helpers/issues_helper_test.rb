@@ -410,8 +410,10 @@ class IssuesHelperTest < Redmine::HelperTest
     html = render_issues_stats(1, 1, {:issue_id => '15,16'})
 
     assert_include '<a href="/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=%2A">2</a>', html
-    assert_include '<a href="/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=o">1 open</a>', html
-    assert_include '<a href="/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=c">1 closed</a>', html
+    #assert_include '<a href="/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=o">1 open</a>', html
+    assert_include "<a href=\"/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=o\">#{l(:label_x_open_issues_abbr, count: 1)}</a>", html
+    #assert_include '<a href="/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=c">1 closed</a>', html
+    assert_include "<a href=\"/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=c\">#{l(:label_x_closed_issues_abbr, count: 1)}</a>", html
   end
 
   def test_render_descendants_stats
@@ -422,8 +424,10 @@ class IssuesHelperTest < Redmine::HelperTest
     html = render_descendants_stats(parent)
 
     assert_include "<a href=\"/issues?parent_id=~#{parent.id}&amp;set_filter=true&amp;status_id=%2A\">2</a>", html
-    assert_include "<a href=\"/issues?parent_id=~#{parent.id}&amp;set_filter=true&amp;status_id=o\">1 open</a>", html
-    assert_include "<a href=\"/issues?parent_id=~#{parent.id}&amp;set_filter=true&amp;status_id=c\">1 closed</a>", html
+    #assert_include "<a href=\"/issues?parent_id=~#{parent.id}&amp;set_filter=true&amp;status_id=o\">1 open</a>", html
+    assert_include "<a href=\"/issues?parent_id=~#{parent.id}&amp;set_filter=true&amp;status_id=o\">#{l(:label_x_open_issues_abbr, count: 1)}</a>", html
+    #assert_include "<a href=\"/issues?parent_id=~#{parent.id}&amp;set_filter=true&amp;status_id=c\">1 closed</a>", html
+    assert_include "<a href=\"/issues?parent_id=~#{parent.id}&amp;set_filter=true&amp;status_id=c\">#{l(:label_x_closed_issues_abbr, count: 1)}</a>", html
   end
 
   def test_render_relations_stats
@@ -440,7 +444,9 @@ class IssuesHelperTest < Redmine::HelperTest
     html = render_relations_stats(issue, relations)
 
     assert_include "<a href=\"/issues?issue_id=#{open_issue.id}%2C#{closed_issue.id}&amp;set_filter=true&amp;status_id=%2A\">2</a></span>", html
-    assert_include "<a href=\"/issues?issue_id=#{open_issue.id}%2C#{closed_issue.id}&amp;set_filter=true&amp;status_id=o\">1 open</a>", html
-    assert_include "<a href=\"/issues?issue_id=#{open_issue.id}%2C#{closed_issue.id}&amp;set_filter=true&amp;status_id=c\">1 closed</a>", html
+    #assert_include "<a href=\"/issues?issue_id=#{open_issue.id}%2C#{closed_issue.id}&amp;set_filter=true&amp;status_id=o\">1 open</a>", html
+    assert_include "<a href=\"/issues?issue_id=#{open_issue.id}%2C#{closed_issue.id}&amp;set_filter=true&amp;status_id=o\">#{l(:label_x_open_issues_abbr, count: 1)}</a>", html
+    #assert_include "<a href=\"/issues?issue_id=#{open_issue.id}%2C#{closed_issue.id}&amp;set_filter=true&amp;status_id=c\">1 closed</a>", html
+    assert_include "<a href=\"/issues?issue_id=#{open_issue.id}%2C#{closed_issue.id}&amp;set_filter=true&amp;status_id=c\">#{l(:label_x_closed_issues_abbr, count: 1)}</a>", html
   end
 end

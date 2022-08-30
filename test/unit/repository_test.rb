@@ -301,7 +301,8 @@ class RepositoryTest < ActiveSupport::TestCase
         "[#{fixed_issue.project.name} - #{fixed_issue.tracker.name} ##{fixed_issue.id}]"
       )
       assert_mail_body_match(
-        "Status changed from #{old_status} to #{fixed_issue.status}", mail
+        #"Status changed from #{old_status} to #{fixed_issue.status}", mail
+        I18n.t(:text_journal_changed, {label: I18n.t(:field_status), old: old_status, new: fixed_issue.status}), mail
       )
     end
 

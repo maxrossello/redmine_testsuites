@@ -54,8 +54,8 @@ if ENV["RAILS_ENV"] == "test"
   
   require_relative 'lib/testsuites_versions'
   
-  Rails.configuration.to_prepare do
-    Testsuites::Versions.check_plugin_versions(supported_plugins);
+  Rails.configuration.after_initialize do
+    TestsuitesVersions.check_plugin_versions(supported_plugins);
   end
 end
 

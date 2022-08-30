@@ -270,7 +270,8 @@ class TimelogReportTest < Redmine::ControllerTest
     assert_equal 'text/csv; header=present', @response.media_type
     lines = @response.body.chomp.split("\n")
     # Headers
-    assert_equal 'Project,User,Overtime,2007-3,2007-4,Total time', lines.first
+    #assert_equal 'Project,User,Overtime,2007-3,2007-4,Total time', lines.first
+    assert_equal "#{I18n.t :field_project},User,Overtime,2007-3,2007-4,Total time", lines.first
     # Total row
     assert_equal 'Total time,"","",154.25,8.65,162.90', lines.last
   end
