@@ -920,6 +920,36 @@ class QueryTest < ActiveSupport::TestCase
     assert_equal issue1, result.first
   end
 
+  def test_filter_on_chained_user_custom_field
+    user = User.find(2)
+    User.current = user
+
+    user_cf = UserCustomField.find(4)
+    user_cf.update! is_filter: true
+
+    issue_cf = IssueCustomField.create!(:field_format => 'user', :is_for_all => true, :is_filter => true, :name => 'User custom field', :tracker_ids => [1])
+    issue1 = Issue.create!(:project_id => 1, :tracker_id => 1, :custom_field_values => {issue_cf.id.to_s => '2'}, :subject => 'Test', :author_id => 1)
+
+    query = IssueQuery.new(:name => '_', :project => Project.find(1))
+    query.filters = {"cf_#{issue_cf.id}.cf_#{user_cf.id}" => {:operator => '~', :values => ['01 42']}}
+    result = query.issues
+
+    assert_equal 1, result.size
+    assert_equal issue1, result.first
+  end
+
+  def test_filter_on_chained_user_custom_field_of_type_float
+    user_cf = UserCustomField.find(5)
+    user_cf.update! is_filter: true
+
+    issue_cf = IssueCustomField.create!(:field_format => 'user', :is_for_all => true, :is_filter => true, :name => 'User custom field', :tracker_ids => [1])
+    issue1 = Issue.create!(:project_id => 1, :tracker_id => 1, :custom_field_values => {issue_cf.id.to_s => '2'}, :subject => 'Test', :author_id => 1)
+    query = IssueQuery.new(:name => '_', :project => Project.find(1))
+    query.filters = {"cf_#{issue_cf.id}.cf_#{user_cf.id}" => {:operator => '=', :values => ["30.1"]}}
+
+    assert query.issues
+  end
+
   def test_filter_on_me_by_anonymous_user
     User.current = nil
     query =
@@ -2696,5 +2726,19 @@ class QueryTest < ActiveSupport::TestCase
 
     # Non-paginated issue ids and paginated issue ids should be in the same order.
     assert_equal issue_ids, paginated_issue_ids
+  end
+
+  def test_display_type_should_accept_known_types
+    query = ProjectQuery.new(:name => '_')
+    query.display_type = 'list'
+
+    assert_equal 'list', query.display_type
+  end
+
+  def test_display_type_should_not_accept_unknown_types
+    query = ProjectQuery.new(:name => '_')
+    query.display_type = 'invalid'
+
+    assert_equal 'board', query.display_type
   end
 end
