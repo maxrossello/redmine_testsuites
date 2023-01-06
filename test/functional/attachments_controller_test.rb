@@ -501,17 +501,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
     assert_select 'h2 a', :text => "Feature request #2"
   end
 
-  def test_edit_all_with_invalid_container_class_should_return_404
-    get(
-      :edit_all,
-      :params => {
-        :object_type => 'nuggets',
-        :object_id => '3'
-      }
-    )
-    assert_response 404
-  end
-
   def test_edit_all_with_invalid_object_should_return_404
     get(
       :edit_all,
@@ -644,6 +633,22 @@ class AttachmentsControllerTest < Redmine::ControllerTest
     assert_response 404
   end
 
+  def test_download_all_with_invisible_journal
+    Project.find(1).update_column :is_public, false
+    Member.delete_all
+    @request.session[:user_id] = 2
+    User.current = User.find(2)
+    assert_not Journal.find(3).journalized.visible?
+    get(
+      :download_all,
+      :params => {
+        :object_type => 'journals',
+        :object_id => '3'
+      }
+    )
+    assert_response 403
+  end
+
   def test_download_all_with_maximum_bulk_download_size_larger_than_attachments
     with_settings :bulk_download_max_size => 0 do
       @request.session[:user_id] = 2
@@ -652,7 +657,23 @@ class AttachmentsControllerTest < Redmine::ControllerTest
         :params => {
           :object_type => 'issues',
           :object_id => '2',
-          :back_url => '/issues/2'
+          :back_url => '/issues/123'
+        }
+      )
+      assert_redirected_to '/issues/123'
+      assert_equal flash[:error], 'These attachments cannot be bulk downloaded because the total file size exceeds the maximum allowed size (0 Bytes)'
+    end
+  end
+
+  def test_download_all_redirects_to_container_url_on_error
+    with_settings :bulk_download_max_size => 0 do
+      @request.session[:user_id] = 2
+      get(
+        :download_all,
+        :params => {
+          :object_type => 'issues',
+          :object_id => '2',
+          :back_url => 'https://example.com'
         }
       )
       assert_redirected_to '/issues/2'

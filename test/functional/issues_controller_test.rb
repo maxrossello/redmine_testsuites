@@ -2700,7 +2700,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       end
       assert_select "li.user-10" do
         assert_select 'img.gravatar[title=?]', 'A Team'
-        assert_select 'a[href="/users/10"]', false
+        assert_select 'a[href="/groups/10"]'
         assert_select 'a[class*=delete]'
       end
     end
@@ -5629,6 +5629,26 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'select[name=?]', 'issue[project_id]', 0
   end
 
+  def test_new_should_hide_project_if_user_is_not_allowed_to_change_project_in_hierarchy_projects
+    WorkflowPermission.create!(:role_id => 1, :tracker_id => 1, :old_status_id => 1,
+                               :field_name => 'project_id', :rule => 'readonly')
+
+    @request.session[:user_id] = 2
+    get(:new, :params => { :tracker_id => 1, :project_id => 1 })
+    assert_response :success
+    assert_select 'select[name=?]', 'issue[project_id]', 0
+  end
+
+  def test_new_should_show_project_if_user_is_not_allowed_to_change_project_global_new_issue
+    WorkflowPermission.create!(:role_id => 1, :tracker_id => 1, :old_status_id => 1,
+                               :field_name => 'project_id', :rule => 'readonly')
+
+    @request.session[:user_id] = 2
+    get(:new, :params => { :tracker_id => 1})
+    assert_response :success
+    assert_select 'select[name=?]', 'issue[project_id]'
+  end
+
   def test_edit_should_not_hide_project_when_user_changes_the_project_even_if_project_is_readonly_on_target_project
     WorkflowPermission.create!(:role_id => 1, :tracker_id => 1, :old_status_id => 1,
                                :field_name => 'project_id', :rule => 'readonly')
@@ -8471,5 +8491,56 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert results = JSON.parse(@response.body)['issues']
     # query filters for tracker_id == 3
     assert results.detect{ |i| i['tracker_id'] != 3 }
+  end
+
+  def test_index_should_ignore_user_default_query_if_it_is_invisible
+    query = IssueQuery.find(4)
+
+    query.update(visibility: Query::VISIBILITY_PRIVATE, user_id: 2)
+    query.save!
+
+    # If visible default query
+    @request.session[:user_id] = 2
+    @request.session[:issue_query] = nil
+    User.find(2).pref.update(default_issue_query: query.id)
+    get :index
+    assert_select 'h2', text: query.name
+
+    # If invisible default query
+    @request.session[:user_id] = 3
+    @request.session[:issue_query] = nil
+    User.find(3).pref.update(default_issue_query: query.id)
+    get :index
+    assert_select 'h2', text: 'Issues'
+  end
+
+  def test_index_should_ignore_project_default_query_if_it_is_not_public
+    query = IssueQuery.find(1)
+    query.project.update(default_issue_query: query)
+
+    query.update(visibility: Query::VISIBILITY_PRIVATE, user_id: 2)
+    query.save!
+
+    [User.find(1), User.find(2)].each do |user|
+      @request.session[:user_id] = user.id
+      @request.session[:issue_query] = nil
+      get :index, params: { project_id: query.project.id }
+      assert_select 'h2', text: 'Issues'
+    end
+  end
+
+  def test_index_should_ignore_global_default_query_if_it_is_not_public
+    query = IssueQuery.find(1)
+    with_settings default_issue_query: query.id do
+      query.update(visibility: Query::VISIBILITY_PRIVATE, user_id: 2)
+      query.save!
+
+      [User.find(1), User.find(2)].each do |user|
+        @request.session[:user_id] = user.id
+        @request.session[:issue_query] = nil
+        get :index
+        assert_select 'h2', text: 'Issues'
+      end
+    end
   end
 end
