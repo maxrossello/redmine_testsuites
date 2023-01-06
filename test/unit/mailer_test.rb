@@ -840,12 +840,12 @@ class MailerTest < ActiveSupport::TestCase
         "status_id%5D=o&set_filter=1&sort=due_date%3Aasc&v%5B" \
         "assigned_to_id%5D%5B%5D=me&v%5Bdue_date%5D%5B%5D=#{days}"
     assert_select_email do
-      #assert_select 'a[href=?]',
-      #              'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
-      #              :text => 'View all issues'
       assert_select 'a[href=?]',
                     url,
                     :text => '1'
+      #assert_select 'a[href=?]',
+      #              'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
+      #              :text => 'View all issues'
       assert_select 'a[href=?]',
                     'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
                     :text => "#{I18n.t :label_issue_view_all}"

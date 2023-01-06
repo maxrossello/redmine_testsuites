@@ -2130,6 +2130,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       assert_select 'a', {:count => 1, :text => 'Watch'}
       assert_select 'a', {:count => 1, :text => 'Copy'}
       assert_select 'div.drdn-items a', {:count => 1, :text => 'Copy link'}
+      #assert_select 'div.drdn-items a', {:count => 1, :text => 'Delete issue'}
       assert_select 'div.drdn-items a', {:count => 1, :text => "Delete #{I18n.t :field_issue}"}
     end
     assert_select 'form#issue-form' do
@@ -8536,5 +8537,56 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert results = JSON.parse(@response.body)['issues']
     # query filters for tracker_id == 3
     assert results.detect{ |i| i['tracker_id'] != 3 }
+  end
+
+  def test_index_should_ignore_user_default_query_if_it_is_invisible
+    query = IssueQuery.find(4)
+
+    query.update(visibility: Query::VISIBILITY_PRIVATE, user_id: 2)
+    query.save!
+
+    # If visible default query
+    @request.session[:user_id] = 2
+    @request.session[:issue_query] = nil
+    User.find(2).pref.update(default_issue_query: query.id)
+    get :index
+    assert_select 'h2', text: query.name
+
+    # If invisible default query
+    @request.session[:user_id] = 3
+    @request.session[:issue_query] = nil
+    User.find(3).pref.update(default_issue_query: query.id)
+    get :index
+    assert_select 'h2', text: 'Issues'
+  end
+
+  def test_index_should_ignore_project_default_query_if_it_is_not_public
+    query = IssueQuery.find(1)
+    query.project.update(default_issue_query: query)
+
+    query.update(visibility: Query::VISIBILITY_PRIVATE, user_id: 2)
+    query.save!
+
+    [User.find(1), User.find(2)].each do |user|
+      @request.session[:user_id] = user.id
+      @request.session[:issue_query] = nil
+      get :index, params: { project_id: query.project.id }
+      assert_select 'h2', text: 'Issues'
+    end
+  end
+
+  def test_index_should_ignore_global_default_query_if_it_is_not_public
+    query = IssueQuery.find(1)
+    with_settings default_issue_query: query.id do
+      query.update(visibility: Query::VISIBILITY_PRIVATE, user_id: 2)
+      query.save!
+
+      [User.find(1), User.find(2)].each do |user|
+        @request.session[:user_id] = user.id
+        @request.session[:issue_query] = nil
+        get :index
+        assert_select 'h2', text: 'Issues'
+      end
+    end
   end
 end
