@@ -88,8 +88,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   end
 
   def clear_downloaded_files
-    # https://github.com/SeleniumHQ/selenium/issues/5292
-    FileUtils.rm downloaded_files if Redmine::Platform.mswin?
+    FileUtils.rm downloaded_files
   end
 
   def downloaded_files(filename='*')
