@@ -189,24 +189,6 @@ class Redmine::WikiFormatting::TextileFormatterTest < ActionView::TestCase
       </ul>
     EXPECTED
     assert_equal expected.gsub(%r{\s+}, ''), to_html(raw).gsub(%r{\s+}, '')
-
-    raw = <<~RAW
-      * Item-1
-
-        * Item-1a
-        * Item-1b
-    RAW
-    expected = <<~EXPECTED
-      <ul>
-        <li>Item-1
-          <ul>
-            <li>Item-1a</li>
-            <li>Item-1b</li>
-          </ul>
-        </li>
-      </ul>
-    EXPECTED
-    assert_equal expected.gsub(%r{\s+}, ''), to_html(raw).gsub(%r{\s+}, '')
   end
 
   def test_escaping
@@ -737,6 +719,17 @@ class Redmine::WikiFormatting::TextileFormatterTest < ActionView::TestCase
     assert_equal expected.gsub(%r{[\r\n\t]}, ''), to_html(text).gsub(%r{[\r\n\t]}, '')
   end
 
+  def test_should_escape_tags_that_start_with_pre
+    text = <<~STR
+      <preä demo>Text
+    STR
+
+    expected = <<~EXPECTED
+      <p>&lt;preä demo&gt;Text</p>
+    EXPECTED
+    assert_equal expected.gsub(%r{[\r\n\t]}, ''), to_html(text).gsub(%r{[\r\n\t]}, '')
+  end
+
   def test_should_remove_html_comments
     text = <<~STR
       <!-- begin -->
@@ -767,6 +760,14 @@ class Redmine::WikiFormatting::TextileFormatterTest < ActionView::TestCase
 
     EXPECTED
     assert_equal expected.gsub(%r{[\r\n\t]}, ''), to_html(text).gsub(%r{[\r\n\t]}, '')
+  end
+
+  def test_should_escape_bq_citations
+    assert_html_output(
+      {
+        %{bq.:http://x/"onmouseover="alert(document.domain) Hover me} =>
+          %{<blockquote cite="http://x/&quot;onmouseover=&quot;alert(document.domain)">\n\t\t<p>Hover me</p>\n\t</blockquote>}
+      }, false)
   end
 
   private

@@ -2403,6 +2403,33 @@ class IssuesControllerTest < Redmine::ControllerTest
 
     get(:show, params: {:id => 1})
     assert_response :success
+    assert_select 'div#issue_tree' do
+      assert_select 'td.subject', :text => /Child Issue/
+    end
+    assert_select 'div#tab-content-history' do
+      assert_select 'div[id=?]', "change-#{Issue.find(1).journals.last.id}" do
+        assert_select 'ul.details', :text => "Subtask ##{issue.id} added"
+      end
+    end
+  end
+
+  def test_show_should_show_subtasks_stats
+    @request.session[:user_id] = 1
+    child1 = Issue.generate!(parent_issue_id: 1, subject: 'Open child issue')
+    Issue.generate!(parent_issue_id: 1, subject: 'Closed child issue', status_id: 5)
+    Issue.generate!(parent_issue_id: child1.id, subject: 'Open child of child')
+    # Issue not visible for anonymous
+    Issue.generate!(parent_issue_id: 1, subject: 'Private child', project_id: 5)
+
+    get(:show, params: {:id => 1})
+    assert_response :success
+
+    assert_select 'div#issue_tree span.issues-stat' do
+      assert_select 'span.badge', text: '4'
+      #assert_select 'span.open a', text: '3 open'
+      assert_select 'span.open a', text: I18n.t(:label_x_open_issues_abbr, :count => 3)
+      assert_equal CGI.unescape(css_select('span.open a').first.attr(:href)),
+                   "/issues?parent_id=~1&set_filter=true&status_id=o"
 
     assert_select 'div#issue_tree span.issues-stat' do
       assert_select 'span.badge', text: '4'
@@ -2718,7 +2745,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       end
       assert_select "li.user-10" do
         assert_select 'img.gravatar[title=?]', 'A Team'
-        assert_select 'a[href="/users/10"]', false
+        assert_select 'a[href="/groups/10"]'
         assert_select 'a[class*=delete]'
       end
     end
@@ -5671,6 +5698,26 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'select[name=?]', 'issue[project_id]', 0
   end
 
+  def test_new_should_hide_project_if_user_is_not_allowed_to_change_project_in_hierarchy_projects
+    WorkflowPermission.create!(:role_id => 1, :tracker_id => 1, :old_status_id => 1,
+                               :field_name => 'project_id', :rule => 'readonly')
+
+    @request.session[:user_id] = 2
+    get(:new, :params => { :tracker_id => 1, :project_id => 1 })
+    assert_response :success
+    assert_select 'select[name=?]', 'issue[project_id]', 0
+  end
+
+  def test_new_should_show_project_if_user_is_not_allowed_to_change_project_global_new_issue
+    WorkflowPermission.create!(:role_id => 1, :tracker_id => 1, :old_status_id => 1,
+                               :field_name => 'project_id', :rule => 'readonly')
+
+    @request.session[:user_id] = 2
+    get(:new, :params => { :tracker_id => 1})
+    assert_response :success
+    assert_select 'select[name=?]', 'issue[project_id]'
+  end
+
   def test_edit_should_not_hide_project_when_user_changes_the_project_even_if_project_is_readonly_on_target_project
     WorkflowPermission.create!(:role_id => 1, :tracker_id => 1, :old_status_id => 1,
                                :field_name => 'project_id', :rule => 'readonly')
@@ -8557,7 +8604,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     @request.session[:issue_query] = nil
     User.find(3).pref.update(default_issue_query: query.id)
     get :index
-    assert_select 'h2', text: 'Issues'
+    #assert_select 'h2', text: 'Issues'
+    assert_select 'h2', text: I18n.t(:label_issue_plural)
   end
 
   def test_index_should_ignore_project_default_query_if_it_is_not_public
@@ -8571,7 +8619,8 @@ class IssuesControllerTest < Redmine::ControllerTest
       @request.session[:user_id] = user.id
       @request.session[:issue_query] = nil
       get :index, params: { project_id: query.project.id }
-      assert_select 'h2', text: 'Issues'
+      #assert_select 'h2', text: 'Issues'
+      assert_select 'h2', text: I18n.t(:label_issue_plural)
     end
   end
 
@@ -8585,7 +8634,8 @@ class IssuesControllerTest < Redmine::ControllerTest
         @request.session[:user_id] = user.id
         @request.session[:issue_query] = nil
         get :index
-        assert_select 'h2', text: 'Issues'
+        #assert_select 'h2', text: 'Issues'
+        assert_select 'h2', text: I18n.t(:label_issue_plural)
       end
     end
   end
