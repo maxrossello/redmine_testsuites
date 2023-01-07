@@ -2430,6 +2430,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       assert_select 'span.open a', text: I18n.t(:label_x_open_issues_abbr, :count => 3)
       assert_equal CGI.unescape(css_select('span.open a').first.attr(:href)),
                    "/issues?parent_id=~1&set_filter=true&status_id=o"
+    end
 
     assert_select 'div#issue_tree span.issues-stat' do
       assert_select 'span.badge', text: '4'

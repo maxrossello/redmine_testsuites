@@ -1824,7 +1824,8 @@ class ApplicationHelperTest < Redmine::HelperTest
       result = 'Dave2 Lopper2'
       assert_equal result, link_to_user(user, :class => 'assigned_to')
     end
-
+  end
+  
   def test_link_to_principal_should_link_to_user
     user = User.find(2)
     result = link_to('John Smith', '/users/2', :class => 'user active')
