@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2021  Jean-Philippe Lang
+# Copyright (C) 2006-2023  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -3069,7 +3069,7 @@ class IssuesControllerTest < Redmine::ControllerTest
   def test_show_display_only_all_and_notes_tabs_for_issue_with_notes_only
     @request.session[:user_id] = 1
 
-    get :show, :params => {:id => 6}
+    get :show, :params => {:id => 14}
     assert_response :success
     assert_select '#history' do
       assert_select 'div.tabs ul a', 2
@@ -3101,13 +3101,6 @@ class IssuesControllerTest < Redmine::ControllerTest
 
   def test_show_display_all_notes_and_history_tabs_for_issue_with_notes_and_history_changes
     journal = Journal.create!(:journalized => Issue.find(6), :user_id => 1)
-    detail =
-      JournalDetail.
-        create!(
-          :journal => journal, :property => 'attr',
-          :prop_key => 'description',
-          :old_value => 'Foo', :value => 'Bar'
-        )
     @request.session[:user_id] = 1
 
     get :show, :params => {:id => 6}
