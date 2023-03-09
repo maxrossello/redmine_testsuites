@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-2023  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -3068,7 +3068,7 @@ class IssuesControllerTest < Redmine::ControllerTest
   def test_show_display_only_all_and_notes_tabs_for_issue_with_notes_only
     @request.session[:user_id] = 1
 
-    get :show, :params => {:id => 6}
+    get :show, :params => {:id => 14}
     assert_response :success
     assert_select '#history' do
       assert_select 'div.tabs ul a', 2
@@ -3099,13 +3099,6 @@ class IssuesControllerTest < Redmine::ControllerTest
 
   def test_show_display_all_notes_and_history_tabs_for_issue_with_notes_and_history_changes
     journal = Journal.create!(:journalized => Issue.find(6), :user_id => 1)
-    detail =
-      JournalDetail.
-        create!(
-          :journal => journal, :property => 'attr',
-          :prop_key => 'description',
-          :old_value => 'Foo', :value => 'Bar'
-        )
     @request.session[:user_id] = 1
 
     get :show, :params => {:id => 6}
@@ -8418,6 +8411,22 @@ class IssuesControllerTest < Redmine::ControllerTest
     get :show, params: { id: issue.id }
     assert_select "div#history div#journal-#{issue.journals.last.id}-notes" do
       assert_select "a[href='/attachments/#{attachment.id}']", :text => 'source.rb'
+    end
+  end
+
+  def test_show_with_thumbnail_macro_should_be_able_to_fetch_image_of_different_journal
+    @request.session[:user_id] = 1
+    issue = Issue.find(2)
+    attachment = Attachment.generate!(filename: 'foo.png', digest: Redmine::Utils.random_hex(32))
+    attachment.update(container: issue)
+
+    issue.init_journal(User.first, "{{thumbnail(#{attachment.filename})}}")
+    issue.save!
+    issue.reload
+
+    get :show, params: { id: issue.id }
+    assert_select "div#history div#journal-#{issue.journals.last.id}-notes" do
+      assert_select "a.thumbnail[title=?][href='/attachments/#{attachment.id}']", 'foo.png'
     end
   end
 

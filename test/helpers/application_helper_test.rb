@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-2023  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -1839,6 +1839,16 @@ class ApplicationHelperTest < Redmine::HelperTest
     unknown_principal = 'foo'
     result = unknown_principal.to_s
     assert_equal result, link_to_principal(unknown_principal, :class => 'bar')
+  end
+
+  def test_link_to_principal_should_escape_principal_name
+    user = User.generate!(firstname: "firstname<>'", lastname: 'lastname&"')
+    group = Group.generate!(lastname: "group<>'&")
+
+    assert_include "firstname&lt;&gt;&#39; lastname&amp;&quot;", link_to_principal(user)
+    assert_include "@firstname&lt;&gt;&#39; lastname&amp;&quot;", link_to_principal(user, { mention: true })
+    assert_include "group&lt;&gt;&#39;&amp;", link_to_principal(group)
+    assert_include "&lt;&gt;&#39;&amp;", link_to_principal("<>'&")
   end
 
   def test_link_to_group_should_return_only_group_name_for_non_admin_users
