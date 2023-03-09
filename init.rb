@@ -1,5 +1,5 @@
 # Redmine plugin for Plugin Testsuites
-# Copyright (C) 2018    Massimo Rossello 
+# Copyright (C) 2018-2023    Massimo Rossello 
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,10 +30,10 @@ if ENV["RAILS_ENV"] == "test"
     description 'Allows to run the Redmine test suite along with plugin tests, considering the different behaviors 
                  introduced by supported plugins over the Redmine default behavior. 
                  Unsupported plugins are signaled in the logs.'
-    version '5.0.4'
+    version '5.0.5'
     url 'https://github.com/maxrossello/redmine_testsuites.git'
     author_url 'https://github.com/maxrossello'
-    requires_redmine :version => '5.0.4'
+    requires_redmine :version => '5.0.5'
 
   end 
 
@@ -47,7 +47,7 @@ if ENV["RAILS_ENV"] == "test"
     redmine_better_overview:   { tilde_greater_than: '5.0.2' },
     redmine_extended_watchers: { tilde_greater_than: '5.0.2' },
     redmine_pluggable_themes:  { tilde_greater_than: '5.0.2' },
-    redwine:                   { version:            '5.0.4' },
+    redwine:                   { version:            '5.0.5' },
     sidebar_hide:              { version_or_higher:  '5.0.2' }
   }
   

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-2023  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -341,6 +341,13 @@ class AttachmentsControllerTest < Redmine::ControllerTest
     get(:download, :params => {:id => 4})
     assert_response :success
     assert_equal 'text/x-ruby', @response.media_type
+  end
+
+  def test_download_should_assign_application_octet_stream_if_content_type_is_not_determined
+    get(:download, :params => {:id => 22})
+    assert_response :success
+    assert_nil Redmine::MimeType.of(attachments(:attachments_022).filename)
+    assert_equal 'application/octet-stream', @response.media_type
   end
 
   def test_download_should_assign_application_octet_stream_if_content_type_is_not_determined

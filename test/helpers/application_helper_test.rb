@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-2023  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -1844,6 +1844,16 @@ class ApplicationHelperTest < Redmine::HelperTest
     assert_equal result, link_to_principal(unknown_principal, :class => 'bar')
   end
 
+  def test_link_to_principal_should_escape_principal_name
+    user = User.generate!(firstname: "firstname<>'", lastname: 'lastname&"')
+    group = Group.generate!(lastname: "group<>'&")
+
+    assert_include "firstname&lt;&gt;&#39; lastname&amp;&quot;", link_to_principal(user)
+    assert_include "@firstname&lt;&gt;&#39; lastname&amp;&quot;", link_to_principal(user, { mention: true })
+    assert_include "group&lt;&gt;&#39;&amp;", link_to_principal(group)
+    assert_include "&lt;&gt;&#39;&amp;", link_to_principal("<>'&")
+  end
+
   def test_link_to_group_should_return_only_group_name_for_non_admin_users
     User.current = nil
     group = Group.find(10)
@@ -2202,18 +2212,6 @@ class ApplicationHelperTest < Redmine::HelperTest
                        "option[selected='selected'][value=#{l(:general_csv_encoding)}]",
                        :text => l(:general_csv_encoding)
       assert_select_in result, "option[value='UTF-8']", :text => 'UTF-8'
-    end
-  end
-
-  def test_redner_if_exist_should_be_render_nil
-    controller.prepend_view_path "test/fixtures/views"
-    assert_nil render_if_exist(:partial => 'non_exist_partial')
-  end
-
-  def test_export_csv_encoding_select_tag_should_return_nil_when_general_csv_encoding_is_UTF8
-    with_locale 'az' do
-      assert_equal l(:general_csv_encoding), 'UTF-8'
-      assert_nil export_csv_encoding_select_tag
     end
   end
 

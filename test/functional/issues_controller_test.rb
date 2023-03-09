@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-2023  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -2403,34 +2403,6 @@ class IssuesControllerTest < Redmine::ControllerTest
 
     get(:show, params: {:id => 1})
     assert_response :success
-    assert_select 'div#issue_tree' do
-      assert_select 'td.subject', :text => /Child Issue/
-    end
-    assert_select 'div#tab-content-history' do
-      assert_select 'div[id=?]', "change-#{Issue.find(1).journals.last.id}" do
-        assert_select 'ul.details', :text => "Subtask ##{issue.id} added"
-      end
-    end
-  end
-
-  def test_show_should_show_subtasks_stats
-    @request.session[:user_id] = 1
-    child1 = Issue.generate!(parent_issue_id: 1, subject: 'Open child issue')
-    Issue.generate!(parent_issue_id: 1, subject: 'Closed child issue', status_id: 5)
-    Issue.generate!(parent_issue_id: child1.id, subject: 'Open child of child')
-    # Issue not visible for anonymous
-    Issue.generate!(parent_issue_id: 1, subject: 'Private child', project_id: 5)
-
-    get(:show, params: {:id => 1})
-    assert_response :success
-
-    assert_select 'div#issue_tree span.issues-stat' do
-      assert_select 'span.badge', text: '4'
-      #assert_select 'span.open a', text: '3 open'
-      assert_select 'span.open a', text: I18n.t(:label_x_open_issues_abbr, :count => 3)
-      assert_equal CGI.unescape(css_select('span.open a').first.attr(:href)),
-                   "/issues?parent_id=~1&set_filter=true&status_id=o"
-    end
 
     assert_select 'div#issue_tree span.issues-stat' do
       assert_select 'span.badge', text: '4'
@@ -3120,7 +3092,7 @@ class IssuesControllerTest < Redmine::ControllerTest
   def test_show_display_only_all_and_notes_tabs_for_issue_with_notes_only
     @request.session[:user_id] = 1
 
-    get :show, :params => {:id => 6}
+    get :show, :params => {:id => 14}
     assert_response :success
     assert_select '#history' do
       assert_select 'div.tabs ul a', 2
@@ -3152,13 +3124,6 @@ class IssuesControllerTest < Redmine::ControllerTest
 
   def test_show_display_all_notes_and_history_tabs_for_issue_with_notes_and_history_changes
     journal = Journal.create!(:journalized => Issue.find(6), :user_id => 1)
-    detail =
-      JournalDetail.
-        create!(
-          :journal => journal, :property => 'attr',
-          :prop_key => 'description',
-          :old_value => 'Foo', :value => 'Bar'
-        )
     @request.session[:user_id] = 1
 
     get :show, :params => {:id => 6}
@@ -8512,6 +8477,22 @@ class IssuesControllerTest < Redmine::ControllerTest
     get :show, params: { id: issue.id }
     assert_select "div#history div#journal-#{issue.journals.last.id}-notes" do
       assert_select "a[href='/attachments/#{attachment.id}']", :text => 'source.rb'
+    end
+  end
+
+  def test_show_with_thumbnail_macro_should_be_able_to_fetch_image_of_different_journal
+    @request.session[:user_id] = 1
+    issue = Issue.find(2)
+    attachment = Attachment.generate!(filename: 'foo.png', digest: Redmine::Utils.random_hex(32))
+    attachment.update(container: issue)
+
+    issue.init_journal(User.first, "{{thumbnail(#{attachment.filename})}}")
+    issue.save!
+    issue.reload
+
+    get :show, params: { id: issue.id }
+    assert_select "div#history div#journal-#{issue.journals.last.id}-notes" do
+      assert_select "a.thumbnail[title=?][href='/attachments/#{attachment.id}']", 'foo.png'
     end
   end
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-2023  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -37,7 +37,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
     find 'div.wiki-preview', :visible => true, :text => 'new issue description'
 
     # Switch to edit using control + shift + p
-    skip "TEMP chromedriver problem with send_keys"
+    #skip "TEMP chromedriver problem with send_keys"
     page.find('body').send_keys([:control, :shift, 'p'])
     find 'div.wiki-preview', :visible => false
     find 'textarea.wiki-edit', :visible => true
@@ -65,7 +65,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
     page.find('fieldset:nth-child(3)').click_link('Preview')
     find 'div#preview_issue_notes', :visible => true
 
-    skip "TEMP chromedriver problem with send_keys"
+    #skip "TEMP chromedriver problem with send_keys"
     page.find('body').send_keys([:command, :shift, 'p'])
     find 'textarea#issue_notes', :visible => true
     find 'div#preview_issue_notes', :visible => false
