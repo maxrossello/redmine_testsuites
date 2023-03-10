@@ -37,7 +37,6 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
     find 'div.wiki-preview', :visible => true, :text => 'new issue description'
 
     # Switch to edit using control + shift + p
-    #skip "TEMP chromedriver problem with send_keys"
     page.find('body').send_keys([:control, :shift, 'p'])
     find 'div.wiki-preview', :visible => false
     find 'textarea.wiki-edit', :visible => true
@@ -65,7 +64,6 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
     page.find('fieldset:nth-child(3)').click_link('Preview')
     find 'div#preview_issue_notes', :visible => true
 
-    #skip "TEMP chromedriver problem with send_keys"
     page.find('body').send_keys([:command, :shift, 'p'])
     find 'textarea#issue_notes', :visible => true
     find 'div#preview_issue_notes', :visible => false
