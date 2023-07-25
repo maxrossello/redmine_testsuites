@@ -117,7 +117,8 @@ class WatcherTest < ActiveSupport::TestCase
       # plugin allows to add any user as a watcher, then the issue becomes visible to it
       assert_not_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
     else
-      assert_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}    end
+      assert_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
+    end
   end
 
   def test_any_watched_should_return_false_if_no_object_is_watched

@@ -480,7 +480,9 @@ module Redmine
 
         options = arg.slice!(request)
 
-        API_FORMATS.each do |format|
+        #API_FORMATS.each do |format|
+        api_formats = %w(json xml).freeze
+        api_formats.each do |format|
           format_request = request.sub /$/, ".#{format}"
           super options.merge(format_request => arg[request], :format => format)
         end

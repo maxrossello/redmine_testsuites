@@ -2180,6 +2180,7 @@ class QueryTest < ActiveSupport::TestCase
     set_language_if_valid 'fr'
     q = IssueQuery.new
     assert_equal 'Assigné à', q.label_for('assigned_to_id')
+    set_language_if_valid 'en' # redmine_testsuites
   end
 
   def test_editable_by
