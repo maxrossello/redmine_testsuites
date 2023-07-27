@@ -2032,6 +2032,22 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#content a.icon-settings[href="/projects/ecookbook/settings/issues"]', 0
   end
 
+  def test_index_should_show_setting_link_with_edit_project_permission
+    role = Role.find(1)
+    role.add_permission! :edit_project
+    @request.session[:user_id] = 2
+    get(:index, :params => {:project_id => 1})
+    assert_select '#content a.icon-settings[href="/projects/ecookbook/settings/issues"]', 1
+  end
+
+  def test_index_should_not_show_setting_link_without_edit_project_permission
+    role = Role.find(1)
+    role.remove_permission! :edit_project
+    @request.session[:user_id] = 2
+    get(:index, :params => {:project_id => 1})
+    assert_select '#content a.icon-settings[href="/projects/ecookbook/settings/issues"]', 0
+  end
+
   def test_index_should_not_include_new_issue_tab_when_disabled
     with_settings :new_item_menu_tab => '0' do
       @request.session[:user_id] = 2
@@ -2793,12 +2809,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
 
     # long text custom field should not be render in the attributes div
-    assert_select "div.attributes div.attribute.cf_#{field.id} p strong", 0, :text => 'Long text'
-    assert_select(
-      "div.attributes div.attribute.cf_#{field.id} div.value",
-      0,
-      :text => 'This is a long text'
-    )
+    assert_select "div.attributes div.attribute.cf_#{field.id} p strong", 0
+    assert_select "div.attributes div.attribute.cf_#{field.id} div.value", 0
     # long text custom field should be render under description field
     assert_select "div.description ~ div.attribute.cf_#{field.id} p strong", :text => 'Long text'
     assert_select(
@@ -3854,10 +3866,12 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
 
     assert_select 'div#trackers_description' do
-      assert_select 'h3', 1, :text => 'Trackers description'
+      #assert_select 'h3', :text => 'Trackers description', :count => 1
+      assert_select 'h3', :text => I18n.t(:label_trackers_description), :count => 1
       # only Bug and Feature have descriptions
-      assert_select 'dt', 2, :text => 'Bug'
-      assert_select 'dd', 2, :text => 'Description for Bug tracker'
+      assert_select 'dt', 2
+      assert_select 'dt', :text => 'Bug', :count => 1
+      assert_select 'dd', :text => 'Description for Bug tracker', :count => 1
     end
   end
 
