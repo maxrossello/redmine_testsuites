@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-  
+
 # Redmine - project management software
 # Copyright (C) 2006-2023  Jean-Philippe Lang
 #
