@@ -17,14 +17,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../application_system_test_case', __FILE__)
+require_relative '../application_system_test_case'
 
 class InlineAutocompleteSystemTest < ApplicationSystemTestCase
   fixtures :projects, :users, :email_addresses, :roles, :members, :member_roles,
            :trackers, :projects_trackers, :enabled_modules, :issue_statuses, :issues,
            :enumerations, :custom_fields, :custom_values, :custom_fields_trackers,
            :watchers, :journals, :journal_details, :versions,
-           :workflows, :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions
+           :workflows, :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions,
+           :boards, :messages
 
   # redmine_testsuite
   def teardown
@@ -189,7 +190,6 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
     within('.tribute-container') do
       assert page.has_text? "Dave Lopper"
     end
-
   end
 
   def test_inline_autocomplete_for_users_on_issues_bulk_edit_show_autocomplete

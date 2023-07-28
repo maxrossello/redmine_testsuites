@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class SettingTest < ActiveSupport::TestCase
   fixtures :users
@@ -144,5 +144,9 @@ class SettingTest < ActiveSupport::TestCase
         assert_nil errors
       end
     end
+  end
+
+  def test_default_text_formatting_for_new_installations_is_common_mark
+    assert_equal 'common_mark', Setting.text_formatting
   end
 end

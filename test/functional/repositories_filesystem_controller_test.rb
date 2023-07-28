@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
   tests RepositoriesController
@@ -215,7 +215,7 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
       assert_response :success
       assert @repository.supports_cat?
       assert_select 'a#tab-entry', :text => /View/
-      assert_not @repository.supports_all_revisions?
+      assert_not @repository.supports_history?
       assert_select 'a#tab-changes', 0
       assert_not @repository.supports_annotate?
       assert_select 'a#tab-annotate', 0

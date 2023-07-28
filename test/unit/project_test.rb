@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class ProjectTest < ActiveSupport::TestCase
   fixtures :projects, :trackers, :issue_statuses, :issues,
@@ -66,13 +66,13 @@ class ProjectTest < ActiveSupport::TestCase
     end
 
     with_settings :sequential_project_identifiers => '1' do
-      assert !Project.new.identifier.blank?
+      assert Project.new.identifier.present?
       assert Project.new(:identifier => '').identifier.blank?
     end
 
     with_settings :sequential_project_identifiers => '0' do
       assert Project.new.identifier.blank?
-      assert !Project.new(:identifier => 'test').blank?
+      assert Project.new(:identifier => 'test').present?
     end
 
     with_settings :default_projects_modules => ['issue_tracking', 'repository'] do
@@ -236,6 +236,7 @@ class ProjectTest < ActiveSupport::TestCase
     # generate some dependent objects
     overridden_activity = TimeEntryActivity.new({:name => "Project", :project => @ecookbook})
     assert overridden_activity.save!
+    TimeEntry.generate!(:project => @ecookbook, :activity_id => overridden_activity.id)
 
     query = IssueQuery.generate!(:project => @ecookbook, :visibility => Query::VISIBILITY_ROLES, :roles => Role.where(:id => [1, 3]).to_a)
 

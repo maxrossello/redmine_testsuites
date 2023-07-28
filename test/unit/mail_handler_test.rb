@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class MailHandlerTest < ActiveSupport::TestCase
   fixtures :users, :projects, :enabled_modules, :roles,
@@ -28,7 +28,7 @@ class MailHandlerTest < ActiveSupport::TestCase
            :workflows, :trackers, :projects_trackers,
            :versions, :enumerations, :issue_categories,
            :custom_fields, :custom_fields_trackers, :custom_fields_projects, :custom_values,
-           :boards, :messages, :watchers
+           :boards, :messages, :watchers, :news, :comments
 
   FIXTURES_PATH = File.dirname(__FILE__) + '/../fixtures/mail_handler'
   include ActiveJob::TestHelper  # redmine_testsuites
@@ -1098,7 +1098,7 @@ class MailHandlerTest < ActiveSupport::TestCase
     assert_no_difference 'Issue.count' do
       assert_no_difference 'Journal.count' do
         journal = submit_email('ticket_reply_with_status.eml')
-        assert_nil journal
+        assert_not journal
       end
     end
   end
@@ -1123,7 +1123,22 @@ class MailHandlerTest < ActiveSupport::TestCase
         journal = submit_email('ticket_reply.eml') do |email|
           email.sub! %r{^In-Reply-To:.*$}, "In-Reply-To: <redmine.journal-#{journal_id}.20060719210421@osiris>"
         end
-        assert_nil journal
+        assert_not journal
+      end
+    end
+  end
+
+  def test_reply_to_a_nonexitent_journal_with_subject_fallback
+    journal_id = Issue.find(2).journals.last.id
+    Journal.destroy(journal_id)
+    assert_no_difference 'Issue.count' do
+      assert_difference 'Journal.count', 1 do
+        journal = submit_email('ticket_reply.eml') do |email|
+          email.sub! %r{^In-Reply-To:.*$}, "In-Reply-To: <redmine.journal-#{journal_id}.20060719210421@osiris>"
+          email.sub! %r{^Subject:.*$}, "Subject: Re: [Feature request #2] Add ingredients categories"
+        end
+        assert_kind_of Journal, journal
+        assert_equal Issue.find(2), journal.journalized
       end
     end
   end
@@ -1162,7 +1177,7 @@ class MailHandlerTest < ActiveSupport::TestCase
     Message.find(2).destroy
     assert_no_difference('Message.count') do
       m = submit_email('message_reply_by_subject.eml')
-      assert_nil m
+      assert_not m
     end
   end
 
@@ -1170,6 +1185,40 @@ class MailHandlerTest < ActiveSupport::TestCase
     Role.all.each {|r| r.remove_permission! :add_messages}
     assert_no_difference('Message.count') do
       assert_not submit_email('message_reply_by_subject.eml')
+    end
+  end
+
+  def test_reply_to_a_news
+    m = submit_email('news_reply.eml')
+    assert m.is_a?(Comment)
+    assert !m.new_record?
+    m.reload
+    assert_equal News.find(1), m.commented
+    assert_equal "This is a reply to a news.", m.content
+  end
+
+  def test_reply_to_a_news_comment
+    m = submit_email('news_comment_reply.eml')
+    assert m.is_a?(Comment)
+    assert !m.new_record?
+    m.reload
+    assert_equal News.find(1), m.commented
+    assert_equal "This is a reply to a comment.", m.content
+  end
+
+  def test_reply_to_a_nonexistant_news
+    News.find(1).destroy
+    assert_no_difference('Comment.count') do
+      assert_not submit_email('news_reply.eml')
+      assert_not submit_email('news_comment_reply.eml')
+    end
+  end
+
+  def test_reply_to_a_news_without_permission
+    Role.all.each {|r| r.remove_permission! :comment_news}
+    assert_no_difference('Comment.count') do
+      assert_not submit_email('news_reply.eml')
+      assert_not submit_email('news_comment_reply.eml')
     end
   end
 

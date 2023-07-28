@@ -17,11 +17,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../../../test_helper', __FILE__)
+require_relative '../../../test_helper'
 
 class Redmine::Search::Tokenize < ActiveSupport::TestCase
   def test_tokenize
     value = "hello \"bye bye\""
     assert_equal ["hello", "bye bye"], Redmine::Search::Tokenizer.new(value).tokens
+  end
+
+  def test_tokenize_should_consider_ideographic_space_as_separator
+    # U+3000 is an ideographic space ("　")
+    value = "全角\u3000スペース"
+    assert_equal %w[全角 スペース], Redmine::Search::Tokenizer.new(value).tokens
   end
 end

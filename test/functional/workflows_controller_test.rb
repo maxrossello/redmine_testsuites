@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class WorkflowsControllerTest < Redmine::ControllerTest
   fixtures :roles, :trackers, :workflows, :users, :issue_statuses, :custom_fields
@@ -74,6 +74,23 @@ class WorkflowsControllerTest < Redmine::ControllerTest
     WorkflowTransition.create!(:role_id => 3, :tracker_id => 1, :old_status_id => 1, :new_status_id => 5)
 
     get :edit, :params => {:role_id => 2, :tracker_id => 1}
+    assert_response :success
+
+    # statuses 1 and 5 not displayed
+    statuses = IssueStatus.where(:id => [2, 3]).sorted.pluck(:name)
+    assert_equal(
+      #["New issue"] + statuses,
+      ["#{I18n.t :label_issue_new}"] + statuses,
+      css_select('table.workflows.transitions-always tbody tr td:first').map(&:text).map(&:strip)
+    )
+  end
+
+  def test_get_edit_with_role_and_tracker_should_not_include_only_identity_workflows
+    WorkflowTransition.delete_all
+    WorkflowTransition.create!(:role_id => 1, :tracker_id => 1, :old_status_id => 1, :new_status_id => 1)
+    WorkflowTransition.create!(:role_id => 1, :tracker_id => 1, :old_status_id => 2, :new_status_id => 3)
+
+    get :edit, :params => {:role_id => 1, :tracker_id => 1}
     assert_response :success
 
     # statuses 1 and 5 not displayed

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class QueriesHelperTest < Redmine::HelperTest
   include QueriesHelper
@@ -83,6 +83,16 @@ class QueriesHelperTest < Redmine::HelperTest
       assert_select_in options, 'optgroup[label=?] > option', "#{I18n.t :field_project}", 3
       #assert_select_in options, 'optgroup > option[value=?]', "project.cf_#{cf1.id}", :text => "Project's Foo"
       assert_select_in options, 'optgroup > option[value=?]', "project.cf_#{cf1.id}", :text => "#{I18n.t :label_attribute_of_project, { name: "Foo"}}"
+    end
+  end
+
+  def test_filters_options_for_select_should_group_text_filters
+    with_locale 'en' do
+      options = filters_options_for_select(IssueQuery.new)
+      assert_select_in options, 'optgroup[label=?]', 'Text', 1
+      assert_select_in options, 'optgroup > option[value=subject]', :text => 'Subject'
+      assert_select_in options, 'optgroup > option[value=cf_2]', :text => 'Searchable field'
+      assert_select_in options, 'optgroup > option:last-of-type[value=any_searchable]', :text => 'Any searchable text'
     end
   end
 

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class TimeEntryTest < ActiveSupport::TestCase
   include Redmine::I18n
@@ -139,6 +139,21 @@ class TimeEntryTest < ActiveSupport::TestCase
     assert_equal entry.activity_id, project_specific_default_activity.id
   end
 
+  def test_activity_id_should_be_set_automatically_if_there_is_only_one_activity_available
+    project = Project.find(1)
+    TimeEntry.all.destroy_all
+    TimeEntryActivity.destroy_all
+    only_one_activity = TimeEntryActivity.create!(
+      name: 'Development',
+      parent_id: nil,
+      project_id: nil,
+      is_default: false
+    )
+
+    entry = TimeEntry.new(project: project)
+    assert_equal entry.activity_id, only_one_activity.id
+  end
+
   def test_should_accept_future_dates
     entry = TimeEntry.generate
     entry.spent_on = User.current.today + 1
@@ -214,14 +229,14 @@ class TimeEntryTest < ActiveSupport::TestCase
     activity = TimeEntryActivity.create!(:name => 'Other project activity', :project_id => 2, :active => true)
 
     entry = TimeEntry.new(:spent_on => Date.today, :hours => 1.0, :user => User.find(1), :project_id => 1, :activity => activity)
-    assert !entry.valid?
+    assert entry.invalid?
     assert_include I18n.translate('activerecord.errors.messages.inclusion'), entry.errors[:activity_id]
   end
 
   def test_spent_on_with_2_digits_year_should_not_be_valid
     entry = TimeEntry.new(:project => Project.find(1), :user => User.find(1), :activity => TimeEntryActivity.first, :hours => 1)
     entry.spent_on = "09-02-04"
-    assert !entry.valid?
+    assert entry.invalid?
     assert_include I18n.translate('activerecord.errors.messages.not_a_date'), entry.errors[:spent_on]
   end
 

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class TrackerTest < ActiveSupport::TestCase
   fixtures :trackers, :workflows, :issue_statuses, :roles, :issues, :custom_fields, :projects, :projects_trackers, :enabled_modules
@@ -89,6 +89,7 @@ class TrackerTest < ActiveSupport::TestCase
   def test_issue_statuses
     tracker = Tracker.find(1)
     WorkflowTransition.delete_all
+    WorkflowTransition.create!(:role_id => 1, :tracker_id => 1, :old_status_id => 1, :new_status_id => 1)
     WorkflowTransition.create!(:role_id => 1, :tracker_id => 1, :old_status_id => 2, :new_status_id => 3)
     WorkflowTransition.create!(:role_id => 2, :tracker_id => 1, :old_status_id => 3, :new_status_id => 5)
 

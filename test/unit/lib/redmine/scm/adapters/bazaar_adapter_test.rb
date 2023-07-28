@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../../../../../test_helper', __FILE__)
+require_relative '../../../../../test_helper'
 
 class BazaarAdapterTest < ActiveSupport::TestCase
   REPOSITORY_PATH = Rails.root.join('tmp/test/bazaar_repository').to_s
@@ -42,7 +42,7 @@ class BazaarAdapterTest < ActiveSupport::TestCase
 
     def test_cat
       cat = @adapter.cat('directory/document.txt')
-      assert cat =~ /Write the contents of a file as of a given revision to standard output/
+      assert cat.include?('Write the contents of a file as of a given revision to standard output')
     end
 
     def test_cat_path_invalid
@@ -174,7 +174,7 @@ class BazaarAdapterTest < ActiveSupport::TestCase
     end
 
     def test_entry
-      entry = @adapter.entry()
+      entry = @adapter.entry
       assert_equal "", entry.path
       assert_equal "dir", entry.kind
       entry = @adapter.entry('')

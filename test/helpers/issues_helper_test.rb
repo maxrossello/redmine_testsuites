@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class IssuesHelperTest < Redmine::HelperTest
   include IssuesHelper
@@ -414,6 +414,36 @@ class IssuesHelperTest < Redmine::HelperTest
     assert_include "<a href=\"/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=o\">#{l(:label_x_open_issues_abbr, count: 1)}</a>", html
     #assert_include '<a href="/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=c">1 closed</a>', html
     assert_include "<a href=\"/issues?issue_id=15%2C16&amp;set_filter=true&amp;status_id=c\">#{l(:label_x_closed_issues_abbr, count: 1)}</a>", html
+  end
+
+  def test_render_issue_relations
+    issue = Issue.generate!(:status_id => 1)
+    closed_issue = Issue.generate!(:status_id => 5)
+    relation = IssueRelation.create!(:issue_from => closed_issue,
+                                     :issue_to => issue,
+                                     :relation_type => IssueRelation::TYPE_FOLLOWS)
+
+    html = render_issue_relations(issue, [relation])
+    assert_include(
+      "<tr id=\"relation-#{relation.id}\"" \
+      " class=\"issue hascontextmenu issue" \
+      " tracker-#{closed_issue.tracker_id}" \
+      " status-#{closed_issue.status_id}" \
+      " priority-#{closed_issue.priority_id} priority-default" \
+      " closed rel-follows\">",
+      html
+    )
+
+    html = render_issue_relations(closed_issue, [relation])
+    assert_include(
+      "<tr id=\"relation-#{relation.id}\"" \
+      " class=\"issue hascontextmenu issue" \
+      " tracker-#{issue.tracker_id}" \
+      " status-#{issue.status_id}" \
+      " priority-#{issue.priority_id} priority-default" \
+      " rel-precedes\">",
+      html
+    )
   end
 
   def test_render_descendants_stats

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../../../../test_helper', __FILE__)
+require_relative '../../../../test_helper'
 require 'redmine/field_format'
 
 class Redmine::NumericFieldFormatTest < ActionView::TestCase
@@ -32,6 +32,6 @@ class Redmine::NumericFieldFormatTest < ActionView::TestCase
     custom_value = CustomValue.new(:custom_field => field, :customized => Issue.new, :value => "3")
 
     assert_equal 3, field.format.formatted_custom_value(self, custom_value, false)
-    assert_equal '<a class="external" href="http://foo/3">3</a>', field.format.formatted_custom_value(self, custom_value, true)
+    assert_equal '<a href="http://foo/3" class="external">3</a>', field.format.formatted_custom_value(self, custom_value, true)
   end
 end

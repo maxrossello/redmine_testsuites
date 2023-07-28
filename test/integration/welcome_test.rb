@@ -17,13 +17,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class WelcomeTest < Redmine::IntegrationTest
   fixtures :users, :email_addresses,
            :projects, :enabled_modules, :members, :member_roles, :roles
 
   def test_robots
+    Project.find(3).update_attribute :status, Project::STATUS_CLOSED
+
     get '/robots.txt'
     assert_response :success
     assert_equal 'text/plain', @response.media_type
@@ -36,5 +38,20 @@ class WelcomeTest < Redmine::IntegrationTest
     assert @response.body.match(%r{^Disallow: /login\r?$})
     assert @response.body.match(%r{^Disallow: /account/register\r?$})
     assert @response.body.match(%r{^Disallow: /account/lost_password\r?$})
+
+    # closed projects are included in the list
+    assert @response.body.match(%r{^Disallow: /projects/subproject1/issues\r?$})
+  end
+
+  def test_robots_when_login_is_required
+    with_settings :login_required => '1' do
+      get '/robots.txt'
+      assert_response :success
+      assert_equal 'text/plain', @response.media_type
+
+      # Disallow everything if logins are required
+      assert_not @response.body.match(%r{^Disallow: /projects/ecookbook/issues\r?$})
+      assert @response.body.match(%r{^Disallow: /\r?$})
+    end
   end
 end

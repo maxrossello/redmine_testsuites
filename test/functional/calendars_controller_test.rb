@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class CalendarsControllerTest < Redmine::ControllerTest
   fixtures :projects,
@@ -57,7 +57,7 @@ class CalendarsControllerTest < Redmine::ControllerTest
         assert_select 'div#query_form_content' do
           assert_select 'fieldset#filters.collapsible'
         end
-        assert_select 'p.contextual'
+        assert_select 'span.contextual.pagination'
         assert_select 'p.buttons'
       end
     end

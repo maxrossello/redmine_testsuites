@@ -17,10 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class WatchersHelperTest < Redmine::HelperTest
   include WatchersHelper
+  include AvatarsHelper
+  include ERB::Util
   include Rails.application.routes.url_helpers
 
   fixtures :users, :issues
@@ -65,5 +67,32 @@ class WatchersHelperTest < Redmine::HelperTest
       :remote => true, :method => 'delete', :class => "issue-1-watcher icon icon-fav"
     )
     assert_equal expected, watcher_link(Issue.find(1), User.find(1))
+  end
+
+  def test_watchers_list_should_be_sorted_by_user_name
+    issue = Issue.find(1)
+    [1, 2, 3].shuffle.each do |user_id|
+      Watcher.create!(:watchable => issue, :user => User.find(user_id))
+    end
+
+    with_settings user_format: 'firstname_lastname' do
+      result1 = watchers_list(issue)
+      assert_select_in result1, 'ul.watchers' do
+        assert_select 'li', 3
+        assert_select 'li:nth-of-type(1)>a[href=?]', '/users/3', text: 'Dave Lopper'
+        assert_select 'li:nth-of-type(2)>a[href=?]', '/users/2', text: 'John Smith'
+        assert_select 'li:nth-of-type(3)>a[href=?]', '/users/1', text: 'Redmine Admin'
+      end
+    end
+
+    with_settings user_format: 'lastname_firstname' do
+      result2 = watchers_list(issue)
+      assert_select_in result2, 'ul.watchers' do
+        assert_select 'li', 3
+        assert_select 'li:nth-of-type(1)>a[href=?]', '/users/1', text: 'Admin Redmine'
+        assert_select 'li:nth-of-type(2)>a[href=?]', '/users/3', text: 'Lopper Dave'
+        assert_select 'li:nth-of-type(3)>a[href=?]', '/users/2', text: 'Smith John'
+      end
+    end
   end
 end

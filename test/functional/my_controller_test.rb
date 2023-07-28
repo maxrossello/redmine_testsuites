@@ -17,14 +17,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class MyControllerTest < Redmine::ControllerTest
   fixtures :users, :email_addresses, :user_preferences,
            :roles, :projects, :members, :member_roles,
            :issues, :issue_statuses, :trackers, :enumerations,
            :custom_fields, :auth_sources, :queries, :enabled_modules,
-           :journals, :projects_trackers
+           :journals, :projects_trackers, :issue_categories
 
   def setup
     @request.session[:user_id] = 2
@@ -276,7 +276,9 @@ class MyControllerTest < Redmine::ControllerTest
       assert_match 'v[updated_by][]=me', report_url
 
       assert_select 'table.issues tbody tr', 2
-      assert_select 'table.issues tbody tr[id=?]', 'issue-1', 1, :title => 'Cannot print recipes'
+      assert_select 'table.issues tbody tr[id=?]', 'issue-1' do
+        assert_select 'td.subject a', :text => 'Cannot print recipes', :count => 1
+      end
       assert_select 'table.issues tbody tr[id=?]', 'issue-14', 0
     end
   end
@@ -315,7 +317,9 @@ class MyControllerTest < Redmine::ControllerTest
       assert_match 'v%5Bproject.status%5D%5B%5D=1', report_url
 
       assert_select 'tr', 1
-      assert_select 'tr[id=?]', 'issue-1', 1, :title => 'Cannot print recipes'
+      assert_select 'tr[id=?]', 'issue-1' do
+        assert_select 'td.subject a', :text => 'Cannot print recipes', :count => 1
+      end
       assert_select 'tr[id=?]', 'issue-4', 0
     end
   end
@@ -343,7 +347,9 @@ class MyControllerTest < Redmine::ControllerTest
       assert_match 'v%5Bproject.status%5D%5B%5D=1', report_url
 
       assert_select 'table.issues tbody tr', 10
-      assert_select 'table.issues tbody tr[id=?]', 'issue-1', 1, :title => 'Cannot print recipes'
+      assert_select 'table.issues tbody tr[id=?]', 'issue-1' do
+        assert_select 'td.subject a', :text => 'Cannot print recipes', :count => 1
+      end
       assert_select 'table.issues tbody tr[id=?]', 'issue-4', 0
     end
   end
@@ -375,7 +381,9 @@ class MyControllerTest < Redmine::ControllerTest
       assert_match 'v%5Bproject.status%5D%5B%5D=1', report_url
 
       assert_select 'tr', 1
-      assert_select 'tr[id=?]', 'issue-1', 1, :title => 'Cannot print recipes'
+      assert_select 'tr[id=?]', 'issue-1' do
+        assert_select 'td.subject a', :text => 'Cannot print recipes', :count => 1
+      end
       assert_select 'tr[id=?]', 'issue-4', 0
     end
   end

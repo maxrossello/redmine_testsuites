@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class SessionsTest < Redmine::IntegrationTest
   fixtures :users, :email_addresses, :roles
@@ -39,7 +39,7 @@ class SessionsTest < Redmine::IntegrationTest
 
     get '/my/account'
     assert_response 302
-    assert flash[:error].match(/Your session has expired/)
+    assert flash[:error].include?('Your session has expired')
   end
 
   def test_lock_user_kills_sessions
@@ -51,7 +51,7 @@ class SessionsTest < Redmine::IntegrationTest
 
     get '/my/account'
     assert_response 302
-    assert flash[:error].match(/Your session has expired/)
+    assert flash[:error].include?('Your session has expired')
   end
 
   def test_update_user_does_not_kill_sessions

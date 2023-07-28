@@ -17,13 +17,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class VersionTest < ActiveSupport::TestCase
   fixtures :projects, :users, :issues, :issue_statuses, :trackers,
            :enumerations, :versions, :projects_trackers,
            :custom_fields, :custom_fields_trackers, :custom_fields_projects,
-           :members, :member_roles, :roles
+           :members, :member_roles, :roles, :issue_categories
 
   def setup
     User.current = nil
@@ -56,15 +56,15 @@ class VersionTest < ActiveSupport::TestCase
   def test_invalid_effective_date_validation
     v = Version.new(:project => Project.find(1), :name => '1.1',
                     :effective_date => '99999-01-01')
-    assert !v.valid?
+    assert v.invalid?
     v.effective_date = '2012-11-33'
-    assert !v.valid?
+    assert v.invalid?
     v.effective_date = '2012-31-11'
-    assert !v.valid?
+    assert v.invalid?
     v.effective_date = '-2012-31-11'
-    assert !v.valid?
+    assert v.invalid?
     v.effective_date = 'ABC'
-    assert !v.valid?
+    assert v.invalid?
     assert_include I18n.translate('activerecord.errors.messages.not_a_date'),
                    v.errors[:effective_date]
   end

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class TimelogControllerTest < Redmine::ControllerTest
   fixtures :projects, :enabled_modules, :roles, :members,
@@ -89,7 +89,20 @@ class TimelogControllerTest < Redmine::ControllerTest
     assert_response 403
   end
 
-  def test_new_should_select_default_activity
+  def test_new_should_select_default_role_activity
+    developer = Role.find(2)
+    developer.default_time_entry_activity_id = 9
+    developer.save!
+
+    @request.session[:user_id] = 3
+    get :new, :params => {:project_id => 1}
+    assert_response :success
+    assert_select 'select[name=?]', 'time_entry[activity_id]' do
+      assert_select 'option[selected=selected]', :text => 'Design'
+    end
+  end
+
+  def test_new_should_select_default_global_activity_for_user_roles_without_default_activities
     @request.session[:user_id] = 3
     get :new, :params => {:project_id => 1}
     assert_response :success
@@ -762,7 +775,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     assert_response :success
     assert_select 'select[id=?]', 'time_entry_activity_id' do
       assert_select 'option', 3
-      assert_select 'option[value=?]', '11', 0, :text => 'QA'
+      assert_select 'option[value=?]', '11', 0
     end
   end
 
@@ -1255,6 +1268,19 @@ class TimelogControllerTest < Redmine::ControllerTest
     assert_equal [entry].map(&:id).map(&:to_s), css_select('input[name="ids[]"]').map {|e| e.attr(:value)}
   end
 
+  def text_index_with_issue_subject_filter
+    get(
+      :index,
+      :params => {
+        :f => ['issue.subject'],
+        :op => {'issue.subject' => '~'},
+        :v => {'issue.subject' => ['"updating a recipe"']}
+      }
+    )
+    assert_response :success
+    assert_equal [3], css_select('input[name="ids[]"]').map {|e| e.attr(:value)}
+  end
+
   def test_index_with_project_status_filter
     project = Project.find(3)
     project.close
@@ -1369,6 +1395,52 @@ class TimelogControllerTest < Redmine::ControllerTest
 
     assert_response :success
     assert_select 'td.issue-category', :text => 'Printing'
+  end
+
+  def test_index_with_issue_parent_filter
+    issue1 = Issue.generate!(project_id: 'ecookbook', parent_id: 2)
+    entry1 = TimeEntry.generate!(issue: issue1, hours: 2.5)
+    issue2 = Issue.generate!(project_id: 'ecookbook', parent_id: 5)
+    entry2 = TimeEntry.generate!(issue: issue2, hours: 5.0)
+
+    get :index, params: {
+      project_id: 'ecookbook',
+      f: ['issue.parent_id'],
+      op: {'issue.parent_id' => '='},
+      v: {'issue.parent_id' => ['2,5']}
+    }
+    assert_response :success
+    assert_equal [entry1.id, entry2.id].sort, css_select('input[name="ids[]"]').map {|e| e.attr(:value).to_i}.sort
+  end
+
+  def test_index_with_issue_parent_column
+    issue = Issue.generate!(project_id: 'ecookbook', parent_id: 2)
+    entry = TimeEntry.generate!(issue: issue, hours: 2.5)
+
+    get :index, params: {
+      project_id: 'ecookbook',
+      c: %w(project spent_on issue comments hours issue.parent)
+    }
+
+    assert_response :success
+    assert_select 'td.issue-parent', text: "#{issue.parent.tracker} ##{issue.parent.id}"
+  end
+
+  def test_index_with_issue_parent_sort
+    issue1 = Issue.generate!(project_id: 'ecookbook', parent_id: 2)
+    entry1 = TimeEntry.generate!(issue: issue1, hours: 2.5)
+    issue2 = Issue.generate!(project_id: 'ecookbook', parent_id: 5)
+    entry2 = TimeEntry.generate!(issue: issue2, hours: 5.0)
+
+    get :index, :params => {
+      :c => ["hours", 'issue.parent'],
+      :sort => 'issue.parent'
+    }
+    assert_response :success
+
+    # Make sure that values are properly sorted
+    values = css_select("td.issue-parent").map(&:text).reject(&:blank?)
+    assert_equal ["#{issue1.parent.tracker} ##{issue1.parent.id}", "#{issue2.parent.tracker} ##{issue2.parent.id}"].sort, values.sort
   end
 
   def test_index_with_issue_fixed_version_column
@@ -1685,6 +1757,18 @@ class TimelogControllerTest < Redmine::ControllerTest
       assert_response :success
       assert_equal 'text/csv; header=present', response.media_type
     end
+  end
+
+  def test_index_csv_filename_query_name_param
+    get :index, :params => {:format => 'csv'}
+    assert_response :success
+    assert_match /timelog.csv/, @response.headers['Content-Disposition']
+  end
+
+  def test_index_csv_filename_with_query_name_param
+    get :index, :params => {:query_name => 'My Query Name', :format => 'csv'}
+    assert_response :success
+    assert_match /my_query_name\.csv/, @response.headers['Content-Disposition']
   end
 
   def test_index_csv_should_fill_issue_column_with_tracker_id_and_subject

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class MemberTest < ActiveSupport::TestCase
   fixtures :projects, :trackers, :issue_statuses, :issues,
@@ -224,5 +224,15 @@ class MemberTest < ActiveSupport::TestCase
         "Unsaved members were returned: #{members.select(&:new_record?).map{|m| m.errors.full_messages}*","}"
       )
     end
+  end
+
+  def test_destroy_member_when_member_role_is_empty
+    member = Member.find(1)
+
+    assert_difference 'Member.count', -1 do
+      member.role_ids = [] # Destroy roles associated with member
+    end
+    assert member.destroyed?
+    assert_raise(ActiveRecord::RecordNotFound) { Member.find(1) }
   end
 end

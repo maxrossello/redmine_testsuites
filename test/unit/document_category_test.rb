@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class DocumentCategoryTest < ActiveSupport::TestCase
   fixtures :enumerations, :documents, :issues
@@ -27,7 +27,7 @@ class DocumentCategoryTest < ActiveSupport::TestCase
   end
 
   def test_should_be_an_enumeration
-    assert DocumentCategory.ancestors.include?(Enumeration)
+    assert DocumentCategory <= Enumeration
   end
 
   def test_objects_count

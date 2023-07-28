@@ -17,11 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../application_system_test_case', __FILE__)
+require_relative '../application_system_test_case'
 
 class IssuesSystemTest < ApplicationSystemTestCase
   fixtures :projects, :users, :email_addresses, :roles, :members, :member_roles,
-           :trackers, :projects_trackers, :enabled_modules, :issue_statuses, :issues,
+           :trackers, :projects_trackers, :enabled_modules,
+           :issue_statuses, :issues, :issue_categories,
            :enumerations, :custom_fields, :custom_values, :custom_fields_trackers,
            :watchers, :journals, :journal_details, :versions,
            :workflows
@@ -443,7 +444,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     page.find('#issue_status_id').select('Assigned')
     assert_no_difference 'Issue.count' do
-      submit_buttons[0].click
+      click_button('commit')
+      # wait for ajax response
       assert page.has_css?('#flash_notice')
       assert_current_path '/issues', :ignore_query => true
     end
@@ -475,7 +477,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     page.find('#issue_status_id').select('Feedback')
     assert_no_difference 'Issue.count' do
-      submit_buttons[1].click
+      click_button('follow')
       # wait for ajax response
       assert page.has_css?('#flash_notice')
       assert_current_path '/projects/onlinestore/issues', :ignore_query => true
@@ -507,6 +509,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     page.find('#issue_priority_id').select('Low')
     assert_difference 'Issue.count', 2 do
       submit_buttons[0].click
+      # wait for ajax response
       assert page.has_css?('#flash_notice')
       assert_current_path '/issues', :ignore_query => true
     end
@@ -606,7 +609,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     csv = CSV.read(downloaded_file("issues.csv"))
     subject_index = csv.shift.index('Subject')
-    subjects = csv.map {|row| row[subject_index]}
+    subjects = csv.pluck(subject_index)
     assert_equal subjects.sort, subjects
   end
 

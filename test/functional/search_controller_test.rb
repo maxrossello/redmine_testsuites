@@ -17,16 +17,17 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class SearchControllerTest < Redmine::ControllerTest
   fixtures :projects, :projects_trackers,
            :enabled_modules, :roles, :users, :members, :member_roles,
            :issues, :trackers, :issue_statuses, :enumerations,
-           :workflows,
+           :issue_categories, :workflows,
            :custom_fields, :custom_values,
            :custom_fields_projects, :custom_fields_trackers,
-           :repositories, :changesets
+           :repositories, :changesets,
+           :user_preferences
 
   def setup
     User.current = nil
@@ -94,6 +95,7 @@ class SearchControllerTest < Redmine::ControllerTest
     assert_select 'input[name=all_words][checked=checked]'
     assert_select 'input[name=titles_only]:not([checked])'
 
+    assert_select 'p.buttons a', :text => 'Apply issues filter'
     assert_select '#search-results' do
       assert_select 'dt.issue a', :text => /Bug #5/
       assert_select 'dt.issue-closed a', :text => /Bug #8 \(Closed\)/
@@ -168,6 +170,19 @@ class SearchControllerTest < Redmine::ControllerTest
 
     assert_select '#search-results' do
       assert_select 'dt', 0
+    end
+  end
+
+  def test_search_my_bookmarks
+    @request.session[:user_id] = 1
+    get :index, :params => {:q => 'project', :scope => 'bookmarks', :all_words => ''}
+    assert_response :success
+
+    assert_select '#search-results' do
+      assert_select 'dt.issue', :count => 1
+      assert_select 'dt.issue', :text => /Bug #6/
+      assert_select 'dt.changeset', :count => 1
+      assert_select 'dt.changeset', :text => /Revision 4/
     end
   end
 
@@ -442,5 +457,16 @@ class SearchControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select '#search-results dt.project', 0
+  end
+
+  def test_search_should_not_show_apply_issues_filter_button_if_no_issues_found
+    get :index, :params => {:q => 'commits'}
+    assert_response :success
+
+    assert_select 'p.buttons a', :text => 'Apply issues filter', :count => 0
+    assert_select '#search-results' do
+      assert_select 'dt.issue', :count => 0
+      assert_select 'dt.issue-closed', :count => 0
+    end
   end
 end

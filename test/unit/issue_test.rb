@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class IssueTest < ActiveSupport::TestCase
   fixtures :projects, :users, :email_addresses, :user_preferences, :members, :member_roles, :roles,
@@ -81,6 +81,16 @@ class IssueTest < ActiveSupport::TestCase
 
     issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => 3, :subject => 'test_create_with_all_fields_disabled')
     assert_save issue
+  end
+
+  def test_default_priority_should_be_set_when_priority_field_is_disabled
+    tracker = Tracker.find(1)
+    tracker.core_fields = tracker.core_fields - ['priority_id']
+    tracker.save!
+
+    issue = Issue.new(:project_id => 1, :tracker_id => tracker.id, :author_id => 1, :subject => 'priority_id is disabled')
+    issue.save!
+    assert_equal IssuePriority.default, issue.priority
   end
 
   def test_start_date_format_should_be_validated
@@ -863,6 +873,28 @@ class IssueTest < ActiveSupport::TestCase
                             WorkflowTransition.where(:old_status_id => issue.status_id).
                                 map(&:new_status).uniq.sort
     assert_equal expected_statuses, issue.new_statuses_allowed_to(admin)
+  end
+
+  def test_new_statuses_allowed_to_should_only_return_transitions_of_considered_workflows
+    issue = Issue.find(9)
+
+    WorkflowTransition.delete_all
+    WorkflowTransition.create!(:role_id => 1, :tracker_id => 1, :old_status_id => 1, :new_status_id => 2)
+
+    developer = Role.find(2)
+    developer.remove_permission! :edit_issues
+    developer.remove_permission! :add_issues
+    assert !developer.consider_workflow?
+    WorkflowTransition.create!(:role_id => 2, :tracker_id => 1, :old_status_id => 1, :new_status_id => 3)
+
+    # status 3 is not displayed
+    expected_statuses = IssueStatus.where(:id => [1, 2])
+
+    admin = User.find(1)
+    assert_equal expected_statuses, issue.new_statuses_allowed_to(admin)
+
+    author = User.find(8)
+    assert_equal expected_statuses, issue.new_statuses_allowed_to(author)
   end
 
   def test_new_statuses_allowed_to_should_return_allowed_statuses_when_copying
@@ -2220,7 +2252,7 @@ class IssueTest < ActiveSupport::TestCase
     assert parent.closable?
     assert_nil parent.transition_warning
     assert allowed_statuses.any?
-    assert allowed_statuses.select(&:is_closed?).any?
+    assert allowed_statuses.any?(&:is_closed?)
   end
 
   def test_reschedule_an_issue_without_dates
@@ -3448,6 +3480,55 @@ class IssueTest < ActiveSupport::TestCase
     assert_equal [5, 6], issue2.filter_projects_scope('descendants').ids.sort
 
     assert_equal [5], issue2.filter_projects_scope('').ids.sort
+  end
+
+  def test_create_should_add_watcher
+    user = User.first
+    user.pref.auto_watch_on=['issue_created']
+    user.pref.save
+    issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => user.id, :subject => 'test_create_should_add_watcher')
+
+    assert_difference 'Watcher.count', 1 do
+      assert_equal true, issue.save
+    end
+  end
+
+  def test_create_should_add_author_watcher_only_once
+    user = User.first
+    user.pref.auto_watch_on=['issue_created']
+    user.pref.save
+    issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => user.id, :subject => 'test_create_should_add_watcher')
+    issue.watcher_user_ids = [user.id]
+
+    assert_difference 'Watcher.count', 1 do
+      assert_equal true, issue.save
+    end
+  end
+
+  def test_create_should_not_add_watcher
+    user = User.first
+    user.pref.auto_watch_on=[]
+    user.pref.save
+    issue = Issue.new(:project_id => 1, :tracker_id => 1, :author_id => user.id, :subject => 'test_create_should_not_add_watcher')
+
+    assert_no_difference 'Watcher.count' do
+      assert_equal true, issue.save
+    end
+  end
+
+  def test_create_should_not_add_anonymous_as_watcher
+    Role.anonymous.add_permission!(:add_issue_watchers)
+
+    user = User.anonymous
+    assert user.pref.auto_watch_on?('issue_contributed_to')
+
+    journal = Journal.new(:journalized => Issue.first, :notes => 'notes', :user => user)
+
+    assert_no_difference 'Watcher.count' do
+      assert journal.save
+      assert journal.valid?
+      assert journal.journalized.valid?
+    end
   end
 
   def test_like_should_escape_query

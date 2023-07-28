@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class ProjectsControllerTest < Redmine::ControllerTest
   fixtures :projects, :versions, :users, :email_addresses, :roles, :members,
@@ -33,6 +33,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
   def setup
     @request.session[:user_id] = nil
     Setting.default_language = 'en'
+    ActiveJob::Base.queue_adapter = :inline
   end
 
   def test_index_by_anonymous_should_not_show_private_projects
@@ -408,6 +409,22 @@ class ProjectsControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_new_by_non_admin_should_enable_setting_public_if_default_role_is_allowed_to_set_public
+    Role.non_member.add_permission!(:add_project)
+    default_role = Role.generate!(permissions: [:add_project])
+    user = User.generate!
+    @request.session[:user_id] = user.id
+
+    with_settings new_project_user_role_id: default_role.id.to_s do
+      get :new
+      assert_select 'input[name=?][disabled=disabled]', 'project[is_public]'
+
+      default_role.add_permission!(:select_project_publicity)
+      get :new
+      assert_select 'input[name=?]:not([disabled])', 'project[is_public]'
+    end
+  end
+
   def test_new_should_not_display_invalid_search_link
     @request.session[:user_id] = 1
 
@@ -505,7 +522,6 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :name => "blog",
           :description => "weblog",
           :identifier => "blog",
-          :is_public => 1,
           :custom_field_values => {
             '3' => 'Beta'
           },
@@ -519,13 +535,51 @@ class ProjectsControllerTest < Redmine::ControllerTest
     project = Project.find_by_name('blog')
     assert_kind_of Project, project
     assert_equal 'weblog', project.description
-    assert_equal true, project.is_public?
     assert_equal [1, 3], project.trackers.map(&:id).sort
     assert_equal ['issue_tracking', 'news', 'repository'], project.enabled_module_names.sort
 
     # User should be added as a project member
     assert User.find(9).member_of?(project)
     assert_equal 1, project.members.size
+  end
+
+  test "#create by user without select_project_publicity permission should not create a new private project" do
+    Role.non_member.add_permission! :add_project
+    default_role = Project.default_member_role
+    default_role.remove_permission!(:select_project_publicity)
+    @request.session[:user_id] = 9
+
+    post(
+      :create, :params => {
+        :project => {
+          :name => "blog",
+          :identifier => "blog",
+          :enabled_module_names => ['issue_tracking', 'news', 'repository'],
+          :is_public => 0
+        }
+      }
+    )
+
+    project = Project.find_by_name('blog')
+    assert_equal true, project.is_public?
+  end
+
+  test "#create by non-admin user with add_project and select_project_publicity permission should create a new private project" do
+    @request.session[:user_id] = 2
+
+    post(
+      :create, :params => {
+        :project => {
+          :name => "blog",
+          :identifier => "blog",
+          :enabled_module_names => ['issue_tracking', 'news', 'repository'],
+          :is_public => 0
+        }
+      }
+    )
+
+    project = Project.find_by_name('blog')
+    assert_equal false, project.is_public?
   end
 
   test "#create by non-admin user with add_project permission should fail with parent_id" do
@@ -1112,7 +1166,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     project.update_attribute :updated_on, nil
     assert_equal 'Stable', project.custom_value_for(3).value
 
-    travel_to Time.current do
+    freeze_time do
       post(
         :update,
         :params => {
@@ -1164,6 +1218,25 @@ class ProjectsControllerTest < Redmine::ControllerTest
                   :text => ['Private child of eCookbook',
                             'Child of private child, eCookbook Subproject 1',
                             'eCookbook Subproject 2'].join(', ')
+  end
+
+  def test_destroy_should_mark_project_and_subprojects_for_deletion
+    queue_adapter_was = ActiveJob::Base.queue_adapter
+    ActiveJob::Base.queue_adapter = :test
+    set_tmp_attachments_directory
+    @request.session[:user_id] = 1 # admin
+
+    assert_no_difference 'Project.count' do
+      delete(:destroy, :params => {:id => 1, :confirm => 'ecookbook'})
+      assert_redirected_to '/admin/projects'
+    end
+    assert p = Project.find_by_id(1)
+    assert_equal Project::STATUS_SCHEDULED_FOR_DELETION, p.status
+    p.descendants.each do |child|
+      assert_equal Project::STATUS_SCHEDULED_FOR_DELETION, child.status
+    end
+  ensure
+    ActiveJob::Base.queue_adapter = queue_adapter_was
   end
 
   def test_destroy_with_confirmation_should_destroy_the_project_and_subprojects
@@ -1253,6 +1326,31 @@ class ProjectsControllerTest < Redmine::ControllerTest
       assert_response 403
     end
     assert Project.find(1)
+  end
+
+  def test_bulk_destroy_should_require_admin
+    @request.session[:user_id] = 2 # non-admin
+    delete :bulk_destroy, params: { ids: [1, 2], confirm: 'Yes' }
+    assert_response 403
+  end
+
+  def test_bulk_destroy_should_require_confirmation
+    @request.session[:user_id] = 1 # admin
+    assert_difference 'Project.count', 0 do
+      delete :bulk_destroy, params: { ids: [1, 2] }
+    end
+    assert Project.find(1)
+    assert Project.find(2)
+    assert_response 200
+  end
+
+  def test_bulk_destroy_should_delete_projects
+    @request.session[:user_id] = 1 # admin
+    assert_difference 'Project.count', -2 do
+      delete :bulk_destroy, params: { ids: [2, 6], confirm: 'Yes' }
+    end
+    assert_equal 0, Project.where(id: [2, 6]).count
+    assert_redirected_to '/admin/projects'
   end
 
   def test_archive

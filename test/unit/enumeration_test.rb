@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class EnumerationTest < ActiveSupport::TestCase
   fixtures :enumerations, :issues, :custom_fields, :custom_values
@@ -178,5 +178,11 @@ class EnumerationTest < ActiveSupport::TestCase
 
     override.destroy
     assert_equal [1, 2, 3], [a, b, c].map(&:reload).map(&:position)
+  end
+
+  def test_spaceship_operator_with_incomparable_value_should_return_nil
+    e = Enumeration.first
+    assert_nil e <=> nil
+    assert_nil e <=> 'foo'
   end
 end

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
   tests RepositoriesController
@@ -589,9 +589,14 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
 
       # Line 23, changeset 2f9c0091
       assert_select 'tr' do
+        prev_blame, path = '4a79347ea4b7184938d9bbea0fd421a6079f71bb', 'sources/watchers_controller.rb'
         assert_select 'th.line-num a[data-txt=?]', '23'
         assert_select 'td.revision', :text => /2f9c0091/
         assert_select 'td.author', :text => 'jsmith'
+        assert_select 'td.previous' do
+          assert_select 'a.icon-history[href=?]',
+                        "/projects/subproject1/repository/#{@repository.id}/revisions/#{prev_blame}/annotate/#{path}"
+        end
         assert_select 'td', :text => /remove_watcher/
       end
     end
@@ -810,14 +815,6 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
       @project.reload
       assert_nil @project.repository
     end
-
-    private
-
-    def puts_pass_on_not_utf8
-      puts "TODO: This test fails " +
-           "when Encoding.default_external is not UTF-8. " +
-           "Current value is '#{Encoding.default_external.to_s}'"
-    end
   else
     puts "Git test repository NOT FOUND. Skipping functional tests !!!"
     def test_fake; assert true end
@@ -830,5 +827,11 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
     ActionController::Base.perform_caching = true
     yield
     ActionController::Base.perform_caching = before
+  end
+
+  def puts_pass_on_not_utf8
+    puts "TODO: This test fails " +
+         "when Encoding.default_external is not UTF-8. " +
+         "Current value is '#{Encoding.default_external.to_s}'"
   end
 end

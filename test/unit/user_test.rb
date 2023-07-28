@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class UserTest < ActiveSupport::TestCase
   fixtures :users, :email_addresses, :members, :projects, :roles, :member_roles, :auth_sources,
@@ -129,7 +129,7 @@ class UserTest < ActiveSupport::TestCase
   def test_login_length_validation
     user = User.new(:firstname => "new", :lastname => "user", :mail => "newuser@somenet.foo")
     user.login = "x" * (User::LOGIN_LENGTH_LIMIT+1)
-    assert !user.valid?
+    assert user.invalid?
 
     user.login = "x" * (User::LOGIN_LENGTH_LIMIT)
     assert user.valid?
@@ -1094,8 +1094,16 @@ class UserTest < ActiveSupport::TestCase
   def test_random_password
     u = User.new
     u.random_password
-    assert !u.password.blank?
-    assert !u.password_confirmation.blank?
+    assert u.password.present?
+    assert u.password_confirmation.present?
+  end
+
+  def test_random_password_include_required_characters
+    with_settings :password_required_char_classes => Setting::PASSWORD_CHAR_CLASSES.keys do
+      u = User.new(:firstname => "new", :lastname => "user", :login => "random", :mail => "random@somnet.foo")
+      u.random_password
+      assert u.valid?
+    end
   end
 
   def test_random_password_include_required_characters
@@ -1301,7 +1309,7 @@ class UserTest < ActiveSupport::TestCase
 
     user.reload
     # Salt added
-    assert !user.salt.blank?
+    assert user.salt.present?
     # Password still valid
     assert user.check_password?("unsalted")
     assert_equal user, User.try_to_login(user.login, "unsalted")
