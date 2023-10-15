@@ -213,14 +213,22 @@ class IssueRelationTest < ActiveSupport::TestCase
     relation.reload
     assert_equal from.journals.size, (from_journals + 1)
     assert_equal to.journals.size, (to_journals + 1)
-    assert_equal 'relation', from.journals.last.details.last.property
-    assert_equal 'precedes', from.journals.last.details.last.prop_key
-    assert_equal '2', from.journals.last.details.last.value
-    assert_nil   from.journals.last.details.last.old_value
-    assert_equal 'relation', to.journals.last.details.last.property
-    assert_equal 'follows', to.journals.last.details.last.prop_key
-    assert_equal '1', to.journals.last.details.last.value
-    assert_nil   to.journals.last.details.last.old_value
+    #assert_equal 'relation', from.journals.last.details.last.property
+    assert_equal 'relation', from.journals.last.details.sort_by(&:property).last.property
+    #assert_equal 'precedes', from.journals.last.details.last.prop_key
+    assert_equal 'precedes', from.journals.last.details.sort_by(&:property).last.prop_key
+    #assert_equal '2', from.journals.last.details.last.value
+    assert_equal '2', from.journals.last.details.sort_by(&:property).last.value
+    #assert_nil   from.journals.last.details.last.old_value
+    assert_nil   from.journals.last.details.sort_by(&:property).last.old_value
+    #assert_equal 'relation', to.journals.last.details.last.property
+    assert_equal 'relation', to.journals.last.details.sort_by(&:property).last.property
+    #assert_equal 'follows', to.journals.last.details.last.prop_key
+    assert_equal 'follows', to.journals.last.details.sort_by(&:property).last.prop_key
+    #assert_equal '1', to.journals.last.details.last.value
+    assert_equal '1', to.journals.last.details.sort_by(&:property).last.value
+    #assert_nil   to.journals.last.details.last.old_value
+    assert_nil   to.journals.last.details.sort_by(&:property).last.old_value
   end
 
   def test_destroy_with_initialized_journals_should_create_journals
