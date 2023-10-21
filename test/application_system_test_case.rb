@@ -18,7 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 require File.expand_path('../test_helper', __FILE__)
-require 'webdrivers/chromedriver'
+#require 'webdrivers/chromedriver'
+require 'webdrivers/chrome_finder' # redmine_testsuite
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   DOWNLOADS_PATH = File.expand_path(File.join(Rails.root, 'tmp', 'downloads'))
@@ -38,6 +39,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
                   'goog:chromeOptions' => {
                     'args' => GOOGLE_CHROME_OPTS_ARGS,
                     'prefs' => {
+                      'intl.accept_languages' => 'en', # redmine_testsuites
                       'download.default_directory' => DOWNLOADS_PATH.gsub(File::SEPARATOR, File::ALT_SEPARATOR || File::SEPARATOR),
                       'download.prompt_for_download' => false,
                       'plugins.plugins_disabled' => ["Chrome PDF Viewer"]
