@@ -3885,7 +3885,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
 
     assert_select 'div#trackers_description' do
-      assert_select 'h3', :text => 'Trackers description', :count => 1
+      #assert_select 'h3', :text => 'Trackers description', :count => 1
+      assert_select 'h3', :text => I18n.t(:label_trackers_description), :count => 1
       # only Bug and Feature have descriptions
       assert_select 'dt', 2
       assert_select 'dt', :text => 'Bug', :count => 1

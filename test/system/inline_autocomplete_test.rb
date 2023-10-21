@@ -29,7 +29,8 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
 
   # redmine_testsuite
   def teardown
-    click_link('Sign out', match: :first)
+    click_link(I18n.t(:label_logout), match: :first)
+    loop until page.has_text? (I18n.t(:label_register))
   end
   
   def test_inline_autocomplete_for_issues
@@ -201,6 +202,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
 
     within('.tribute-container') do
       assert page.has_text? 'Dave Lopper'
+      loop until page.evaluate_script('jQuery.active').zero? # redmine_testsuites
       first('li').click
     end
 
