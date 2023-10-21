@@ -48,8 +48,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     assert_kind_of Issue, issue
 
     # check redirection
-    #find 'div#flash_notice', :visible => true, :text => "Issue \##{issue.id} created."
-    find 'div#flash_notice', :visible => true, :text => "#{I18n.t(:field_issue)} \##{issue.id} created."
+    find 'div#flash_notice', :visible => true, :text => "Issue ##{issue.id} created."
     assert_equal issue_path(:id => issue), current_path
 
     # check issue attributes
@@ -265,7 +264,6 @@ class IssuesSystemTest < ApplicationSystemTestCase
   end
 
   def test_update_issue_with_form_update_should_keep_newly_added_attachments
-    attachments = Issue.find(2).attachments.count # redmine_testsuites
     set_tmp_attachments_directory
     log_user('jsmith', 'jsmith')
 
@@ -282,8 +280,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     click_on 'Submit'
 
-    #assert_equal 1, Issue.find(2).attachments.count
-    assert_equal attachments+1, Issue.find(2).attachments.count
+    assert_equal 1, Issue.find(2).attachments.count
   end
 
   test "removing issue shows confirm dialog" do
@@ -360,10 +357,6 @@ class IssuesSystemTest < ApplicationSystemTestCase
     visit '/issues/1'
     assert page.has_css?('#content .contextual .issue-1-watcher.icon-fav-off')
     # add watcher 'jsmith' from sidebar
-    if Redmine::Plugin.installed?(:sidebar_hide)
-        page.execute_script("setSideBarVisible()")
-        page.execute_script("setState('visible')")
-    end
     page.find('#watchers .contextual a', :text => 'Add').click
     page.find('#users_for_watcher label', :text => 'John Smith').click
     page.find('#new-watcher-form p.buttons input[type=submit]').click
@@ -413,8 +406,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     find('tr#issue-4 input[type=checkbox]').click
     find('tr#issue-1 td.updated_on').right_click
     within('#context-menu') do
-      #click_link 'Status'
-      click_link I18n.t(:field_status)
+      click_link 'Status'
       click_link 'Closed'
     end
     assert page.has_css?('#flash_notice')
@@ -467,7 +459,6 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     page.find('#issue_project_id').select('OnlineStore')
     # wait for ajax response
-    loop until page.evaluate_script('jQuery.active').zero? #redmine_testsuites
     assert page.has_select?('issue_project_id', selected: 'OnlineStore')
 
     submit_buttons = page.all('input[type=submit]')
@@ -532,7 +523,6 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     page.find('#issue_project_id').select('OnlineStore')
     # wait for ajax response
-    loop until page.evaluate_script('jQuery.active').zero? #redmine_testsuites
     assert page.has_select?('issue_project_id', selected: 'OnlineStore')
 
     submit_buttons = page.all('input[type=submit]')
@@ -619,8 +609,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     visit '/issues/1'
     page.driver.execute_script('$.fx.off = true;')
     page.first(:link, 'Edit').click
-    #page.click_link('View all trackers description')
-    page.click_link(I18n.t :label_open_trackers_description)
+    page.click_link('View all trackers description')
     assert page.has_css?('#trackers_description')
     within('#trackers_description') do
       click_link('Feature')

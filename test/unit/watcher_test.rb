@@ -110,7 +110,9 @@ class WatcherTest < ActiveSupport::TestCase
   end
 
   def test_watcher_user_ids_should_make_ids_uniq
-    issue = Issue.new(:project => Project.find(1), :tracker_id => 1, :subject => "test", :author => User.find(2))
+    author = User.find(2)
+    author.pref.auto_watch_on = []
+    issue = Issue.new(:project => Project.find(1), :tracker_id => 1, :subject => "test", :author => author)
     issue.watcher_user_ids = ['1', '3', '1']
     issue.save!
     assert_equal 2, issue.watchers.count
@@ -126,11 +128,7 @@ class WatcherTest < ActiveSupport::TestCase
 
   def test_addable_watcher_users_should_not_include_user_that_cannot_view_the_object
     issue = Issue.new(:project => Project.find(1), :is_private => true)
-    if Redmine::Plugin.installed? :redmine_extended_watchers
-      # plugin allows to add any user as a watcher, then the issue becomes visible to it
-      assert_not_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
-    else
-      assert_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}    end
+    assert_nil issue.addable_watcher_users.detect {|user| user.is_a?(User) && !issue.visible?(user)}
   end
 
   def test_any_watched_should_return_false_if_no_object_is_watched

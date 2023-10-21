@@ -204,6 +204,18 @@ class MailerTest < ActiveSupport::TestCase
     end
   end
 
+  def test_thumbnail_macro_in_email
+    set_tmp_attachments_directory
+    issue = Issue.generate!(:description => '{{thumbnail(image.png)}}')
+    issue.attachments << Attachment.new(:file => mock_file_with_options(:original_filename => 'image.png'), :author => User.find(1))
+    issue.save!
+
+    assert Mailer.deliver_issue_add(issue)
+    assert_select_email do
+      assert_select 'img[alt="image.png"]'
+    end
+  end
+
   def test_email_headers
     with_settings :mail_from => 'Redmine <redmine@example.net>' do
       issue = Issue.find(1)
@@ -423,6 +435,17 @@ class MailerTest < ActiveSupport::TestCase
         assert_match /^redmine\.issue-3\.20060719190727\.1@example\.net/, Mailer.token_for(issue, user)
       end
     end
+  end
+
+  def test_timestamp_in_message_id_should_be_utc
+    zone_was = Time.zone
+    issue = Issue.find(3)
+    user = User.find(1)
+    %w(UTC Paris Tokyo).each do |zone|
+      Time.use_zone(zone) do
+        assert_match /^redmine\.issue-3\.20060719190727\.1@example\.net/, Mailer.token_for(issue, user)
+      end
+    end
   ensure #redmine_testsuites
     Time.zone = zone_was
   end
@@ -494,6 +517,19 @@ class MailerTest < ActiveSupport::TestCase
     assert_include User.find(1).mail, recipients
   end
 
+  def test_issue_add_should_notify_mentioned_users_in_issue_description
+    User.find(1).mail_notification = 'only_my_events'
+
+    issue = Issue.generate!(project_id: 1, description: 'Hello @dlopper and @admin.')
+
+    assert Mailer.deliver_issue_add(issue)
+    # @jsmith and @dlopper are members of the project
+    # admin is mentioned
+    # @dlopper won't receive duplicated notifications
+    assert_equal 3, ActionMailer::Base.deliveries.size
+    assert_include User.find(1).mail, recipients
+  end
+
   def test_issue_add_should_include_enabled_fields
     issue = Issue.find(2)
     assert Mailer.deliver_issue_add(issue)
@@ -543,8 +579,7 @@ class MailerTest < ActiveSupport::TestCase
 
     mail = last_email
     assert_select_email do
-      #assert_select 'span.badge.badge-status-open', text: 'open'
-      assert_select 'span.badge.badge-status-open', text: I18n.t(:label_open_issues)
+      assert_select 'span.badge.badge-status-open', text: 'open'
     end
   end
 
@@ -684,10 +719,8 @@ class MailerTest < ActiveSupport::TestCase
 
       mail = last_email
       assert_mail_body_match /^\* Author: /, mail
-      #assert_mail_body_match /^\* Status: /, mail
-      assert_mail_body_match /^\* #{I18n.t :field_status}: /, mail
-      #assert_mail_body_match /^\* Priority: /, mail
-      assert_mail_body_match /^\* #{I18n.t :field_priority}: /, mail
+      assert_mail_body_match /^\* Status: /, mail
+      assert_mail_body_match /^\* Priority: /, mail
       assert_mail_body_match /^\* Parent task: /, mail
 
       assert_mail_body_no_match /^\* Assignee: /, mail
@@ -834,8 +867,7 @@ class MailerTest < ActiveSupport::TestCase
     mail = last_email
     assert mail.to.include?('dlopper@somenet.foo')
     assert_mail_body_match 'Bug #3: Error 281 when updating a recipe (5 days late)', mail
-    #assert_mail_body_match 'View all issues (2 open)', mail
-    assert_mail_body_match "#{I18n.t :label_issue_view_all} (2 #{I18n.t :label_open_issues_plural})", mail
+    assert_mail_body_match 'View all issues (2 open)', mail
     url =
       "http://localhost:3000/issues?f%5B%5D=status_id&f%5B%5D=assigned_to_id" \
         "&f%5B%5D=due_date&op%5Bassigned_to_id%5D=%3D&op%5Bdue_date%5D=%3Ct%2B&op%5B" \
@@ -845,17 +877,12 @@ class MailerTest < ActiveSupport::TestCase
       assert_select 'a[href=?]',
                     url,
                     :text => '1'
-      #assert_select 'a[href=?]',
-      #              'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
-      #              :text => 'View all issues'
       assert_select 'a[href=?]',
                     'http://localhost:3000/issues?assigned_to_id=me&set_filter=1&sort=due_date%3Aasc',
-                    :text => "#{I18n.t :label_issue_view_all}"
-      #assert_select '/p:nth-last-of-type(1)', :text => 'View all issues (2 open)'
-      assert_select '/p:nth-last-of-type(1)', :text => "#{I18n.t :label_issue_view_all} (2 #{I18n.t :label_open_issues_plural})"
+                    :text => 'View all issues'
+      assert_select '/p:nth-last-of-type(1)', :text => 'View all issues (2 open)'
     end
-    #assert_equal "1 issue(s) due in the next #{days} days", mail.subject
-    assert_equal "#{I18n.t :mail_subject_reminder, {count: 1, days: days}}", mail.subject
+    assert_equal "1 issue(s) due in the next #{days} days", mail.subject
   end
 
   def test_reminders_language_auto
@@ -926,14 +953,12 @@ class MailerTest < ActiveSupport::TestCase
       assert_equal %w(dlopper@somenet.foo jsmith@somenet.foo), recipients
       ActionMailer::Base.deliveries.each do |mail|
         assert_mail_body_match(
-          #'1 issue(s) that are assigned to you are due in the next 7 days::',
-          "#{I18n.t :mail_body_reminder, count: 1, days: 7}",
+          '1 issue(s) that are assigned to you are due in the next 7 days::',
           mail
         )
         assert_mail_body_match 'Assigned to group (Due in 5 days)', mail
         assert_mail_body_match(
-          #"View all issues (#{mail.bcc.include?('dlopper@somenet.foo') ? 3 : 2} open)",
-          "#{I18n.t :label_issue_view_all} (#{mail.to.include?('dlopper@somenet.foo') ? 3 : 2} #{I18n.t :label_open_issues_plural})",
+          "View all issues (#{mail.to.include?('dlopper@somenet.foo') ? 3 : 2} open)",
           mail
         )
       end

@@ -289,10 +289,8 @@ class RolesControllerTest < Redmine::ControllerTest
     assert_equal 'Module,Permissions,Manager,Developer,Reporter,Non member,Anonymous', lines.first
     # Details
     to_test = {
-      #:add_project => '"",Create project,Yes,No,No,No,""',
-      :add_project => '"",'+I18n.t(:permission_add_project)+',Yes,No,No,No,""',
-      #:add_issue_notes => 'Issue tracking,Add notes,Yes,Yes,Yes,Yes,Yes',
-      :add_issue_notes => "#{I18n.t(:project_module_issue_tracking)},#{I18n.t(:permission_add_issue_notes)},Yes,Yes,Yes,Yes,Yes",
+      :add_project => '"",Create project,Yes,No,No,No,""',
+      :add_issue_notes => 'Issue tracking,Add notes,Yes,Yes,Yes,Yes,Yes',
       :manage_wiki => 'Wiki,Manage wiki,Yes,No,No,"",""'
     }
     to_test.each do |name, expected|

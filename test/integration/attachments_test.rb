@@ -175,7 +175,8 @@ class AttachmentsTest < Redmine::IntegrationTest
   def test_upload_filename_with_plus
     log_user('jsmith', 'jsmith')
     filename = 'a+b.txt'
-    token = ajax_upload(filename, 'File content')
+    file_content = 'File content'
+    token = ajax_upload(filename, file_content)
     assert_difference 'Issue.count' do
       post(
         '/projects/ecookbook/issues',
@@ -193,7 +194,7 @@ class AttachmentsTest < Redmine::IntegrationTest
     attachment = issue.attachments.first
     assert_equal filename, attachment.filename
     assert_equal '', attachment.description
-    assert_equal 'File content'.length, attachment.filesize
+    assert_equal file_content.length, attachment.filesize
   end
 
   def test_upload_as_js_and_destroy

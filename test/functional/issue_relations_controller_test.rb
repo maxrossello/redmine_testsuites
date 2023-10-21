@@ -300,6 +300,86 @@ class IssueRelationsControllerTest < Redmine::ControllerTest
     assert_include "#{I18n.t(:field_issue_to)} #{CGI::escapeHTML(I18n.t('activerecord.errors.messages.not_same_project'))}", response.body
   end
 
+  def test_create_duplicated_follows_relations_should_not_raise_exception
+    IssueRelation.create(
+      :issue_from => Issue.find(1), :issue_to => Issue.find(2),
+      :relation_type => IssueRelation::TYPE_PRECEDES
+    )
+
+    assert_no_difference 'IssueRelation.count' do
+      post(
+        :create,
+        :params => {
+          :issue_id => 2,
+          :relation => {
+            :issue_to_id => 1,
+            :relation_type => 'follows',
+            :delay => ''
+          }
+        },
+        :xhr => true
+      )
+    end
+
+    assert_response :success
+    assert_include 'has already been taken', response.body
+  end
+
+  def test_bulk_create_with_multiple_issue_to_id_issues
+    assert_difference 'IssueRelation.count', +3 do
+      post(
+        :create,
+        :params => {
+          :issue_id => 1,
+          :relation => {
+            # js autocomplete adds a comma at the end
+            # issue to id should accept both id and hash with id
+            :issue_to_id => '2,3,#7, ',
+            :relation_type => 'relates',
+            :delay => ''
+          }
+        },
+        :xhr => true
+      )
+    end
+
+    assert_response :success
+    relations = IssueRelation.where(:issue_from_id => 1, :issue_to_id => [2, 3, 7])
+    assert_equal 3, relations.count
+    # all relations types should be 'relates'
+    relations.map {|r| assert_equal 'relates', r.relation_type}
+
+    # no error messages should be returned in the response
+    assert_not_include 'id=\"errorExplanation\"', response.body
+  end
+
+  def test_bulk_create_should_show_errors
+    with_settings :cross_project_issue_relations => '0' do
+      assert_difference 'IssueRelation.count', +3 do
+        post(
+          :create,
+          :params => {
+            :issue_id => 1,
+            :relation => {
+              :issue_to_id => '1,2,3,4,5,7',
+              :relation_type => 'relates',
+              :delay => ''
+            }
+          },
+          :xhr => true
+        )
+      end
+    end
+
+    assert_response :success
+    assert_equal 'text/javascript', response.media_type
+    # issue #1 is invalid
+    assert_include 'Related issue is invalid: #1', response.body
+    # issues #4 and #5 can't be related by default
+    assert_include 'Related issue cannot be blank', response.body
+    assert_include 'Related issue doesn&#39;t belong to the same project', response.body
+  end
+
   def test_destroy
     assert_difference 'IssueRelation.count', -1 do
       delete(:destroy, :params => {:id => '2'})

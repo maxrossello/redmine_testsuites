@@ -403,8 +403,7 @@ class ApplicationHelperTest < Redmine::HelperTest
         'Bug #3: Error 281 when updating a recipe',
         {:controller => 'issues', :action => 'show', :id => 3},
         :class => Issue.find(3).css_classes,
-          #:title => 'Status: New'
-          :title => "#{I18n.t :field_status}: New"
+        :title => 'Status: New'
       )
     note_link =
       link_to(
@@ -420,8 +419,7 @@ class ApplicationHelperTest < Redmine::HelperTest
         {:controller => 'issues', :action => 'show',
          :id => 3, :anchor => 'note-14'},
         :class => Issue.find(3).css_classes,
-          #:title => 'Status: New'
-          :title => "#{I18n.t :field_status}: New"
+        :title => 'Status: New'
       )
     note_link2 =
       link_to(
@@ -437,8 +435,7 @@ class ApplicationHelperTest < Redmine::HelperTest
         {:controller => 'issues', :action => 'show',
          :id => 3, :anchor => 'note-14'},
         :class => Issue.find(3).css_classes,
-          #:title => 'Status: New'
-          :title => "#{I18n.t :field_status}: New"
+        :title => 'Status: New'
       )
     revision_link =
       link_to(
@@ -1299,12 +1296,13 @@ class ApplicationHelperTest < Redmine::HelperTest
   def test_html_tags
     to_test = {
       "<div>content</div>" => "<p>&lt;div&gt;content&lt;/div&gt;</p>",
-      "<div class=\"bold\">content</div>" => "<p>&lt;div class=\"bold\"&gt;content&lt;/div&gt;</p>",
+      "<div class=\"bold\">content</div>" => "<p>&lt;div class=&quot;bold&quot;&gt;content&lt;/div&gt;</p>",
       "<script>some script;</script>" => "<p>&lt;script&gt;some script;&lt;/script&gt;</p>",
       # do not escape pre/code tags
       "<pre>\nline 1\nline2</pre>" => "<pre>\nline 1\nline2</pre>",
       "<pre><code>\nline 1\nline2</code></pre>" => "<pre><code>\nline 1\nline2</code></pre>",
-      "<pre><div>content</div></pre>" => "<pre>&lt;div&gt;content&lt;/div&gt;</pre>",
+      "<pre><div class=\"foo\">content</div></pre>" => "<pre>&lt;div class=\"foo\"&gt;content&lt;/div&gt;</pre>",
+      "<pre><div class=\"<foo\">content</div></pre>" => "<pre>&lt;div class=\"&lt;foo\"&gt;content&lt;/div&gt;</pre>",
       "<!-- opening comment" => "<p>&lt;!-- opening comment</p>",
       # remove attributes including class
       "<pre class='foo'>some text</pre>" => "<pre>some text</pre>",
@@ -2179,6 +2177,72 @@ class ApplicationHelperTest < Redmine::HelperTest
                  html_hours('0:45')
     assert_equal '<span class="hours hours-int">0</span><span class="hours hours-dec">.75</span>',
                  html_hours('0.75')
+  end
+
+  def test_form_for_includes_name_attribute
+    assert_match(/name="new_issue-[a-z0-9]{8}"/, form_for(Issue.new){})
+  end
+
+  def test_labelled_form_for_includes_name_attribute
+    assert_match(/name="new_issue-[a-z0-9]{8}"/, labelled_form_for(Issue.new){})
+  end
+
+  def test_redner_if_exist_should_be_render_partial
+    controller.prepend_view_path "test/fixtures/views"
+    assert_equal "partial html\n", render_if_exist(:partial => 'partial')
+  end
+
+  def test_redner_if_exist_should_be_render_nil
+    controller.prepend_view_path "test/fixtures/views"
+    assert_nil render_if_exist(:partial => 'non_exist_partial')
+  end
+
+  def test_export_csv_encoding_select_tag_should_return_nil_when_general_csv_encoding_is_UTF8
+    with_locale 'az' do
+      assert_equal l(:general_csv_encoding), 'UTF-8'
+      assert_nil export_csv_encoding_select_tag
+    end
+  end
+
+  def test_export_csv_encoding_select_tag_should_have_two_option_when_general_csv_encoding_is_not_UTF8
+    with_locale 'en' do
+      assert_not_equal l(:general_csv_encoding), 'UTF-8'
+      result = export_csv_encoding_select_tag
+      assert_select_in result,
+                       "option[selected='selected'][value=#{l(:general_csv_encoding)}]",
+                       :text => l(:general_csv_encoding)
+      assert_select_in result, "option[value='UTF-8']", :text => 'UTF-8'
+    end
+  end
+
+  def test_time_tag
+    user = User.find(1)
+    user.pref.update(time_zone: 'UTC')
+    User.current = user
+
+    assert_nil time_tag(nil)
+    with_locale 'en' do
+      travel_to Time.zone.parse('2022-12-30T01:00:00Z') do
+        assert_equal "<abbr title=\"12/28/2022 01:00 AM\">2 days</abbr>", time_tag(2.days.ago)
+
+        @project = Project.find(1)
+        assert_equal "<a title=\"12/28/2022 01:00 AM\" href=\"/projects/ecookbook/activity?from=2022-12-28\">2 days</a>", time_tag(2.days.ago)
+      end
+    end
+  end
+
+  # TODO: Remove this test when Redcarpet-based Markdown formatter is removed
+  def test_markdown_formatter
+    [
+      ['markdown', 'markdown'],
+      ['common_mark', 'common_mark'],
+      ['textile', 'common_mark'],
+      ['', 'common_mark']
+    ].each do |text_formatting, expected|
+      with_settings text_formatting: text_formatting do
+        assert_equal expected, markdown_formatter
+      end
+    end
   end
 
   def test_form_for_includes_name_attribute

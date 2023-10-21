@@ -115,8 +115,7 @@ class VersionsControllerTest < Redmine::ControllerTest
 
       assert_select 'table.related-issues' do
         assert_select 'tr.issue', :count => 2 do
-          #assert_select 'img.gravatar[title=?]', 'Assignee: John Smith', :count => 1
-          assert_select 'img.gravatar[title=?]', "#{I18n.t :field_assigned_to}: John Smith", :count => 1
+          assert_select 'img.gravatar[title=?]', 'Assignee: John Smith', :count => 1
         end
       end
     end
@@ -142,8 +141,7 @@ class VersionsControllerTest < Redmine::ControllerTest
 
       assert_select 'table.related-issues' do
         assert_select 'tr.issue td.assigned_to', :count => 2 do
-          #assert_select 'img.gravatar[title=?]', 'Assignee: Dave Lopper', :count => 1
-          assert_select 'img.gravatar[title=?]', "#{I18n.t :field_assigned_to}: Dave Lopper", :count => 1
+          assert_select 'img.gravatar[title=?]', 'Assignee: Dave Lopper', :count => 1
         end
       end
     end
@@ -211,8 +209,7 @@ class VersionsControllerTest < Redmine::ControllerTest
 
       assert_select 'div.version-overview' do
         assert_select 'table.progress-98' do
-          #assert_select 'td[class=closed][title=?]', 'closed: 98%'
-          assert_select 'td[class=closed][title=?]', "#{I18n.t :label_closed_issues_plural}: 98%"
+          assert_select 'td[class=closed][title=?]', 'closed: 98%'
           assert_select 'td[class=done][title=?]', '% Done: 99%'
         end
         assert_select 'p[class=percent]', :text => '99%'
@@ -225,8 +222,7 @@ class VersionsControllerTest < Redmine::ControllerTest
     get :show, :params => {:id => 3}
 
     assert_response :success
-    #assert_select 'a.icon.icon-add', :text => 'New issue'
-    assert_select 'a.icon.icon-add', :text => I18n.t(:label_issue_new)
+    assert_select 'a.icon.icon-add', :text => 'New issue'
   end
 
   def test_show_with_text_format

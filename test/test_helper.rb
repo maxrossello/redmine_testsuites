@@ -27,7 +27,7 @@ end
 $redmine_test_ldap_server = ENV['REDMINE_TEST_LDAP_SERVER'] || '127.0.0.1'
 
 ENV["RAILS_ENV"] = "test"
-require_relative '../../../config/environment'
+require_relative '../config/environment'
 require 'rails/test_help'
 
 require_relative 'object_helpers'
@@ -41,9 +41,6 @@ Redmine::SudoMode.disable!
 
 $redmine_tmp_attachments_directory = "#{Rails.root}/tmp/test/attachments"
 FileUtils.mkdir_p $redmine_tmp_attachments_directory
-
-require "minitest/reporters"
-Minitest::Reporters.use! [Minitest::Reporters::ProgressReporter.new]
 
 $redmine_tmp_pdf_directory = "#{Rails.root}/tmp/test/pdf"
 FileUtils.mkdir_p $redmine_tmp_pdf_directory
@@ -344,7 +341,7 @@ module Redmine
   class ControllerTest < ActionController::TestCase
     # Returns the issues that are displayed in the list in the same order
     def issues_in_list
-      ids = css_select('tr.issue td.id').map(&:text).map(&:to_i)
+      ids = css_select('tr.issue td.id').map {|e| e.text.to_i}
       Issue.where(:id => ids).sort_by {|issue| ids.index(issue.id)}
     end
 
@@ -487,9 +484,7 @@ module Redmine
 
         options = arg.slice!(request)
 
-        #API_FORMATS.each do |format|
-        api_formats = %w(json xml).freeze
-        api_formats.each do |format|
+        API_FORMATS.each do |format|
           format_request = request.sub /$/, ".#{format}"
           super options.merge(format_request => arg[request], :format => format)
         end

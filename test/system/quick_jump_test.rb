@@ -30,8 +30,7 @@ class QuickJumpTest < ApplicationSystemTestCase
     visit '/'
 
     within '#header' do
-      #page.first('span', :text => 'Jump to a project...').click
-      page.first('span', :text => I18n.t(:label_jump_to_a_project)).click
+      page.first('span', :text => 'Jump to a project...').click
       click_link('eCookbook', match: :first)
     end
     assert_current_path '/projects/ecookbook?jump=welcome'
@@ -42,8 +41,7 @@ class QuickJumpTest < ApplicationSystemTestCase
     visit '/issues'
 
     within '#header' do
-      #page.first('span', :text => 'Jump to a project...').click
-      page.first('span', :text => I18n.t(:label_jump_to_a_project)).click
+      page.first('span', :text => 'Jump to a project...').click
       click_link('eCookbook', match: :first)
       assert_current_path '/projects/ecookbook/issues'
 

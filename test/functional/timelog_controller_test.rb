@@ -731,6 +731,41 @@ class TimelogControllerTest < Redmine::ControllerTest
     assert_equal 6.0, entry.hours
   end
 
+  def test_update_should_fail_when_changing_user_without_permission
+    Role.find_by_name('Manager').remove_permission! :log_time_for_other_users
+    @request.session[:user_id] = 2
+
+    put :update, :params => {
+      :id => 3,
+      :time_entry => {
+        :user_id => '3'
+      }
+    }
+
+    assert_response :success
+    assert_select_error /User is invalid/
+  end
+
+  def test_update_should_allow_updating_existing_entry_logged_on_a_locked_user
+    entry = TimeEntry.generate!(:user_id => 2, :hours => 4, :comments => "Time entry on a future locked user")
+    Role.find_by_name('Manager').add_permission! :log_time_for_other_users
+    @request.session[:user_id] = 2
+
+    put :update, :params => {
+      :id => entry.id,
+      :time_entry => {
+        :hours => '6'
+      }
+    }
+
+    assert_response :redirect
+
+    entry.reload
+    # Ensure user didn't change
+    assert_equal 2, entry.user_id
+    assert_equal 6.0, entry.hours
+  end
+
   def test_get_bulk_edit
     @request.session[:user_id] = 2
 
@@ -1187,7 +1222,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     }
     assert_response :success
     assert_equal(
-      [t2, t1, t3].map(&:id).map(&:to_s),
+      [t2, t1, t3].map {|t| t.id.to_s},
       css_select('input[name="ids[]"]').map {|e| e.attr(:value)}
     )
     get(
@@ -1202,7 +1237,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     )
     assert_response :success
     assert_equal(
-      [t3, t1, t2].map(&:id).map(&:to_s),
+      [t3, t1, t2].map {|t| t.id.to_s},
       css_select('input[name="ids[]"]').map {|e| e.attr(:value)}
     )
   end
@@ -1228,7 +1263,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     ].each do |sort_criteria, expected|
       get :index, :params => params.dup.merge(sort_criteria)
       assert_response :success
-      expected_ids = expected.map(&:id).map(&:to_s)
+      expected_ids = expected.map {|t| t.id.to_s}
       actual_ids = css_select('input[name="ids[]"]').map {|e| e.attr(:value)}
       assert_equal expected_ids, actual_ids
     end
@@ -1265,7 +1300,7 @@ class TimelogControllerTest < Redmine::ControllerTest
       }
     )
     assert_response :success
-    assert_equal [entry].map(&:id).map(&:to_s), css_select('input[name="ids[]"]').map {|e| e.attr(:value)}
+    assert_equal [entry.id.to_s], css_select('input[name="ids[]"]').map {|e| e.attr(:value)}
   end
 
   def text_index_with_issue_subject_filter
@@ -1344,7 +1379,7 @@ class TimelogControllerTest < Redmine::ControllerTest
       :v => {'issue.tracker_id' => ['2']}
     }
     assert_response :success
-    assert_equal [entry].map(&:id).map(&:to_s), css_select('input[name="ids[]"]').map {|e| e.attr(:value)}
+    assert_equal [entry.id.to_s], css_select('input[name="ids[]"]').map {|e| e.attr(:value)}
   end
 
   def test_index_with_issue_tracker_column
@@ -1528,7 +1563,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     }
     assert_response :success
     assert_equal(
-      [entry].map(&:id).map(&:to_s),
+      [entry.id.to_s],
       css_select('input[name="ids[]"]').map {|e| e.attr(:value)}
     )
   end
