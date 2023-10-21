@@ -2969,7 +2969,7 @@ class IssuesControllerTest < Redmine::ControllerTest
 
   def test_show_export_to_pdf
     issue = Issue.find(3)
-    assert issue.relations.select{|r| r.other_issue(issue).visible?}.present?
+    assert issue.relations.any? {|r| r.other_issue(issue).visible?}
     get(
       :show,
       :params => {
@@ -3163,8 +3163,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#history' do
       assert_select 'div.tabs ul a', 3
       assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      #assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
-      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => I18n.t(:label_issue_history_notes)
+      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
       assert_select 'div.tabs a[id=?]', 'tab-properties', :text => 'Property changes'
     end
   end
@@ -3912,6 +3911,49 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
 
     assert_select 'div#trackers_description', 0
+  end
+
+  def test_get_new_should_show_issue_status_description
+    @request.session[:user_id] = 2
+    get :new, :params => {
+      :project_id => 1,
+      :issue => {
+        :status_id => 2
+      }
+    }
+    assert_response :success
+
+    assert_select 'form#issue-form' do
+      assert_select 'a[title=?]', 'View all issue statuses description', :text => 'View all issue statuses description'
+      assert_select 'select[name=?][title=?]', 'issue[status_id]', 'Description for Assigned issue status'
+    end
+
+    assert_select 'div#issue_statuses_description' do
+      assert_select 'h3', :text => 'Issue statuses description', :count => 1
+      assert_select 'dt', 2
+      assert_select 'dt', :text => 'New', :count => 1
+      assert_select 'dd', :text => 'Description for New issue status', :count => 1
+    end
+  end
+
+  def test_get_new_should_not_show_issue_status_description
+    IssueStatus.update_all(:description => '')
+
+    @request.session[:user_id] = 2
+    get :new, :params => {
+      :project_id => 1,
+      :issue => {
+        :status_id => 2
+      }
+    }
+    assert_response :success
+
+    assert_select 'form#issue-form' do
+      assert_select 'a[title=?]', 'View all issue statuses description', 0
+      assert_select 'select[name=?][title=?]', 'issue[status_id]', ''
+    end
+
+    assert_select 'div#issue_statuses_description', 0
   end
 
   def test_get_new_should_show_create_and_follow_button_when_issue_is_subtask_and_back_url_is_present

@@ -111,7 +111,7 @@ class IssueImportTest < ActiveSupport::TestCase
     import.save!
 
     issues = new_records(Issue, 3) {import.run}
-    assert_equal ['New', 'New', 'Assigned'], issues.map(&:status).map(&:name)
+    assert_equal ['New', 'New', 'Assigned'], issues.map {|x| x.status.name}
   end
 
   def test_parent_should_be_set
@@ -317,7 +317,7 @@ class IssueImportTest < ActiveSupport::TestCase
 
   def test_list_custom_field_should_be_set
     field = CustomField.find(1)
-    field.tracker_ids = Tracker.all.ids
+    field.tracker_ids = Tracker.ids
     field.save!
     import = generate_import_with_mapping
     import.mapping["cf_1"] = '8'
@@ -331,7 +331,7 @@ class IssueImportTest < ActiveSupport::TestCase
 
   def test_multiple_list_custom_field_should_be_set
     field = CustomField.find(1)
-    field.tracker_ids = Tracker.all.ids
+    field.tracker_ids = Tracker.ids
     field.multiple = true
     field.save!
     import = generate_import_with_mapping

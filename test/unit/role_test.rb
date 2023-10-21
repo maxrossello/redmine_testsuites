@@ -26,10 +26,6 @@ class RoleTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_sorted_scope
     assert_equal Role.all.sort, Role.sorted.to_a
   end
