@@ -21,7 +21,6 @@ require_relative 'test_helper'
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   DOWNLOADS_PATH = File.expand_path(File.join(Rails.root, 'tmp', 'downloads'))
-  GOOGLE_CHROME_OPTS_ARGS = []
 
   # Allow running Capybara default server on custom IP address and/or port
   Capybara.server_host = ENV['CAPYBARA_SERVER_HOST'] if ENV['CAPYBARA_SERVER_HOST']

@@ -6229,14 +6229,14 @@ class IssuesControllerTest < Redmine::ControllerTest
           :params => {
             :id => 1,
             :issue => {
-            :status_id => 2,
-            :assigned_to_id => 3,
-            :notes => 'Assigned to dlopper'
+              :status_id => 2,
+              :assigned_to_id => 3,
+              :notes => 'Assigned to dlopper'
             },
             :time_entry => {
-            :hours => '',
-            :comments => '',
-            :activity_id => TimeEntryActivity.first
+              :hours => '',
+              :comments => '',
+              :activity_id => TimeEntryActivity.first
             }
           }
           )
@@ -6428,7 +6428,7 @@ class IssuesControllerTest < Redmine::ControllerTest
           :params => {
             :id => 1,
             :issue => {
-            :notes => ''
+              :notes => ''
             },
             :attachments => {
             '1' => {
