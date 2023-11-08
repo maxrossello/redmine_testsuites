@@ -419,7 +419,7 @@ module Redmine
   end
 
   module ApiTest
-    #API_FORMATS = %w(json xml).freeze
+    API_FORMATS = %w(json xml).freeze
 
     # Base class for API tests
     class Base < Redmine::IntegrationTest

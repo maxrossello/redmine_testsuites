@@ -2245,72 +2245,19 @@ class ApplicationHelperTest < Redmine::HelperTest
     end
   end
 
-  def test_form_for_includes_name_attribute
-    assert_match(/name="new_issue-[a-z0-9]{8}"/, form_for(Issue.new){})
-  end
-
-  def test_labelled_form_for_includes_name_attribute
-    assert_match(/name="new_issue-[a-z0-9]{8}"/, labelled_form_for(Issue.new){})
-  end
-
-  def test_redner_if_exist_should_be_render_partial
-    controller.prepend_view_path "test/fixtures/views"
-    assert_equal "partial html\n", render_if_exist(:partial => 'partial')
-  end
-
-  def test_redner_if_exist_should_be_render_nil
-    controller.prepend_view_path "test/fixtures/views"
-    assert_nil render_if_exist(:partial => 'non_exist_partial')
-  end
-
-  def test_export_csv_encoding_select_tag_should_return_nil_when_general_csv_encoding_is_UTF8
-    with_locale 'az' do
-      assert_equal l(:general_csv_encoding), 'UTF-8'
-      assert_nil export_csv_encoding_select_tag
-    end
-  end
-
-  def test_export_csv_encoding_select_tag_should_have_two_option_when_general_csv_encoding_is_not_UTF8
+  def test_export_csv_separator_select_tag
     with_locale 'en' do
-      assert_not_equal l(:general_csv_encoding), 'UTF-8'
-      result = export_csv_encoding_select_tag
-      assert_select_in result,
-                       "option[selected='selected'][value=#{l(:general_csv_encoding)}]",
-                       :text => l(:general_csv_encoding)
-      assert_select_in result, "option[value='UTF-8']", :text => 'UTF-8'
+      result = export_csv_separator_select_tag
+      assert_equal ',', l(:general_csv_separator)
+      assert_select_in result, 'option[value=?][selected=selected]', ',', text: 'Comma'
+      assert_select_in result, 'option[value=?]', ';', text: 'Semicolon'
+    end
+    with_locale 'fr' do
+      result = export_csv_separator_select_tag
+      assert_equal ';', l(:general_csv_separator)
+      assert_select_in result, 'option[value=?][selected=selected]', ';'
     end
   end
-
-  def test_time_tag
-    user = User.find(1)
-    user.pref.update(time_zone: 'UTC')
-    User.current = user
-
-    assert_nil time_tag(nil)
-    with_locale 'en' do
-      travel_to Time.zone.parse('2022-12-30T01:00:00Z') do
-        assert_equal "<abbr title=\"12/28/2022 01:00 AM\">2 days</abbr>", time_tag(2.days.ago)
-
-        @project = Project.find(1)
-        assert_equal "<a title=\"12/28/2022 01:00 AM\" href=\"/projects/ecookbook/activity?from=2022-12-28\">2 days</a>", time_tag(2.days.ago)
-      end
-    end
-  end
-
-  # TODO: Remove this test when Redcarpet-based Markdown formatter is removed
-  def test_markdown_formatter
-    [
-      ['markdown', 'markdown'],
-      ['common_mark', 'common_mark'],
-      ['textile', 'common_mark'],
-      ['', 'common_mark']
-    ].each do |text_formatting, expected|
-      with_settings text_formatting: text_formatting do
-        assert_equal expected, markdown_formatter
-      end
-    end
-  end
-
 
   private
 

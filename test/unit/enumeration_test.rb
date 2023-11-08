@@ -185,10 +185,4 @@ class EnumerationTest < ActiveSupport::TestCase
     assert_nil e <=> nil
     assert_nil e <=> 'foo'
   end
-
-  def test_spaceship_operator_with_incomparable_value_should_return_nil
-    e = Enumeration.first
-    assert_nil e <=> nil
-    assert_nil e <=> 'foo'
-  end
 end

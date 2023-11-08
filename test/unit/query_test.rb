@@ -1266,7 +1266,6 @@ class QueryTest < ActiveSupport::TestCase
 
     query.filters = {"cf_#{cf.id}" => {:operator => '=', :values => ['me']}}
     result = query.issues
-
     assert_equal 1, result.size
     assert_equal issue1, result.first
   end

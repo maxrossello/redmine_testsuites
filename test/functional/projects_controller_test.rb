@@ -1196,8 +1196,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
       delete(:destroy, :params => {:id => 2, :confirm => 'wrong'})
       assert_response :success
     end
-    #assert_select '.warning', :text => /Are you sure you want to delete this project/
-    assert_select '.warning', :text => /#{I18n.t(:text_project_destroy_confirmation)}/
+    assert_select '.warning', :text => /Are you sure you want to delete this project/
   end
 
   def test_destroy_without_confirmation_should_show_confirmation_with_subprojects
