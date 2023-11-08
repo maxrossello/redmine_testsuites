@@ -39,11 +39,6 @@ class MailerTest < ActiveSupport::TestCase
     Setting.default_language = 'en'
     User.current = nil
   end
-  
-  # redmine_testsuites
-  def teardown
-    set_language_if_valid 'en'
-  end
 
   def test_generated_links_in_emails
     with_settings :host_name => 'mydomain.foo', :protocol => 'https' do
@@ -435,8 +430,6 @@ class MailerTest < ActiveSupport::TestCase
         assert_match /^redmine\.issue-3\.20060719190727\.1@example\.net/, Mailer.token_for(issue, user)
       end
     end
-  ensure #redmine_testsuites
-    Time.zone = zone_was
   end
 
   test "#issue_add should notify project members" do
@@ -458,11 +451,7 @@ class MailerTest < ActiveSupport::TestCase
     issue = Issue.find(1)
     Role.find(2).remove_permission!(:view_issues)
     assert Mailer.deliver_issue_add(issue)
-    if Redmine::Plugin.installed?(:redmine_extended_watchers) and issue.watcher_users.include?(User.find(3))
-       assert_include 'dlopper@somenet.foo', recipients
-    else
-       assert_not_include 'dlopper@somenet.foo', recipients
-    end
+    assert_not_include 'dlopper@somenet.foo', recipients
   end
 
   test "#issue_add should notify issue watchers" do
@@ -485,12 +474,7 @@ class MailerTest < ActiveSupport::TestCase
     Watcher.create!(:watchable => issue, :user => user)
     Role.non_member.remove_permission!(:view_issues)
     assert Mailer.deliver_issue_add(issue)
-    if Redmine::Plugin.installed? :redmine_extended_watchers
-      # the plugin provides full watching features, including notifications, also to watchers with no membership
-      assert_include user.mail, recipients
-    else
-      assert_not_include user.mail, recipients
-    end
+    assert_not_include user.mail, recipients
   end
 
   def test_issue_add_should_notify_mentioned_users_in_issue_description
@@ -630,8 +614,7 @@ class MailerTest < ActiveSupport::TestCase
     with_settings :default_language => 'en' do
       Mailer.deliver_issue_edit(journal)
     end
-    #assert_mail_body_match '(Private notes)', last_email
-    assert_mail_body_match "(#{I18n.t :field_private_notes})", last_email
+    assert_mail_body_match '(Private notes)', last_email
   end
 
   def test_issue_edit_with_relation_should_notify_users_who_can_see_the_related_issue

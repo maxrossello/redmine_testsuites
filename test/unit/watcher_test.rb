@@ -234,22 +234,12 @@ class WatcherTest < ActiveSupport::TestCase
 
     Member.delete_all
 
-    if Redmine::Plugin.installed? :redmine_extended_watchers
-      # watching does allow issue visibility, therefore issue watcher is not pruned
-      assert_difference 'Watcher.count', -3 do
-        Watcher.prune(:user => User.find(9))
-      end
-      
-      assert Issue.find(1).watched_by?(user)
-      assert Issue.find(4).watched_by?(user)
-    else 
-      assert_difference 'Watcher.count', -4 do
-        Watcher.prune(:user => User.find(9))
-      end
-
-      assert Issue.find(1).watched_by?(user)
-      assert !Issue.find(4).watched_by?(user)
+    assert_difference 'Watcher.count', -4 do
+      Watcher.prune(:user => User.find(9))
     end
+
+    assert Issue.find(1).watched_by?(user)
+    assert !Issue.find(4).watched_by?(user)
   end
 
   def test_prune_with_project
@@ -257,29 +247,16 @@ class WatcherTest < ActiveSupport::TestCase
     Watcher.new(:watchable => Issue.find(4), :user => User.find(9)).save(:validate => false) # project 2
     Watcher.new(:watchable => Issue.find(6), :user => User.find(9)).save(:validate => false) # project 5
 
-    if Redmine::Plugin.installed? :redmine_extended_watchers
-      # watching does allow issue visibility, therefore issue watcher is not pruned
-      assert Watcher.prune(:project => Project.find(5)) == 0
-      assert Issue.find(4).watched_by?(user)
-      assert Issue.find(6).watched_by?(user)
-    else
-      assert Watcher.prune(:project => Project.find(5)) > 0
-      assert Issue.find(4).watched_by?(user)
-      assert !Issue.find(6).watched_by?(user)
-    end
+    assert Watcher.prune(:project => Project.find(5)) > 0
+    assert Issue.find(4).watched_by?(user)
+    assert !Issue.find(6).watched_by?(user)
   end
 
   def test_prune_all
     user = User.find(9)
     Watcher.new(:watchable => Issue.find(4), :user => User.find(9)).save(:validate => false)
 
-    if Redmine::Plugin.installed? :redmine_extended_watchers
-      # watching does allow issue visibility, therefore issue watcher is not pruned
-      assert Watcher.prune == 0
-      assert Issue.find(4).watched_by?(user)
-    else
-      assert Watcher.prune > 0
-      assert !Issue.find(4).watched_by?(user)
-    end
+    assert Watcher.prune > 0
+    assert !Issue.find(4).watched_by?(user)
   end
 end

@@ -122,9 +122,7 @@ class IssueTest < ActiveSupport::TestCase
     issue = Issue.generate(:start_date => '2013-06-04')
     issue.stubs(:soonest_start).returns(Date.parse('2013-06-10'))
     assert !issue.valid?
-    #assert_include "Start date cannot be earlier than 06/10/2013 because of preceding issues", issue.errors.full_messages
-    I18n.include Redmine::I18n unless I18n.include? Redmine::I18n # mixin format_date
-    assert_include "#{I18n.t :field_start_date} #{I18n.t('activerecord.errors.messages.earlier_than_minimum_start_date', { date: "#{I18n.format_date(issue.soonest_start)}" })}", issue.errors.full_messages
+    assert_include "Start date cannot be earlier than 06/10/2013 because of preceding issues", issue.errors.full_messages
   end
 
   def test_start_date_lesser_than_soonest_start_should_not_validate_on_update_if_changed
@@ -132,9 +130,7 @@ class IssueTest < ActiveSupport::TestCase
     issue.stubs(:soonest_start).returns(Date.parse('2013-06-10'))
     issue.start_date = '2013-06-07'
     assert !issue.valid?
-    #assert_include "Start date cannot be earlier than 06/10/2013 because of preceding issues", issue.errors.full_messages
-    I18n.include Redmine::I18n unless I18n.include? Redmine::I18n # mixin format_date
-    assert_include "#{I18n.t :field_start_date} #{I18n.t('activerecord.errors.messages.earlier_than_minimum_start_date', { date: "#{I18n.format_date(issue.soonest_start)}" })}", issue.errors.full_messages
+    assert_include "Start date cannot be earlier than 06/10/2013 because of preceding issues", issue.errors.full_messages
   end
 
   def test_start_date_lesser_than_soonest_start_should_validate_on_update_if_unchanged
@@ -215,8 +211,7 @@ class IssueTest < ActiveSupport::TestCase
                       :parent_issue_id => '01ABC')
     assert !issue.save
     assert_equal '01ABC', issue.parent_issue_id
-    #assert_include 'Parent task is invalid', issue.errors.full_messages
-    assert_include "#{I18n.t :field_parent_issue} #{I18n.t 'activerecord.errors.messages.invalid'}", issue.errors.full_messages
+    assert_include 'Parent task is invalid', issue.errors.full_messages
   end
 
   def test_create_with_invalid_sharp_parent_issue_id
@@ -226,8 +221,7 @@ class IssueTest < ActiveSupport::TestCase
                       :parent_issue_id => '#01ABC')
     assert !issue.save
     assert_equal '#01ABC', issue.parent_issue_id
-    #assert_include 'Parent task is invalid', issue.errors.full_messages
-    assert_include "#{I18n.t :field_parent_issue} #{I18n.t 'activerecord.errors.messages.invalid'}", issue.errors.full_messages
+    assert_include 'Parent task is invalid', issue.errors.full_messages
   end
 
   def assert_visibility_match(user, issues)
@@ -2151,12 +2145,7 @@ class IssueTest < ActiveSupport::TestCase
     issue = Issue.find(9)
     Watcher.create!(:user => user, :watchable => issue)
     assert issue.watched_by?(user)
-    if Redmine::Plugin.installed? :redmine_extended_watchers
-      # the plugins lets the issue visible to watchers
-      assert issue.watcher_recipients.include?(user.mail)
-    else
-      assert !issue.watcher_recipients.include?(user.mail)
-    end
+    assert !issue.watcher_recipients.include?(user.mail)
   end
 
   def test_issue_destroy
@@ -2428,9 +2417,7 @@ class IssueTest < ActiveSupport::TestCase
       child = Issue.new(:parent_issue_id => issue2.id, :start_date => '2012-10-16',
         :project_id => 1, :tracker_id => 1, :status_id => 1, :subject => 'Child', :author_id => 1)
       assert !child.valid?
-      #assert_include 'Start date cannot be earlier than 10/18/2012 because of preceding issues', child.errors.full_messages
-      I18n.include Redmine::I18n unless I18n.include? Redmine::I18n # mixin format_date
-      assert_include "#{I18n.t :field_start_date} #{I18n.t('activerecord.errors.messages.earlier_than_minimum_start_date', { date: "#{I18n.format_date(issue2.start_date)}" })}", child.errors.full_messages
+      assert_include 'Start date cannot be earlier than 10/18/2012 because of preceding issues', child.errors.full_messages
       assert_equal Date.parse('2012-10-18'), child.soonest_start
       child.start_date = '2012-10-18'
       assert child.save
@@ -2451,8 +2438,7 @@ class IssueTest < ActiveSupport::TestCase
     issue3.reload
     issue3.parent_issue_id = issue1.id
     assert !issue3.valid?
-    #assert_include 'Parent task is invalid', issue3.errors.full_messages
-    assert_include "#{I18n.t :field_parent_issue} #{I18n.t 'activerecord.errors.messages.invalid'}", issue3.errors.full_messages
+    assert_include 'Parent task is invalid', issue3.errors.full_messages
   end
 
   def test_setting_parent_to_a_an_issue_that_follows_should_not_validate
@@ -2469,8 +2455,7 @@ class IssueTest < ActiveSupport::TestCase
     issue1.reload
     issue1.parent_issue_id = issue3.id
     assert !issue1.valid?
-    #assert_include 'Parent task is invalid', issue1.errors.full_messages
-    assert_include "#{I18n.t :field_parent_issue} #{I18n.t 'activerecord.errors.messages.invalid'}", issue1.errors.full_messages
+    assert_include 'Parent task is invalid', issue1.errors.full_messages
   end
 
   def test_setting_parent_to_a_an_issue_that_precedes_through_hierarchy_should_not_validate
@@ -2495,8 +2480,7 @@ class IssueTest < ActiveSupport::TestCase
     issue4.reload
     issue4.parent_issue_id = issue1.id
     assert !issue4.valid?
-    #assert_include 'Parent task is invalid', issue4.errors.full_messages
-    assert_include "#{I18n.t :field_parent_issue} #{I18n.t 'activerecord.errors.messages.invalid'}", issue4.errors.full_messages
+    assert_include 'Parent task is invalid', issue4.errors.full_messages
   end
 
   def test_issue_and_following_issue_should_be_able_to_be_moved_to_the_same_parent
@@ -3133,12 +3117,7 @@ class IssueTest < ActiveSupport::TestCase
   def test_css_classes_should_include_priority
     issue = Issue.new(:priority => IssuePriority.find(8))
     classes = issue.css_classes.split(' ')
-    if Redmine::Plugin.installed? :redwine
-      priority = IssuePriority.find(8).position
-      assert_include "priority-#{priority}", classes
-    else
-      assert_include 'priority-8', classes
-    end
+    assert_include 'priority-8', classes
     assert_include 'priority-highest', classes
   end
 

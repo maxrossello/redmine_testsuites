@@ -101,8 +101,7 @@ class IssueImportTest < ActiveSupport::TestCase
 
     assert_equal 1, import.unsaved_items.count
     item = import.unsaved_items.first
-    #assert_include "Tracker cannot be blank", item.message
-    assert_include "#{I18n.t :field_tracker} #{I18n.t 'activerecord.errors.messages.blank'}", item.message
+    assert_include "Tracker cannot be blank", item.message
   end
 
   def test_status_should_be_set

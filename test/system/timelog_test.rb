@@ -39,8 +39,7 @@ class TimelogTest < ApplicationSystemTestCase
     end
 
     within 'form#new_time_entry' do
-      #select 'eCookbook', :from => 'Project'
-      select 'eCookbook', :from => I18n.t(:field_project)
+      select 'eCookbook', :from => 'Project'
     end
     within 'select#time_entry_activity_id' do
       assert has_content?('Development')
@@ -92,16 +91,14 @@ class TimelogTest < ApplicationSystemTestCase
     select 'Comment', :from => 'Selected Columns'
     page.first('input[type=button].move-left').click
     # Add a column
-    #select 'Tracker', :from => 'Available Columns'
-    select I18n.t(:field_tracker), :from => I18n.t(:description_available_columns)
+    select 'Tracker', :from => 'Available Columns'
     page.first('input[type=button].move-right').click
     click_on 'Save'
 
     # Display the list with updated settings
     visit '/time_entries'
     within 'table.time-entries thead' do
-      #assert page.has_link?('Tracker')
-      assert page.has_link?(I18n.t(:field_tracker))
+      assert page.has_link?('Tracker')
       assert page.has_no_text?('Comment')
     end
   end

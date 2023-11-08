@@ -37,9 +37,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     journal = issue.init_journal(user, "some notes")
 
     with_settings :notified_events => %w(issue_updated) do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert journal.save
-      end
+      assert journal.save
     end
     assert_equal 2, ActionMailer::Base.deliveries.size
   end
@@ -51,9 +49,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     journal.notify = false
 
     with_settings :notified_events => %w(issue_updated) do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert journal.save
-      end
+      assert journal.save
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -64,9 +60,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     journal = issue.init_journal(user, "some notes")
 
     with_settings :notified_events => [] do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert journal.save
-      end
+      assert journal.save
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -78,9 +72,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     journal.notes = 'This update has a note'
 
     with_settings :notified_events => %w(issue_note_added) do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert journal.save
-      end
+      assert journal.save
     end
     assert_equal 2, ActionMailer::Base.deliveries.size
   end
@@ -92,9 +84,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     journal.notes = 'This update has a note'
 
     with_settings :notified_events => [] do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert journal.save
-      end
+      assert journal.save
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -106,9 +96,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.status = IssueStatus.last
 
     with_settings :notified_events => %w(issue_status_updated) do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert issue.save
-      end
+      assert issue.save
     end
     assert_equal 2, ActionMailer::Base.deliveries.size
   end
@@ -120,9 +108,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.status = IssueStatus.last
 
     with_settings :notified_events => [] do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert issue.save
-      end
+      assert issue.save
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -134,9 +120,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.subject = "No status update"
 
     with_settings :notified_events => %w(issue_status_updated) do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert issue.save
-      end
+      assert issue.save
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -149,9 +133,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.assigned_to = User.find(3)
 
     with_settings :notified_events => %w(issue_assigned_to_updated) do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert issue.save
-      end
+      assert issue.save
     end
     assert_equal 2, ActionMailer::Base.deliveries.size
   end
@@ -164,9 +146,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.assigned_to = User.find(3)
 
     with_settings :notified_events => [] do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert issue.save
-      end 
+      assert issue.save
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end
@@ -178,9 +158,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.priority = IssuePriority.last
 
     with_settings :notified_events => %w(issue_priority_updated) do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert issue.save
-      end
+      assert issue.save
     end
     assert_equal 2, ActionMailer::Base.deliveries.size
   end
@@ -192,9 +170,7 @@ class JournalObserverTest < ActiveSupport::TestCase
     issue.priority = IssuePriority.last
 
     with_settings :notified_events => [] do
-      perform_enqueued_jobs do  # redmine_testsuites
-        assert issue.save
-      end
+      assert issue.save
     end
     assert_equal 0, ActionMailer::Base.deliveries.size
   end

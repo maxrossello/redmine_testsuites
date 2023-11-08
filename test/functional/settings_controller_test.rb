@@ -55,18 +55,15 @@ class SettingsControllerTest < Redmine::ControllerTest
 
     assert_select 'select[name=?]', 'settings[issue_list_default_columns][]' do
       assert_select 'option', 4
-      #assert_select 'option[value=tracker]', :text => 'Tracker'
-      assert_select 'option[value=tracker]', :text => I18n.t(:field_tracker)
+      assert_select 'option[value=tracker]', :text => 'Tracker'
       assert_select 'option[value=subject]', :text => 'Subject'
-      #assert_select 'option[value=status]', :text => 'Status'
-      assert_select 'option[value=status]', :text => I18n.t(:field_status)
+      assert_select 'option[value=status]', :text => 'Status'
       assert_select 'option[value=updated_on]', :text => 'Updated'
     end
 
     assert_select 'select[name=?]', 'available_columns[]' do
       assert_select 'option[value=tracker]', 0
-      #assert_select 'option[value=priority]', :text => 'Priority'
-      assert_select 'option[value=priority]', :text => I18n.t(:field_priority)
+      assert_select 'option[value=priority]', :text => 'Priority'
     end
   end
 

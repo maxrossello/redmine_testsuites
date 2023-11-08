@@ -105,8 +105,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
 
     get :edit, :params => {:role_id => 1, :tracker_id => 1}
     assert_response :success
-    #assert_select 'td', 'New issue'
-    assert_select 'td', I18n.t(:label_issue_new)
+    assert_select 'td', 'New issue'
     assert_select 'input[type=checkbox][name=?][value="1"][checked=checked]', 'transitions[0][1][always]'
   end
 
@@ -450,8 +449,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
         :target_tracker_ids => ['2', '3'], :target_role_ids => ['1', '3']
       }
       assert_response 200
-      #assert_select 'div.flash.error', :text => 'Please select a source tracker or role'
-      assert_select 'div.flash.error', :text => I18n.t(:error_workflow_copy_source)
+      assert_select 'div.flash.error', :text => 'Please select a source tracker or role'
     end
   end
 
@@ -462,8 +460,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
         :target_tracker_ids => ['2', '3']
       }
       assert_response 200
-      #assert_select 'div.flash.error', :text => 'Please select target tracker(s) and role(s)'
-      assert_select 'div.flash.error', :text => I18n.t(:error_workflow_copy_target)
+      assert_select 'div.flash.error', :text => 'Please select target tracker(s) and role(s)'
     end
   end
 

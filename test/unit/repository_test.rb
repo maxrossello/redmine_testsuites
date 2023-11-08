@@ -41,16 +41,10 @@ class RepositoryTest < ActiveSupport::TestCase
            :versions
 
   include Redmine::I18n
-  include ActiveJob::TestHelper  # redmine_testsuites
 
   def setup
     User.current = nil
     @repository = Project.find(1).repository
-  end
-
-  # redmine_testsuites
-  def teardown
-    set_language_if_valid 'en'
   end
 
   def test_blank_log_encoding_error_message
@@ -260,7 +254,6 @@ class RepositoryTest < ActiveSupport::TestCase
   end
 
   def test_scan_changesets_for_issue_ids
-    set_language_if_valid 'en'  # redmine_testsuites
     Setting.default_language = 'en'
     Setting.commit_ref_keywords = 'refs , references, IssueID'
     Setting.commit_update_keywords = [
@@ -277,9 +270,7 @@ class RepositoryTest < ActiveSupport::TestCase
     old_status = fixed_issue.status
 
     with_settings :notified_events => %w(issue_added issue_updated) do
-      perform_enqueued_jobs do  # redmine_testsuites
-        Repository.scan_changesets_for_issue_ids
-      end
+      Repository.scan_changesets_for_issue_ids
     end
     assert_equal [101, 102], Issue.find(3).changeset_ids
 

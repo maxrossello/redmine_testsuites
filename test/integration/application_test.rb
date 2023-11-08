@@ -43,16 +43,14 @@ class ApplicationTest < Redmine::IntegrationTest
     # then an italien user
     get '/projects', :headers => {'HTTP_ACCEPT_LANGUAGE' => 'it;q=0.8,en-us;q=0.5,en;q=0.3'}
     assert_response :success
-    #assert_select 'h2', :text => 'Progetti'
-    assert_select 'h2', :text => I18n.t(:label_project_plural)
+    assert_select 'h2', :text => 'Progetti'
     assert_equal :it, current_language
     assert_select "html[lang=?]", "it"
 
     # not a supported language: default language should be used
     get '/projects', :headers => {'HTTP_ACCEPT_LANGUAGE' => 'zz'}
     assert_response :success
-    #assert_select 'h2', :text => 'Projects'
-    assert_select 'h2', :text => I18n.t(:label_project_plural)
+    assert_select 'h2', :text => 'Projects'
     assert_select "html[lang=?]", "en"
   end
 

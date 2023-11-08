@@ -32,34 +32,22 @@ class IssuesImportTest < ApplicationSystemTestCase
     click_on 'Import'
 
     attach_file 'file', Rails.root.join('test/fixtures/files/import_issues.csv')
-    #click_on 'Next »'
-    click_on "#{I18n.t(:label_next)} »"
+    click_on 'Next »'
 
-    #select 'Semicolon', :from => 'Field separator'
-    #select 'Double quote', :from => 'Field wrapper'
-    #select 'ISO-8859-1', :from => 'Encoding'
-    #select 'MM/DD/YYYY', :from => 'Date format'
-    #click_on 'Next »'
-    select I18n.t(:label_semi_colon_char), :from => I18n.t(:label_fields_separator)
-    select I18n.t(:label_double_quote_char), :from => I18n.t(:label_fields_wrapper)
-    select I18n.t(:general_csv_encoding), :from => I18n.t(:label_encoding)
-    select 'MM/DD/YYYY', :from => I18n.t(:setting_date_format)
-    click_on "#{I18n.t(:label_next)} »"
+    select 'Semicolon', :from => 'Field separator'
+    select 'Double quote', :from => 'Field wrapper'
+    select 'ISO-8859-1', :from => 'Encoding'
+    select 'MM/DD/YYYY', :from => 'Date format'
+    click_on 'Next »'
 
-    #select 'eCookbook', :from => 'Project'
-    #select 'tracker', :from => 'Tracker'
-    #select 'status', :from => 'Status'
-    #select 'subject', :from => 'Subject'
-    select 'eCookbook', :from => I18n.t(:field_project)
-    select 'tracker', :from => I18n.t(:field_tracker)
-    select 'status', :from => I18n.t(:field_status)
-    select 'subject', :from => I18n.t(:field_subject)
+    select 'eCookbook', :from => 'Project'
+    select 'tracker', :from => 'Tracker'
+    select 'status', :from => 'Status'
+    select 'subject', :from => 'Subject'
 
     assert_difference 'Issue.count', 3 do
-      #click_button 'Import'
-      #assert page.has_content?('3 items have been imported')
-      click_button I18n.t(:button_import)
-      assert page.has_content?(I18n.t(:notice_import_finished, count: 3))
+      click_button 'Import'
+      assert page.has_content?('3 items have been imported')
     end
   end
 end

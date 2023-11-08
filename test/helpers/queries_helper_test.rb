@@ -39,8 +39,7 @@ class QueriesHelperTest < Redmine::HelperTest
     with_locale 'en' do
       options = filters_options_for_select(IssueQuery.new)
       assert_select_in options, 'optgroup option[value=status_id]', 0
-      #assert_select_in options, 'option[value=status_id]', :text => 'Status'
-      assert_select_in options, 'option[value=status_id]', :text => "#{I18n.t :field_status}"
+      assert_select_in options, 'option[value=status_id]', :text => 'Status'
     end
   end
 
@@ -77,12 +76,9 @@ class QueriesHelperTest < Redmine::HelperTest
 
     with_locale 'en' do
       options = filters_options_for_select(IssueQuery.new)
-      #assert_select_in options, 'optgroup[label=?]', 'Project', 1
-      assert_select_in options, 'optgroup[label=?]', "#{I18n.t :field_project}", 1
-      #assert_select_in options, 'optgroup[label=?] > option', 'Project', 3
-      assert_select_in options, 'optgroup[label=?] > option', "#{I18n.t :field_project}", 3
-      #assert_select_in options, 'optgroup > option[value=?]', "project.cf_#{cf1.id}", :text => "Project's Foo"
-      assert_select_in options, 'optgroup > option[value=?]', "project.cf_#{cf1.id}", :text => "#{I18n.t :label_attribute_of_project, { name: "Foo"}}"
+      assert_select_in options, 'optgroup[label=?]', 'Project', 1
+      assert_select_in options, 'optgroup[label=?] > option', 'Project', 3
+      assert_select_in options, 'optgroup > option[value=?]', "project.cf_#{cf1.id}", :text => "Project's Foo"
     end
   end
 

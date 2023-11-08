@@ -201,8 +201,6 @@ class Redmine::I18nTest < ActiveSupport::TestCase
   def test_languages_options_should_ignore_locales_without_general_lang_name_key
     stubs(:valid_languages).returns([:en, :foo])
     assert_equal [["English", "en"]], languages_options(:cache => false)
-  ensure
-    unstub(:valid_languages)  # redmine_testsuites
   end
 
   def test_locales_validness
@@ -239,9 +237,6 @@ class Redmine::I18nTest < ActiveSupport::TestCase
     assert_equal "Untranslated string", l(:untranslated)
     ::I18n.locale = 'fr'
     assert_equal "Pas de traduction", l(:untranslated)
-    
-    # missing reload harms later lookups
-    ::I18n.backend.reload!   # redmine_testsuites
   end
 
   def test_utf8

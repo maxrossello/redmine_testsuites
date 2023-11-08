@@ -31,10 +31,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
     log_user('jsmith', 'jsmith')
     visit '/projects/ecookbook/issues/new'
     within('form#issue-form') do
-      #select 'Bug', :from => 'Tracker'
-      select 'Bug', :from => I18n.t(:field_tracker)
-      #select 'Low', :from => 'Priority'
-      select 'Low', :from => I18n.t(:field_priority)
+      select 'Bug', :from => 'Tracker'
+      select 'Low', :from => 'Priority'
       fill_in 'Subject', :with => 'new test issue'
       fill_in 'Description', :with => 'new issue'
       select '0 %', :from => 'Done'
@@ -85,12 +83,10 @@ class IssuesSystemTest < ApplicationSystemTestCase
     fill_in 'Subject', :with => 'New test issue'
     fill_in 'Description', :with => 'New test issue description'
     fill_in field1.name, :with => 'CF1 value'
-    #select 'Low', :from => 'Priority'
-    select 'Low', :from => I18n.t(:field_priority)
+    select 'Low', :from => 'Priority'
 
     # field2 should show up when changing tracker
-    #select 'Feature request', :from => 'Tracker'
-    select 'Feature request', :from => I18n.t(:field_tracker)
+    select 'Feature request', :from => 'Tracker'
     assert page.has_content?(field2.name)
     assert page.has_content?(field1.name)
 
@@ -118,8 +114,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     # Search for another user
     assert page.has_no_css?('form#new-watcher-form')
     assert page.has_no_content?('Some Watcher')
-    #click_link 'Search for watchers to add'
-    click_link I18n.t(:label_search_for_watchers)
+    click_link 'Search for watchers to add'
     within('form#new-watcher-form') do
       fill_in 'user_search', :with => 'watch'
       assert page.has_content?('Some Watcher')
@@ -236,8 +231,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     page.first(:link, 'Edit').click
     assert page.has_no_select?("issue_status_id")
     # the custom field should show up when changing tracker
-    #select 'Feature request', :from => 'Tracker'
-    select 'Feature request', :from => I18n.t(:field_tracker)
+    select 'Feature request', :from => 'Tracker'
     assert page.has_content?('Form update CF')
 
     fill_in 'Form update CF', :with => 'CF value'
@@ -298,17 +292,11 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     log_user('jsmith', 'jsmith')
     visit '/issues/1'
-    if Redmine::Plugin.installed?(:sidebar_hide)
-      page.execute_script("setSideBarVisible()")
-      page.execute_script("setState('visible')")
-    end
-    #assert page.first('#sidebar').has_content?('Watchers (1)')
-    assert page.first('#sidebar').has_content?("#{I18n.t(:label_issue_watchers)} (1)")
+    assert page.first('#sidebar').has_content?('Watchers (1)')
     assert page.first('#sidebar').has_content?(user.name)
     assert_difference 'Watcher.count', -1 do
       page.first('ul.watchers .user-3 a.delete').click
-      #assert page.first('#sidebar').has_content?('Watchers (0)')
-      assert page.first('#sidebar').has_content?("#{I18n.t(:label_issue_watchers)} (0)")
+      assert page.first('#sidebar').has_content?('Watchers (0)')
     end
     assert page.first('#sidebar').has_no_content?(user.name)
   end
@@ -317,16 +305,10 @@ class IssuesSystemTest < ApplicationSystemTestCase
     user = User.find(2)
     log_user('jsmith', 'jsmith')
     visit '/issues/1'
-    if Redmine::Plugin.installed?(:sidebar_hide)
-      page.execute_script("setSideBarVisible()")
-      page.execute_script("setState('visible')")
-    end
-    #assert page.first('#sidebar').has_content?('Watchers (0)')
-    assert page.first('#sidebar').has_content?("#{I18n.t(:label_issue_watchers)} (0)")
+    assert page.first('#sidebar').has_content?('Watchers (0)')
 
     page.first('a.issue-1-watcher').click
-    #assert page.first('#sidebar').has_content?('Watchers (1)')
-    assert page.first('#sidebar').has_content?("#{I18n.t(:label_issue_watchers)} (1)")
+    assert page.first('#sidebar').has_content?('Watchers (1)')
     assert page.first('#sidebar').has_content?(user.name)
   end
 
@@ -576,8 +558,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     assert page.has_css?('#change-2 textarea')
     assert page.first('#change-2 textarea').has_content?('Some notes with Redmine links')
     # Update the notes
-    #fill_in 'Notes', :with => 'Updated notes'
-    fill_in I18n.t(:field_notes), :with => 'Updated notes'
+    fill_in 'Notes', :with => 'Updated notes'
     # Preview the change
     page.first('#change-2 a.tab-preview').click
     assert page.has_css?('#preview_journal_2_notes')

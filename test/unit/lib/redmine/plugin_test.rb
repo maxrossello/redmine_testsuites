@@ -35,7 +35,6 @@ class Redmine::PluginTest < ActiveSupport::TestCase
 
   def teardown
     @klass.clear
-    @klass.reload  # redmine_testsuites
   end
 
   def test_register

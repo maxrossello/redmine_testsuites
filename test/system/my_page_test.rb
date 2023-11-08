@@ -38,14 +38,12 @@ class MyPageTest < ApplicationSystemTestCase
 
     within('#block-issuesassignedtome') do
       # sort by tracker asc
-      #click_link 'Tracker'
-      click_link I18n.t(:field_tracker)
+      click_link 'Tracker'
       assert page.has_css?('table.issues.sort-by-tracker')
       assert page.has_css?('table.issues.sort-asc')
 
       # and desc
-      #click_link 'Tracker'
-      click_link I18n.t(:field_tracker)
+      click_link 'Tracker'
       assert page.has_css?('table.issues.sort-by-tracker')
       assert page.has_css?('table.issues.sort-desc')
     end
@@ -63,8 +61,7 @@ class MyPageTest < ApplicationSystemTestCase
 
     log_user('jsmith', 'jsmith')
     visit '/my/page'
-    #select 'Watched issues', :from => 'Add'
-    select I18n.t(:label_watched_issues), :from => 'Add'
+    select 'Watched issues', :from => 'Add'
 
     assert page.has_css?('#block-issueswatched')
     assert_equal({'top' => ['issueswatched', 'issuesassignedtome']},
@@ -79,8 +76,7 @@ class MyPageTest < ApplicationSystemTestCase
 
     log_user('jsmith', 'jsmith')
     visit '/my/page'
-    #select 'Issues', :from => 'Add'
-    select I18n.t(:label_issue_plural), :from => 'Add'
+    select 'Issues', :from => 'Add'
     # Select which query to display
     select query.name, :from => 'Custom query'
     click_on 'Save'

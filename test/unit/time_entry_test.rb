@@ -276,8 +276,7 @@ class TimeEntryTest < ActiveSupport::TestCase
                             :activity => TimeEntryActivity.first,
                             :hours => 1)
       assert !entry.save
-      #assert_equal ["Comment cannot be blank", "Issue cannot be blank"], entry.errors.full_messages.sort
-      assert_equal ["Comment #{I18n.t 'activerecord.errors.messages.blank'}", "#{I18n.t :field_issue} #{I18n.t 'activerecord.errors.messages.blank'}"], entry.errors.full_messages.sort
+      assert_equal ["Comment cannot be blank", "Issue cannot be blank"], entry.errors.full_messages.sort
     end
   end
 

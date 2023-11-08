@@ -165,8 +165,7 @@ class TimelogReportTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select '#time-report thead tr' do
-      #assert_select 'th:nth-child(1)', :text => 'Project'
-      assert_select 'th:nth-child(1)', :text => I18n.t(:field_project)
+      assert_select 'th:nth-child(1)', :text => 'Project'
       assert_select 'th:nth-child(2)', :text => '2009-52'
       assert_select 'th:nth-child(3)', :text => '2009-53'
       assert_select 'th:nth-child(4)', :text => '2010-1'
@@ -221,8 +220,7 @@ class TimelogReportTest < Redmine::ControllerTest
     get :report, :params => {:project_id => 1, :criteria => ['status']}
     assert_response :success
 
-    #assert_select 'th', :text => 'Status'
-    assert_select 'th', :text => I18n.t(:field_status)
+    assert_select 'th', :text => 'Status'
     assert_select 'td', :text => 'New'
   end
 
@@ -251,8 +249,7 @@ class TimelogReportTest < Redmine::ControllerTest
     assert_equal 'text/csv; header=present', @response.media_type
     lines = @response.body.chomp.split("\n")
     # Headers
-    #assert_equal 'Project,User,Activity,2007-3,2007-4,Total time', lines.first
-    assert_equal "#{I18n.t(:field_project)},User,Activity,2007-3,2007-4,Total time", lines.first
+    assert_equal 'Project,User,Activity,2007-3,2007-4,Total time', lines.first
     # Total row
     assert_equal 'Total time,"","",154.25,8.65,162.90', lines.last
   end

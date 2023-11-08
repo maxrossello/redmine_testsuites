@@ -31,7 +31,6 @@ class MailHandlerTest < ActiveSupport::TestCase
            :boards, :messages, :watchers, :news, :comments
 
   FIXTURES_PATH = File.dirname(__FILE__) + '/../fixtures/mail_handler'
-  include ActiveJob::TestHelper  # redmine_testsuites
 
   def setup
     ActionMailer::Base.deliveries.clear
@@ -459,10 +458,7 @@ class MailHandlerTest < ActiveSupport::TestCase
   end
 
   def test_add_issue_should_send_notification
-    issue = nil  # redmine_testsuites
-    perform_enqueued_jobs do  # redmine_testsuites
-      issue = submit_email('ticket_on_given_project.eml', :allow_override => 'all')
-    end
+    issue = submit_email('ticket_on_given_project.eml', :allow_override => 'all')
     assert issue.is_a?(Issue)
     assert !issue.new_record?
 
@@ -499,14 +495,12 @@ class MailHandlerTest < ActiveSupport::TestCase
 
   def test_created_user_should_not_receive_account_information_with_no_account_info_option
     assert_difference 'User.count' do
-      perform_enqueued_jobs do  # redmine_testsuites
-        submit_email(
-          'ticket_by_unknown_user.eml',
-          :issue => {:project => 'ecookbook'},
-          :unknown_user => 'create',
-          :no_account_notice => '1'
-        )
-      end
+      submit_email(
+        'ticket_by_unknown_user.eml',
+        :issue => {:project => 'ecookbook'},
+        :unknown_user => 'create',
+        :no_account_notice => '1'
+      )
     end
 
     # only 2 emails for the new issue notification
@@ -932,10 +926,7 @@ class MailHandlerTest < ActiveSupport::TestCase
   def test_add_issue_should_send_email_notification
     Setting.notified_events = ['issue_added']
     # This email contains: 'Project: onlinestore'
-    issue = nil  # redmine_testsuites
-    perform_enqueued_jobs do  # redmine_testsuites
-      issue = submit_email('ticket_on_given_project.eml')
-    end
+    issue = submit_email('ticket_on_given_project.eml')
     assert issue.is_a?(Issue)
     assert_equal 1, ActionMailer::Base.deliveries.size
   end
@@ -1032,10 +1023,7 @@ class MailHandlerTest < ActiveSupport::TestCase
   end
 
   def test_update_issue_should_send_email_notification
-    journal = nil # redmine_testsuites
-    perform_enqueued_jobs do  # redmine_testsuites
-      journal = submit_email('ticket_reply.eml')
-    end
+    journal = submit_email('ticket_reply.eml')
     assert journal.is_a?(Journal)
     assert_equal 3, ActionMailer::Base.deliveries.size
   end

@@ -49,7 +49,6 @@ class IssuesControllerTest < Redmine::ControllerTest
            :watchers, :groups_users
 
   include Redmine::I18n
-  include ActiveJob::TestHelper  # redmine_testsuites
 
   def setup
     User.current = nil
@@ -67,8 +66,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       assert_select 'a[href="/issues/6"]', 0
       assert_select 'a[href="/issues/4"]', 0
       # project column
-      #assert_select 'th', :text => /Project/
-      assert_select 'th', :text => /#{I18n.t(:field_project)}/
+      assert_select 'th', :text => /Project/
     end
   end
 
@@ -1445,8 +1443,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
 
     # query should use specified columns
-    #assert_equal ["#", "Project", "Tracker", "Subject", "Assignee"], columns_in_issues_list
-    assert_equal ["#", I18n.t(:field_project), I18n.t(:field_tracker), "Subject", I18n.t(:field_assigned_to)], columns_in_issues_list
+    assert_equal ["#", "Project", "Tracker", "Subject", "Assignee"], columns_in_issues_list
   end
 
   def test_index_without_project_and_explicit_default_columns_should_not_add_project_column
@@ -1462,8 +1459,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
 
     # query should use specified columns
-    #assert_equal ["#", "Tracker", "Subject", "Assignee"], columns_in_issues_list
-    assert_equal ["#", I18n.t(:field_tracker), "Subject", I18n.t(:field_assigned_to)], columns_in_issues_list
+    assert_equal ["#", "Tracker", "Subject", "Assignee"], columns_in_issues_list
   end
 
   def test_index_with_default_columns_should_respect_default_columns_order
@@ -1492,8 +1488,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
 
     # query should use specified columns
-    #assert_equal ["#", "Tracker", "Subject", "Searchable field"], columns_in_issues_list
-    assert_equal ["#", I18n.t(:field_tracker), "Subject", "Searchable field"], columns_in_issues_list
+    assert_equal ["#", "Tracker", "Subject", "Searchable field"], columns_in_issues_list
     assert_select 'table.issues' do
       assert_select 'th.cf_2.string'
       assert_select 'td.cf_2.string'
@@ -2035,8 +2030,7 @@ class IssuesControllerTest < Redmine::ControllerTest
   def test_index_without_project_should_include_new_issue_link
     @request.session[:user_id] = 2
     get :index
-    #assert_select '#content a.new-issue[href="/issues/new"]', :text => 'New issue'
-    assert_select '#content a.new-issue[href="/issues/new"]', :text => I18n.t(:label_issue_new)
+    assert_select '#content a.new-issue[href="/issues/new"]', :text => 'New issue'
   end
 
   def test_index_should_show_setting_link_with_edit_project_permission
@@ -2133,8 +2127,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     # anonymous role is allowed to add a note
     assert_select 'form#issue-form' do
       assert_select 'fieldset' do
-        #assert_select 'legend', :text => 'Notes'
-        assert_select 'legend', :text => I18n.t(:field_notes)
+        assert_select 'legend', :text => 'Notes'
         assert_select 'textarea[name=?]', 'issue[notes]'
       end
     end
@@ -2163,8 +2156,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         assert_select 'input[name=?]', 'time_entry[hours]'
       end
       assert_select 'fieldset' do
-        #assert_select 'legend', :text => 'Notes'
-        assert_select 'legend', :text => I18n.t(:field_notes)
+        assert_select 'legend', :text => 'Notes'
         assert_select 'textarea[name=?]', 'issue[notes]'
       end
     end
@@ -3515,8 +3507,7 @@ class IssuesControllerTest < Redmine::ControllerTest
 
     get :new
     assert_response 403
-    #assert_select_error /no projects/
-    assert_select_error I18n.t(:error_no_projects_with_tracker_allowed_for_new_issue)
+    assert_select_error /no projects/
   end
 
   def test_new_without_enabled_trackers_on_projects_should_respond_with_403
@@ -3524,8 +3515,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     get :new
     assert_response 403
-    #assert_select_error /no projects/
-    assert_select_error I18n.t(:error_no_projects_with_tracker_allowed_for_new_issue)
+    assert_select_error /no projects/
   end
 
   def test_new_should_preselect_default_version
@@ -3794,8 +3784,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       }
     )
     assert_response 500
-    #assert_select_error /No default issue/
-    assert_select_error I18n.t(:error_no_default_issue_status)
+    assert_select_error /No default issue/
   end
 
   def test_get_new_with_no_tracker_should_display_an_error
@@ -3808,8 +3797,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       }
     )
     assert_response 500
-    #assert_select_error /No tracker/
-    assert_select_error I18n.t(:error_no_tracker_in_project)
+    assert_select_error /No tracker/
   end
 
   def test_new_with_invalid_project_id
@@ -4551,8 +4539,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       )
       assert_response :success
       assert_select 'input[name=?][value=?]', 'issue[parent_issue_id]', '4'
-      #assert_select_error /Parent task is invalid/i
-      assert_select_error /#{I18n.t(:field_parent_issue)} #{I18n.t('activerecord.errors.messages.invalid')}/i
+      assert_select_error /Parent task is invalid/i
     end
   end
 
@@ -4572,8 +4559,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       )
       assert_response :success
       assert_select 'input[name=?][value=?]', 'issue[parent_issue_id]', '01ABC'
-      #assert_select_error /Parent task is invalid/i
-      assert_select_error /#{I18n.t(:field_parent_issue)} #{I18n.t('activerecord.errors.messages.invalid')}/i
+      assert_select_error /Parent task is invalid/i
     end
   end
 
@@ -5344,8 +5330,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    #assert_select_error 'Tracker is invalid'
-    assert_select_error "#{I18n.t(:field_tracker)} #{I18n.t('activerecord.errors.messages.invalid')}"
+    assert_select_error 'Tracker is invalid'
   end
 
   def test_create_as_copy_should_copy_attachments
@@ -6067,8 +6052,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
     assert mail.subject.starts_with?("[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}]")
-    #assert_mail_body_match "Project changed from eCookbook to OnlineStore", mail
-    assert_mail_body_match "#{I18n.t(:field_project)} changed from eCookbook to OnlineStore", mail
+    assert_mail_body_match "Project changed from eCookbook to OnlineStore", mail
   end
 
   def test_put_update_trying_to_move_issue_to_project_without_tracker_should_not_error
@@ -6119,8 +6103,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     mail = ActionMailer::Base.deliveries.last
     assert_not_nil mail
     assert mail.subject.starts_with?("[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}]")
-    #assert_mail_body_match "Tracker changed from Bug to Feature request", mail
-    assert_mail_body_match "#{I18n.t(:field_tracker)} changed from Bug to Feature request", mail
+    assert_mail_body_match "Tracker changed from Bug to Feature request", mail
   end
 
   def test_put_update_with_custom_field_change
@@ -6216,8 +6199,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_equal 2, j.details.size
 
     mail = ActionMailer::Base.deliveries.last
-    #assert_mail_body_match "Status changed from New to Assigned", mail
-    assert_mail_body_match "#{I18n.t(:field_status)} changed from New to Assigned", mail
+    assert_mail_body_match "Status changed from New to Assigned", mail
     # subject should contain the new status
     assert mail.subject.include?("(#{IssueStatus.find(2).name})")
   end
@@ -7671,8 +7653,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     )
     assert_response :success
     assert_select '#errorExplanation span',
-                  #:text => "Failed to save 2 issue(s) on 3 selected: ##{issue1.id}, ##{issue2.id}."
-                  :text => I18n.t(:notice_failed_to_save_issues, { count: 2, total: 3, ids: "##{issue1.id}, ##{issue2.id}"})
+                  :text => "Failed to save 2 issue(s) on 3 selected: ##{issue1.id}, ##{issue2.id}."
     assert_select '#errorExplanation ul li',
                   :text => "Due date must be greater than start date: ##{issue1.id}, ##{issue2.id}"
     assert_select '#bulk-selection li', 2
@@ -8337,8 +8318,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       end
     end
     assert_response :success
-    #assert_select '#flash_error', :text => 'Issue cannot be blank'
-    assert_select '#flash_error', :text => "#{I18n.t(:field_issue)} #{I18n.t('activerecord.errors.messages.blank')}"
+    assert_select '#flash_error', :text => 'Issue cannot be blank'
   end
 
   def test_destroy_issues_from_different_projects

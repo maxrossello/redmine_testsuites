@@ -28,8 +28,6 @@ class VersionsControllerTest < Redmine::ControllerTest
            :users, :email_addresses,
            :roles, :members, :member_roles
 
-  include Redmine::I18n  # redmine_testsuites
-  
   def setup
     User.current = nil
   end
@@ -164,10 +162,8 @@ class VersionsControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select 'p.progress-info' do
-      #assert_select 'a', :text => '1 issue'
-      assert_select 'a', :text => l(:label_x_issues, :count => 1)
-      #assert_select 'a', :text => '1 open'
-      assert_select 'a', :text => l(:label_x_open_issues_abbr, :count => 1)
+      assert_select 'a', :text => '1 issue'
+      assert_select 'a', :text => '1 open'
     end
 
     assert_select '.time-tracking td.total-hours a:first-child', :text => '2:00 hours'

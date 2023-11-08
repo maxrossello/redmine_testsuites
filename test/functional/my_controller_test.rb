@@ -76,8 +76,7 @@ class MyControllerTest < Redmine::ControllerTest
     get :page
     assert_select '#block-issuesassignedtome' do
       assert_select 'table.issues' do
-        #assert_select 'th a[data-remote=true][data-method=post]', :text => 'Tracker'
-        assert_select 'th a[data-remote=true][data-method=post]', :text => I18n.t(:field_tracker)
+        assert_select 'th a[data-remote=true][data-method=post]', :text => 'Tracker'
       end
       assert_select '#issuesassignedtome-settings' do
         assert_select 'select[name=?]', 'settings[issuesassignedtome][columns][]'
@@ -119,8 +118,7 @@ class MyControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select '#block-issuequery' do
-      #assert_select 'h3', :text => 'Issues'
-      assert_select 'h3', :text => I18n.t(:label_issue_plural)
+      assert_select 'h3', :text => 'Issues'
       assert_select 'select[name=?]', 'settings[issuequery][query_id]' do
         assert_select 'option[value="5"]', :text => 'Open issues by priority and tracker'
       end
@@ -224,13 +222,11 @@ class MyControllerTest < Redmine::ControllerTest
 
     assert_select '#block-issuequery__1' do
       assert_select 'h3', :text => /Other issues/
-      #assert_select 'table.issues th', :text => 'Priority'
-      assert_select 'table.issues th', :text => I18n.t(:field_priority)
+      assert_select 'table.issues th', :text => 'Priority'
     end
 
     assert_select '#block-select' do
-      #assert_select 'option[value=?]:not([disabled])', 'issuequery__2', :text => 'Issues'
-      assert_select 'option[value=?]:not([disabled])', 'issuequery__2', :text => I18n.t(:label_issue_plural)
+      assert_select 'option[value=?]:not([disabled])', 'issuequery__2', :text => 'Issues'
     end
   end
 

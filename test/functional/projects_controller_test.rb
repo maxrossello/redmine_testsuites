@@ -54,8 +54,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
   def test_index_atom
     get(:index, :params => {:format => 'atom'})
     assert_response :success
-    #assert_select 'feed>title', :text => 'Redmine: Latest projects'
-    assert_select 'feed>title', :text => "Redmine: #{I18n.t(:label_project_latest)}"
+    assert_select 'feed>title', :text => 'Redmine: Latest projects'
     assert_select 'feed>entry', :count => Project.visible(User.current).count
   end
 
@@ -603,8 +602,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
       )
     end
     assert_response :success
-    #assert_select_error /Subproject of is invalid/
-    assert_select_error /#{I18n.t(:field_parent)} #{I18n.t('activerecord.errors.messages.invalid')}/
+    assert_select_error /Subproject of is invalid/
   end
 
   test "#create by non-admin user with add_subprojects permission should create a project with a parent_id" do
@@ -652,8 +650,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
       )
     end
     assert_response :success
-    #assert_select_error /Subproject of is invalid/
-    assert_select_error /#{I18n.t(:field_parent)} #{I18n.t('activerecord.errors.messages.invalid')}/
+    assert_select_error /Subproject of is invalid/
   end
 
   test "#create by non-admin user with add_subprojects permission should fail with unauthorized parent_id" do
@@ -679,8 +676,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
       )
     end
     assert_response :success
-    #assert_select_error /Subproject of is invalid/
-    assert_select_error /#{I18n.t(:field_parent)} #{I18n.t('activerecord.errors.messages.invalid')}/
+    assert_select_error /Subproject of is invalid/
   end
 
   def test_create_by_non_admin_should_accept_modules_if_default_role_is_allowed_to_select_modules
@@ -810,11 +806,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     get(:show, :params => {:id => project.id})
     assert_response :success
     assert_select 'li', :text => /#{f1.name}/, :count => 0
-    if Redmine::Plugin.installed? :redmine_better_overview
-      assert_select 'h3', :text => /#{f2.name}/
-    else
-      assert_select 'li', :text => /#{f2.name}/
-    end
+    assert_select 'li', :text => /#{f2.name}/
   end
 
   def test_show_should_not_display_blank_text_custom_fields
@@ -1358,8 +1350,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     Project.any_instance.stubs(:archive).returns(false)
     post(:archive, :params => {:id => 1})
     assert_redirected_to '/admin/projects'
-    #assert_match /project cannot be archived/i, flash[:error]
-    assert_match /#{I18n.t(:error_can_not_archive_project)}/i, flash[:error]
+    assert_match /project cannot be archived/i, flash[:error]
   end
 
   def test_unarchive

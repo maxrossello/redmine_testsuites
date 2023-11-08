@@ -58,17 +58,11 @@ class QueryTest < ActiveSupport::TestCase
     set_language_if_valid 'en'
     query = IssueQuery.new
     assert_equal 0, query.available_filters.keys.index('status_id')
-    #expected_order = [
-     # "Status",
-     # "Project",
-     # "Tracker",
-     # "Priority"
-    #]
     expected_order = [
-      "#{I18n.t :field_status}",
-      "#{I18n.t :field_project}",
-      "#{I18n.t :field_tracker}",
-      "#{I18n.t :field_priority}"
+      "Status",
+      "Project",
+      "Tracker",
+      "Priority"
     ]
     assert_equal expected_order,
                  (query.available_filters.values.pluck(:name) & expected_order)
@@ -81,19 +75,12 @@ class QueryTest < ActiveSupport::TestCase
       :is_for_all => true, :is_filter => true
     )
     query = IssueQuery.new
-    #expected_order = [
-    #  "Searchable field",
-    #  "Database",
-    #  "Project's Development status",
-    #  "Author's order test",
-    #  "Assignee's order test"
-    #]
     expected_order = [
       "Searchable field",
       "Database",
-      "#{I18n.t :label_attribute_of_project, { name: "Development status"}}",
-      "#{I18n.t :label_attribute_of_author, { name: "order test"}}",
-      "#{I18n.t :label_attribute_of_assigned_to, { name: "order test"}}"
+      "Project's Development status",
+      "Author's order test",
+      "Assignee's order test"
     ]
     assert_equal expected_order,
                  (query.available_filters.values.pluck(:name) & expected_order)
@@ -2576,8 +2563,7 @@ class QueryTest < ActiveSupport::TestCase
   def test_label_for
     set_language_if_valid 'en'
     q = IssueQuery.new
-    #assert_equal 'Assignee', q.label_for('assigned_to_id')
-    assert_equal "#{I18n.t :field_assigned_to}", q.label_for('assigned_to_id')
+    assert_equal 'Assignee', q.label_for('assigned_to_id')
   end
 
   def test_label_for_fr

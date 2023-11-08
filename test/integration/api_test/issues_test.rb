@@ -893,8 +893,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
       :params => {:issue => {:assigned_to_id => user.id}},
       :headers => credentials('jsmith'))
     assert_response :unprocessable_entity
-    #assert_select 'errors error', :text => "Assignee is invalid"
-    assert_select 'errors error', :text => "#{I18n.t(:field_assigned_to)} #{I18n.t('activerecord.errors.messages.invalid')}"
+    assert_select 'errors error', :text => "Assignee is invalid"
   end
 
   test "PUT /issues/:id.json" do
