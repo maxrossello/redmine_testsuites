@@ -435,17 +435,6 @@ class MailerTest < ActiveSupport::TestCase
         assert_match /^redmine\.issue-3\.20060719190727\.1@example\.net/, Mailer.token_for(issue, user)
       end
     end
-  end
-
-  def test_timestamp_in_message_id_should_be_utc
-    zone_was = Time.zone
-    issue = Issue.find(3)
-    user = User.find(1)
-    %w(UTC Paris Tokyo).each do |zone|
-      Time.use_zone(zone) do
-        assert_match /^redmine\.issue-3\.20060719190727\.1@example\.net/, Mailer.token_for(issue, user)
-      end
-    end
   ensure #redmine_testsuites
     Time.zone = zone_was
   end
@@ -502,19 +491,6 @@ class MailerTest < ActiveSupport::TestCase
     else
       assert_not_include user.mail, recipients
     end
-  end
-
-  def test_issue_add_should_notify_mentioned_users_in_issue_description
-    User.find(1).mail_notification = 'only_my_events'
-
-    issue = Issue.generate!(project_id: 1, description: 'Hello @dlopper and @admin.')
-
-    assert Mailer.deliver_issue_add(issue)
-    # @jsmith and @dlopper are members of the project
-    # admin is mentioned
-    # @dlopper won't receive duplicated notifications
-    assert_equal 3, ActionMailer::Base.deliveries.size
-    assert_include User.find(1).mail, recipients
   end
 
   def test_issue_add_should_notify_mentioned_users_in_issue_description

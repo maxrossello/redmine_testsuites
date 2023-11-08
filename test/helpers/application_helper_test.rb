@@ -2248,6 +2248,19 @@ class ApplicationHelperTest < Redmine::HelperTest
     end
   end
 
+  def test_export_csv_separator_select_tag
+    with_locale 'en' do
+      result = export_csv_separator_select_tag
+      assert_equal ',', l(:general_csv_separator)
+      assert_select_in result, 'option[value=?][selected=selected]', ',', text: 'Comma'
+      assert_select_in result, 'option[value=?]', ';', text: 'Semicolon'
+    end
+    with_locale 'fr' do
+      result = export_csv_separator_select_tag
+      assert_equal ';', l(:general_csv_separator)
+      assert_select_in result, 'option[value=?][selected=selected]', ';'
+    end
+  end
 
   private
 

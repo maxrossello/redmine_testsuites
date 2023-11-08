@@ -21,13 +21,15 @@ require File.expand_path('../../test_helper', __dir__)
 
 class RoutingPluginsTest < Redmine::RoutingTest
   setup do
+    @tmp_plugins_path = Rails.root.join('tmp/test/plugins')
+
     @setup_plugin_paths = []
     @setup_plugin_paths << setup_plugin(
       :redmine_test_plugin_foo,
       "config/routes.rb" => <<~ROUTES_CONTENT,
         resources :plugin_articles, only: %i[index]
       ROUTES_CONTENT
-      "app/contrtollers/plugin_articles_controller.rb" => <<~CONTROLLER_CONTENT
+      "app/controllers/plugin_articles_controller.rb" => <<~CONTROLLER_CONTENT
         class PluginArticlesController < ApplicationController
           def index
             render plain: "foo PluginArticlesController#index"
@@ -41,7 +43,7 @@ class RoutingPluginsTest < Redmine::RoutingTest
         # same path helper name with foo's
         get '/bar_plugin_articles', as: :plugin_articles, to: 'bar_plugin_articles#index'
       ROUTES_CONTENT
-      "app/contrtollers/bar_plugin_articles_controller.rb" => <<~CONTROLLER_CONTENT
+      "app/controllers/bar_plugin_articles_controller.rb" => <<~CONTROLLER_CONTENT
         class BarPluginArticlesController < ApplicationController
           def index
             render plain: "bar BarPluginArticlesController#index"
@@ -49,13 +51,16 @@ class RoutingPluginsTest < Redmine::RoutingTest
         end
       CONTROLLER_CONTENT
     )
+
+    # Change plugin loader's directory for testing
+    Redmine::PluginLoader.directory = @tmp_plugins_path
     Redmine::PluginLoader.load
     Redmine::PluginLoader.directories.each(&:run_initializer) # to define relative controllers
     RedmineApp::Application.instance.routes_reloader.reload!
   end
 
   teardown do
-    @setup_plugin_paths.each(&:rmtree)
+    FileUtils.rm_rf @tmp_plugins_path
     Redmine::PluginLoader.load
     RedmineApp::Application.instance.routes_reloader.reload!
   end
@@ -69,7 +74,8 @@ class RoutingPluginsTest < Redmine::RoutingTest
   private
 
   def setup_plugin(plugin_name, **relative_path_to_content)
-    plugin_path = Redmine::Plugin.directory / plugin_name.to_s
+    Redmine::Plugin.directory = @tmp_plugins_path
+    plugin_path =  Redmine::Plugin.directory / plugin_name.to_s
     plugin_path.mkpath
     (plugin_path / "init.rb").write(<<~INITRB)
       Redmine::Plugin.register :#{plugin_name} do
