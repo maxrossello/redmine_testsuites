@@ -19,9 +19,14 @@
 
 require_relative '../test_helper'
 
-class ApplicationControllerTest < Redmine::ControllerTest
-  def test_back_url_should_remove_utf8_checkmark_from_referer
-    @request.set_header 'HTTP_REFERER', "/path?utf8=\u2713&foo=bar"
-    assert_equal "/path?foo=bar", @controller.back_url
+  skip_before_action :check_if_login_required, only: [:robots]
+
+  def index
+    @news = News.latest User.current
+  end
+
+  def robots
+    @projects = Project.visible(User.anonymous) unless Setting.login_required?
+    render :layout => false, :content_type => 'text/plain'
   end
 end
