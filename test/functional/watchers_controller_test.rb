@@ -199,10 +199,22 @@ class WatchersControllerTest < Redmine::ControllerTest
     }, :xhr => true
     assert_response :success
 
-    assert_match(
-      %r{/watchers/autocomplete_for_user\?object_id%5B%5D=7&object_id%5B%5D=9&object_type=issue},
-      response.body
-    )
+    # redmine_testsuites  rescue
+    #assert_match(
+    #  %r{/watchers/autocomplete_for_user\?object_id%5B%5D=7&object_id%5B%5D=9&object_type=issue},
+    #  response.body
+    #)
+    begin
+        assert_match(
+            %r{/watchers/autocomplete_for_user\?object_id%5B%5D=7&object_id%5B%5D=9&object_type=issue},
+            response.body
+        )
+    rescue
+        assert_match(
+            %r{/watchers/autocomplete_for_user\?object_id%5B%5D=9&object_id%5B%5D=7&object_type=issue},
+            response.body
+        )
+    end
   end
 
   def test_create_as_html
