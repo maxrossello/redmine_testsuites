@@ -82,7 +82,7 @@ class QueriesHelperTest < Redmine::HelperTest
       #assert_select_in options, 'optgroup[label=?] > option', 'Project', 3
       assert_select_in options, 'optgroup[label=?] > option', "#{I18n.t :field_project}", 3
       #assert_select_in options, 'optgroup > option[value=?]', "project.cf_#{cf1.id}", :text => "Project's Foo"
-      assert_select_in options, 'optgroup > option[value=?]', "project.cf_#{cf1.id}", :text => "#{I18n.t :label_attribute_of_project, { name: "Foo"}}"
+      assert_select_in options, 'optgroup > option[value=?]', "project.cf_#{cf1.id}", :text => "#{I18n.t :label_attribute_of_project, name: "Foo"}"
     end
   end
 

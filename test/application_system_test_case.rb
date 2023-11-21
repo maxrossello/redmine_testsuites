@@ -46,6 +46,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     driver_option.add_preference 'download.default_directory',   DOWNLOADS_PATH.gsub(File::SEPARATOR, File::ALT_SEPARATOR || File::SEPARATOR)
     driver_option.add_preference 'download.prompt_for_download', false
     driver_option.add_preference 'plugins.plugins_disabled',     ["Chrome PDF Viewer"]
+    driver_option.add_preference 'intl.accept_languages', 'en' # redmine_testsuites
   end
 
   setup do

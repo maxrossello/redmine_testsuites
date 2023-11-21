@@ -3163,7 +3163,8 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#history' do
       assert_select 'div.tabs ul a', 3
       assert_select 'div.tabs a[id=?]', 'tab-history', :text => 'History'
-      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
+      #assert_select 'div.tabs a[id=?]', 'tab-notes', :text => 'Notes'
+      assert_select 'div.tabs a[id=?]', 'tab-notes', :text => I18n.t(:label_issue_history_notes)
       assert_select 'div.tabs a[id=?]', 'tab-properties', :text => 'Property changes'
     end
   end
@@ -7718,7 +7719,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
     assert_select '#errorExplanation span',
                   #:text => "Failed to save 2 issue(s) on 3 selected: ##{issue1.id}, ##{issue2.id}."
-                  :text => I18n.t(:notice_failed_to_save_issues, { count: 2, total: 3, ids: "##{issue1.id}, ##{issue2.id}"})
+                  :text => I18n.t(:notice_failed_to_save_issues, count: 2, total: 3, ids: "##{issue1.id}, ##{issue2.id}")
     assert_select '#errorExplanation ul li',
                   :text => "Due date must be greater than start date: ##{issue1.id}, ##{issue2.id}"
     assert_select '#bulk-selection li', 2

@@ -26,6 +26,12 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
            :watchers, :journals, :journal_details, :versions,
            :workflows
 
+  # redmine_testsuite
+  def teardown
+    click_link(I18n.t(:label_logout), match: :first)
+    loop until page.has_text? (I18n.t(:label_register))
+  end
+
   def test_keyboard_shortcuts_to_switch_edit_preview_tabs
     log_user('jsmith', 'jsmith')
     visit 'issues/new'

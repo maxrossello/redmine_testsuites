@@ -91,9 +91,9 @@ class QueryTest < ActiveSupport::TestCase
     expected_order = [
       "Searchable field",
       "Database",
-      "#{I18n.t :label_attribute_of_project, { name: "Development status"}}",
-      "#{I18n.t :label_attribute_of_author, { name: "order test"}}",
-      "#{I18n.t :label_attribute_of_assigned_to, { name: "order test"}}"
+      "#{I18n.t :label_attribute_of_project, name: "Development status"}",
+      "#{I18n.t :label_attribute_of_author, name: "order test"}",
+      "#{I18n.t :label_attribute_of_assigned_to, name: "order test"}"
     ]
     assert_equal expected_order,
                  (query.available_filters.values.pluck(:name) & expected_order)

@@ -124,7 +124,7 @@ class IssueTest < ActiveSupport::TestCase
     assert !issue.valid?
     #assert_include "Start date cannot be earlier than 06/10/2013 because of preceding issues", issue.errors.full_messages
     I18n.include Redmine::I18n unless I18n.include? Redmine::I18n # mixin format_date
-    assert_include "#{I18n.t :field_start_date} #{I18n.t('activerecord.errors.messages.earlier_than_minimum_start_date', { date: "#{I18n.format_date(issue.soonest_start)}" })}", issue.errors.full_messages
+    assert_include "#{l :field_start_date} #{I18n.t('activerecord.errors.messages.earlier_than_minimum_start_date', date: "#{I18n.format_date(issue.soonest_start)}")}", issue.errors.full_messages
   end
 
   def test_start_date_lesser_than_soonest_start_should_not_validate_on_update_if_changed
@@ -134,7 +134,7 @@ class IssueTest < ActiveSupport::TestCase
     assert !issue.valid?
     #assert_include "Start date cannot be earlier than 06/10/2013 because of preceding issues", issue.errors.full_messages
     I18n.include Redmine::I18n unless I18n.include? Redmine::I18n # mixin format_date
-    assert_include "#{I18n.t :field_start_date} #{I18n.t('activerecord.errors.messages.earlier_than_minimum_start_date', { date: "#{I18n.format_date(issue.soonest_start)}" })}", issue.errors.full_messages
+    assert_include "#{l :field_start_date} #{I18n.t('activerecord.errors.messages.earlier_than_minimum_start_date', date: "#{I18n.format_date(issue.soonest_start)}")}", issue.errors.full_messages
   end
 
   def test_start_date_lesser_than_soonest_start_should_validate_on_update_if_unchanged
@@ -1997,7 +1997,7 @@ class IssueTest < ActiveSupport::TestCase
 #      "Subtask ##{child.id} could not be moved to the new project: Tracker is not included in the list",
 #      parent.errors[:base])
     assert_include(
-       %Q|#{I18n.t :error_move_of_child_not_possible, {child: "##{child.id}", errors: "#{I18n.t(:field_tracker)} #{I18n.t('activerecord.errors.messages.inclusion')}"}}|,
+       %Q|#{l :error_move_of_child_not_possible, child: "##{child.id}", errors: "#{I18n.t(:field_tracker)} #{I18n.t('activerecord.errors.messages.inclusion')}"}|,
        parent.errors[:base])
   end
 
@@ -2436,7 +2436,7 @@ class IssueTest < ActiveSupport::TestCase
       assert !child.valid?
       #assert_include 'Start date cannot be earlier than 10/18/2012 because of preceding issues', child.errors.full_messages
       I18n.include Redmine::I18n unless I18n.include? Redmine::I18n # mixin format_date
-      assert_include "#{I18n.t :field_start_date} #{I18n.t('activerecord.errors.messages.earlier_than_minimum_start_date', { date: "#{I18n.format_date(issue2.start_date)}" })}", child.errors.full_messages
+      assert_include "#{l :field_start_date} #{I18n.t('activerecord.errors.messages.earlier_than_minimum_start_date', date: "#{I18n.format_date(issue2.start_date)}")}", child.errors.full_messages
       assert_equal Date.parse('2012-10-18'), child.soonest_start
       child.start_date = '2012-10-18'
       assert child.save

@@ -280,7 +280,8 @@ class ReportsControllerTest < Redmine::ControllerTest
       rows = Project.find(1).rolled_up_trackers(true).visible
       assert_equal rows.size + 1, lines.size
       # Header
-      assert_equal '"",New,Assigned,Resolved,Feedback,Closed,Rejected,open,closed,Total', lines.first
+      #assert_equal '"",New,Assigned,Resolved,Feedback,Closed,Rejected,open,closed,Total', lines.first
+      assert_equal "\"\",New,Assigned,Resolved,Feedback,Closed,Rejected,#{I18n.t(:label_open_issues_plural)},#{I18n.t(:label_closed_issues_plural)},Total", lines.first
       # Details
       to_test = [
         'Bug,5,0,0,0,3,0,5,3,8',
@@ -317,7 +318,8 @@ class ReportsControllerTest < Redmine::ControllerTest
       rows = Project.find(1).principals.sorted + [I18n.t(:label_none)]
       assert_equal rows.size + 1, lines.size
       # Header
-      assert_equal '"",New,Assigned,Resolved,Feedback,Closed,Rejected,open,closed,Total', lines.first
+      #assert_equal '"",New,Assigned,Resolved,Feedback,Closed,Rejected,open,closed,Total', lines.first
+      assert_equal "\"\",New,Assigned,Resolved,Feedback,Closed,Rejected,#{I18n.t(:label_open_issues_plural)},#{I18n.t(:label_closed_issues_plural)},Total", lines.first
       # Details
       to_test = [
         'Dave Lopper,0,0,0,0,0,0,0,0,0',
