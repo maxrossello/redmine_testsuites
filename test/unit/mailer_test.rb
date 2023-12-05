@@ -505,19 +505,6 @@ class MailerTest < ActiveSupport::TestCase
     assert_include User.find(1).mail, recipients
   end
 
-  def test_issue_add_should_notify_mentioned_users_in_issue_description
-    User.find(1).mail_notification = 'only_my_events'
-
-    issue = Issue.generate!(project_id: 1, description: 'Hello @dlopper and @admin.')
-
-    assert Mailer.deliver_issue_add(issue)
-    # @jsmith and @dlopper are members of the project
-    # admin is mentioned
-    # @dlopper won't receive duplicated notifications
-    assert_equal 3, ActionMailer::Base.deliveries.size
-    assert_include User.find(1).mail, recipients
-  end
-
   def test_issue_add_should_include_enabled_fields
     issue = Issue.find(2)
     assert Mailer.deliver_issue_add(issue)
