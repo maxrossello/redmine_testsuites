@@ -24,7 +24,7 @@ require 'redmine'
 Rails.logger.info 'Redmine Test Suites'
 
 if ENV["RAILS_ENV"] == "test"
-  Redmine::Plugin.register :redmine_testsuites do
+  plugin = Redmine::Plugin.register :redmine_testsuites do
     name 'Redmine Test Suites plugin'
     author 'Massimo Rossello'
     description 'Allows to run the Redmine test suite along with plugin tests, considering the different behaviors 
@@ -42,19 +42,19 @@ if ENV["RAILS_ENV"] == "test"
   # each hash contains conditions in AND; plugin is supported if any hash in array matches 
   supported_plugins = {
     redmine_testsuites:        {},
-    redmine_translation_terms: { tilde_greater_than: '5.1.0' },
-    redmine_base_deface:       { version_or_higher:  '5.1.0' },
-    redmine_better_overview:   { tilde_greater_than: '5.1.0' },
-    redmine_extended_watchers: { tilde_greater_than: '5.1.0' },
-    redmine_pluggable_themes:  { tilde_greater_than: '5.1.0' },
-    redwine:                   { version:            '5.1.1' },
-    sidebar_hide:              { version_or_higher:  '5.1.0' }
+    redmine_translation_terms: { tilde_greater_than: '5.1.0', mandatory: false },
+    redmine_base_deface:       { version_or_higher:  '5.1.0', mandatory: false },
+    redmine_better_overview:   { tilde_greater_than: '5.1.0', mandatory: false },
+    redmine_extended_watchers: { tilde_greater_than: '5.1.0', mandatory: false },
+    redmine_pluggable_themes:  { tilde_greater_than: '5.1.0', mandatory: false },
+    redwine:                   { version:            '5.1.1', mandatory: false },
+    sidebar_hide:              { version_or_higher:  '5.1.0', mandatory: false }
   }
   
-  require_relative 'lib/testsuites_versions'
-  
   Rails.configuration.after_initialize do
-    TestsuitesVersions.check_plugin_versions(supported_plugins);
+    if plugin.methods.include? :compatible_redmine_plugins
+      plugin.compatible_redmine_plugins(supported_plugins)
+    end
   end
 end
 

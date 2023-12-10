@@ -72,7 +72,12 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # using default browser locale which depend on system locale for "real" browsers drivers
   def log_user(login, password)
     visit '/my/page'
-    loop until page.evaluate_script('jQuery.active').zero? # redmine_testsuites
+    # redmine_testsuites start
+    if current_path != '/login'
+      reset_session!
+      visit '/my/page'
+    end
+    # redmine_testsuites end 
     assert_equal '/login', current_path
     within('#login-form form') do
       fill_in 'username', :with => login

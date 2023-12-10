@@ -67,6 +67,7 @@ class TimelogTest < ApplicationSystemTestCase
     page.first(:button, 'Submit').click
 
     assert page.has_css?('#errorExplanation')
+    fill_in 'Hours', :with => ''  # redmine_testsuites
     fill_in 'Hours', :with => '7'
     page.first(:button, 'Submit').click
 

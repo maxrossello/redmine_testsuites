@@ -27,12 +27,6 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
            :workflows, :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions,
            :boards, :messages
 
-  # redmine_testsuite
-  def teardown
-    click_link(I18n.t(:label_logout), match: :first)
-    loop until page.has_text? (I18n.t(:label_register))
-  end
-  
   def test_inline_autocomplete_for_issues
     log_user('jsmith', 'jsmith')
     visit 'issues/new'
@@ -60,6 +54,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
       assert page.has_text? 'Bug #11: Closed issue on a closed version'
       assert page.has_text? 'Bug #8: Closed issue'
 
+      loop until page.evaluate_script('jQuery.active').zero? # redmine_testsuites
       first('li').click
     end
 
@@ -166,6 +161,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
     end
 
     fill_in 'Description', :with => '[[page'
+    loop until page.evaluate_script('jQuery.active').zero? # redmine_testsuites
     within('.tribute-container') do
       assert page.has_text? 'Page_with_sections'
       assert page.has_text? 'Another_page'
