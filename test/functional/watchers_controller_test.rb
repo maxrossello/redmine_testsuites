@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -154,6 +154,12 @@ class WatchersControllerTest < Redmine::ControllerTest
     get :new, :params => {:object_type => 'issue', :object_id => '2'}, :xhr => true
     assert_response :success
     assert_match /ajax-modal/, response.body
+  end
+
+  def test_new_as_html_should_respond_with_404
+    @request.session[:user_id] = 2
+    get :new, :params => {:object_type => 'issue', :object_id => '2'}
+    assert_response 404
   end
 
   def test_new_for_message
