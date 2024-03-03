@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -231,7 +231,7 @@ class TimelogReportTest < Redmine::ControllerTest
     get :report, :params => {:project_id => 1, :criteria => ['activity']}
     assert_response :success
 
-    assert_select 'tr.last-level:first' do
+    assert_select 'tr.last-level' do
       assert_select 'td.name', :text => 'Design'
       assert_select 'td.hours:last', :text => '165:15'
     end
