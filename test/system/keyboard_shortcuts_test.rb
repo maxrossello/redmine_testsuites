@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -25,12 +25,6 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
            :enumerations, :custom_fields, :custom_values, :custom_fields_trackers,
            :watchers, :journals, :journal_details, :versions,
            :workflows
-
-  # redmine_testsuite
-  def teardown
-    click_link(I18n.t(:label_logout), match: :first)
-    loop until page.has_text? (I18n.t(:label_register))
-  end
 
   def test_keyboard_shortcuts_to_switch_edit_preview_tabs
     log_user('jsmith', 'jsmith')

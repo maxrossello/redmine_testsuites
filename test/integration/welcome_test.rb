@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -52,6 +52,13 @@ class WelcomeTest < Redmine::IntegrationTest
       # Disallow everything if logins are required
       assert_not @response.body.match(%r{^Disallow: /projects/ecookbook/issues\r?$})
       assert @response.body.match(%r{^Disallow: /\r?$})
+    end
+  end
+
+  def test_robots_should_not_respond_to_formats_other_than_txt
+    %w(robots.json robots).each do |file|
+      get "/#{file}"
+      assert_response :not_found
     end
   end
 end
