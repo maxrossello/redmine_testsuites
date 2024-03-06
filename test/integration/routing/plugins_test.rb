@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,6 +21,7 @@ require File.expand_path('../../test_helper', __dir__)
 
 class RoutingPluginsTest < Redmine::RoutingTest
   setup do
+    @original_plugin_dir = Redmine::PluginLoader.directory
     @tmp_plugins_path = Rails.root.join('tmp/test/plugins')
 
     @setup_plugin_paths = []
@@ -61,6 +62,9 @@ class RoutingPluginsTest < Redmine::RoutingTest
 
   teardown do
     FileUtils.rm_rf @tmp_plugins_path
+
+    Redmine::Plugin.clear
+    Redmine::PluginLoader.directory = @original_plugin_dir
     Redmine::PluginLoader.load
     RedmineApp::Application.instance.routes_reloader.reload!
   end
@@ -69,6 +73,11 @@ class RoutingPluginsTest < Redmine::RoutingTest
     should_route 'GET /plugin_articles' => 'plugin_articles#index'
     should_route 'GET /bar_plugin_articles' => 'bar_plugin_articles#index'
     assert_equal("/bar_plugin_articles", plugin_articles_path)
+    should_route(
+      'GET /attachments/plugin_articles/12/edit' => 'attachments#edit_all',
+      :object_id => '12',
+      :object_type => 'plugin_articles'
+    )
   end
 
   private
@@ -84,6 +93,8 @@ class RoutingPluginsTest < Redmine::RoutingTest
         description 'This is a plugin for Redmine test'
         version '0.0.1'
       end
+
+      Redmine::Acts::Attachable::ObjectTypeConstraint.register_object_type('plugin_articles')
 
       Pathname(__dir__).glob("app/**/*.rb").sort.each do |path|
         require path

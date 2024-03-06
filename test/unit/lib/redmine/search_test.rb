@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -23,6 +23,29 @@ class Redmine::Search::Tokenize < ActiveSupport::TestCase
   def test_tokenize
     value = "hello \"bye bye\""
     assert_equal ["hello", "bye bye"], Redmine::Search::Tokenizer.new(value).tokens
+  OptionName = :enumeration_activities
+
+  def self.default(project=nil)
+    default_activity = super()
+
+    if default_activity.nil? || project.nil? || project.activities.blank? || project.activities.include?(default_activity)
+      return default_activity
+    end
+
+    project.activities.detect { |activity| activity.parent_id == default_activity.id }
+  end
+
+  # Returns the available activities for the time entry
+  def self.available_activities(project=nil)
+    if project.nil?
+      TimeEntryActivity.shared.active
+    else
+      project.activities
+    end
+  end
+
+  def option_name
+    OptionName
   end
 
   def test_tokenize_should_consider_ideographic_space_as_separator
