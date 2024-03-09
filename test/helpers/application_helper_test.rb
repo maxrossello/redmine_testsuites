@@ -2214,6 +2214,7 @@ class ApplicationHelperTest < Redmine::HelperTest
                        :text => l(:general_csv_encoding)
       assert_select_in result, "option[value='UTF-8']", :text => 'UTF-8'
     end
+  end
 
 
   private
