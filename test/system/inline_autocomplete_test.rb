@@ -59,6 +59,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
       assert page.has_text? 'Bug #11: Closed issue on a closed version'
       assert page.has_text? 'Bug #8: Closed issue'
 
+      loop until page.evaluate_script('jQuery.active').zero? # redmine_testsuites
       first('li').click
     end
 
@@ -165,6 +166,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
     end
 
     fill_in 'Description', :with => '[[page'
+    loop until page.evaluate_script('jQuery.active').zero? # redmine_testsuites
     within('.tribute-container') do
       assert page.has_text? 'Page_with_sections'
       assert page.has_text? 'Another_page'
