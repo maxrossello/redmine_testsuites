@@ -45,7 +45,7 @@ if ENV["RAILS_ENV"] == "test"
     redmine_translation_terms: { tilde_greater_than: '5.1.0', mandatory: false },
     redmine_base_deface:       { version_or_higher:  '5.1.1', mandatory: false },
     redmine_better_overview:   { tilde_greater_than: '5.1.0', mandatory: false },
-    redmine_extended_watchers: { tilde_greater_than: '5.1.0', mandatory: false },
+    redmine_extended_watchers: { tilde_greater_than: '5.1.2', mandatory: false },
     redmine_pluggable_themes:  { tilde_greater_than: '5.1.0', mandatory: false },
     redwine:                   { version:            '5.1.2', mandatory: false },
     sidebar_hide:              { version_or_higher:  '5.1.1', mandatory: false }
