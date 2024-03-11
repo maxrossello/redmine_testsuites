@@ -25,7 +25,8 @@ class JournalTest < ActiveSupport::TestCase
            :users, :members, :member_roles, :roles, :enabled_modules,
            :groups_users, :email_addresses,
            :enumerations,
-           :projects_trackers, :trackers, :custom_fields
+           :projects_trackers, :trackers, :custom_fields,
+           :issue_categories  # redmine_testsuites
 
   def setup
     @journal = Journal.find 1

@@ -78,6 +78,7 @@ class RepositoryBazaarTest < ActiveSupport::TestCase
       )
     assert !repo.save
     assert_include 'Chemin du dépôt doit être renseigné(e)', repo.errors.full_messages
+    set_language_if_valid 'en' # redmine_testsuites
   end
 
   if File.directory?(REPOSITORY_PATH_TRUNK)
