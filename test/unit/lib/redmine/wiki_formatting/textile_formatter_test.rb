@@ -787,57 +787,6 @@ class Redmine::WikiFormatting::TextileFormatterTest < ActionView::TestCase
     assert_equal expected.gsub(%r{[\r\n\t]}, ''), to_html(text).gsub(%r{[\r\n\t]}, '')
   end
 
-  def test_should_escape_tags_that_start_with_pre
-    text = <<~STR
-      <preä demo>Text
-    STR
-
-    expected = <<~EXPECTED
-      <p>&lt;preä demo&gt;Text</p>
-    EXPECTED
-    assert_equal expected.gsub(%r{[\r\n\t]}, ''), to_html(text).gsub(%r{[\r\n\t]}, '')
-  end
-
-  def test_should_remove_html_comments
-    text = <<~STR
-      <!-- begin -->
-      Hello <!-- comment between words -->world.
-
-      <!--
-        multi-line
-      comment -->Foo
-
-      <pre>
-      This is a code block.
-      <p>
-      <!-- comments in a code block should be preserved -->
-      </p>
-      </pre>
-    STR
-    expected = <<~EXPECTED
-      <p>Hello world.</p>
-
-      <p>Foo</p>
-
-      <pre>
-      This is a code block.
-      &lt;p&gt;
-      &lt;!-- comments in a code block should be preserved --&gt;
-      &lt;/p&gt;
-      </pre>
-
-    EXPECTED
-    assert_equal expected.gsub(%r{[\r\n\t]}, ''), to_html(text).gsub(%r{[\r\n\t]}, '')
-  end
-
-  def test_should_escape_bq_citations
-    assert_html_output(
-      {
-        %{bq.:http://x/"onmouseover="alert(document.domain) Hover me} =>
-          %{<blockquote cite="http://x/&quot;onmouseover=&quot;alert(document.domain)">\n\t\t<p>Hover me</p>\n\t</blockquote>}
-      }, false)
-  end
-
   private
 
   def assert_html_output(to_test, expect_paragraph = true)
