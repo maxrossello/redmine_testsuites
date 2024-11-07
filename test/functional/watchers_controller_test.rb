@@ -498,11 +498,8 @@ class WatchersControllerTest < Redmine::ControllerTest
     # All users from two projects eCookbook (7) and Private child of eCookbook
     # (9) who can see both issues
     if Redmine::Plugin.installed? :redmine_extended_watchers
-      assert_select 'input', :count => 8
-      assert_select 'input[name=?][value="4"]', 'watcher[user_ids][]'
-      assert_select 'input[name=?][value="7"]', 'watcher[user_ids][]'
-      assert_select 'input[name=?][value="9"]', 'watcher[user_ids][]'
-      assert_select 'input[name=?][value="11"]', 'watcher[user_ids][]'
+      assert_select 'input', :count => 5
+      assert_select 'input[name=?][value="3"]', 'watcher[user_ids][]'
     else
       assert_select 'input', :count => 4
     end

@@ -1,5 +1,5 @@
 # Redmine plugin for Plugin Testsuites
-# Copyright (C) 2018-2023    Massimo Rossello 
+# Copyright (C) 2018-    Massimo Rossello 
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ if ENV["RAILS_ENV"] == "test"
     redmine_translation_terms: { tilde_greater_than: '5.0.6' },
     redmine_base_deface:       { version_or_higher:  '5.0.6' },
     redmine_better_overview:   { tilde_greater_than: '5.0.2' },
-    redmine_extended_watchers: { tilde_greater_than: '5.0.2' },
+    redmine_extended_watchers: { tilde_greater_than: '5.0.10' },
     redmine_pluggable_themes:  { tilde_greater_than: '5.0.2' },
     redwine:                   { version:            '5.0.10' },
     sidebar_hide:              { version_or_higher:  '5.0.2' }
