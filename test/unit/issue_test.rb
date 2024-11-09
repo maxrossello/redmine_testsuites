@@ -83,6 +83,16 @@ class IssueTest < ActiveSupport::TestCase
     assert_save issue
   end
 
+  def test_create_with_no_priority_defined
+    IssuePriority.delete_all
+    issue = Issue.new(
+      project_id: 1, tracker_id: 1, author_id: 3, subject: 'test_create_with_no_priority_defined'
+    )
+
+    assert_nothing_raised {assert_not issue.save}
+    assert_include 'Priority cannot be blank', issue.errors.full_messages
+  end
+
   def test_default_priority_should_be_set_when_priority_field_is_disabled
     tracker = Tracker.find(1)
     tracker.core_fields = tracker.core_fields - ['priority_id']
@@ -1488,11 +1498,31 @@ class IssueTest < ActiveSupport::TestCase
     user2 = User.find(3)
     issue = Issue.find(8)
 
+    User.current = user
+
     Watcher.create!(:user => user, :watchable => issue)
     Watcher.create!(:user => user2, :watchable => issue)
 
     user2.status = User::STATUS_LOCKED
     user2.save!
+
+    issue = Issue.new.copy_from(8)
+
+    assert issue.save
+    assert issue.watched_by?(user)
+    assert !issue.watched_by?(user2)
+  end
+
+  def test_copy_should_not_copy_watchers_without_permission
+    user = User.find(2)
+    user2 = User.find(3)
+    issue = Issue.find(8)
+
+    Role.find(1).remove_permission! :view_issue_watchers
+    User.current = user
+
+    Watcher.create!(:user => user, :watchable => issue)
+    Watcher.create!(:user => user2, :watchable => issue)
 
     issue = Issue.new.copy_from(8)
 
@@ -2190,6 +2220,16 @@ class IssueTest < ActiveSupport::TestCase
 
     assert blocked_issue.blocked?
     assert !blocking_issue.blocked?
+  end
+
+  def test_blocked_should_not_raise_exception_when_blocking_issue_id_is_invalid
+    ir = IssueRelation.find_by(issue_from_id: 10, issue_to_id: 9, relation_type: 'blocks')
+    issue = Issue.find(9)
+    assert issue.blocked?
+
+    ir.update_column :issue_from_id, 0  # invalid issue id
+    issue.reload
+    assert_nothing_raised {assert_not issue.blocked?}
   end
 
   def test_blocked_issues_dont_allow_closed_statuses
@@ -3390,7 +3430,7 @@ class IssueTest < ActiveSupport::TestCase
     user_in_europe.pref.update! :time_zone => 'UTC'
 
     user_in_asia = users(:users_002)
-    user_in_asia.pref.update! :time_zone => 'Hongkong'
+    user_in_asia.pref.update! :time_zone => 'Asia/Hong_Kong'
 
     issue = Issue.generate! :due_date => Date.parse('2016-03-20')
 
