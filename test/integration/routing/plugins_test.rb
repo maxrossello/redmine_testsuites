@@ -20,6 +20,7 @@
 require File.expand_path('../../test_helper', __dir__)
 
 class RoutingPluginsTest < Redmine::RoutingTest
+<<<<<<< HEAD
   setup do
     @original_plugin_dir = Redmine::PluginLoader.directory
     @tmp_plugins_path = Rails.root.join('tmp/test/plugins')
@@ -55,16 +56,31 @@ class RoutingPluginsTest < Redmine::RoutingTest
 
     # Change plugin loader's directory for testing
     Redmine::PluginLoader.directory = @tmp_plugins_path
+=======
+  def setup
+    @original_plugin_dir = Redmine::PluginLoader.directory
+
+    Redmine::Plugin.clear
+    Redmine::PluginLoader.directory = Rails.root.join('test/fixtures/plugins')
+    Redmine::Plugin.directory = Rails.root.join('test/fixtures/plugins')
+>>>>>>> 6.0.1
     Redmine::PluginLoader.load
     Redmine::PluginLoader.directories.each(&:run_initializer) # to define relative controllers
     RedmineApp::Application.instance.routes_reloader.reload!
   end
 
+<<<<<<< HEAD
   teardown do
     FileUtils.rm_rf @tmp_plugins_path
 
     Redmine::Plugin.clear
     Redmine::PluginLoader.directory = @original_plugin_dir
+=======
+  def teardown
+    Redmine::Plugin.clear
+    Redmine::PluginLoader.directory = @original_plugin_dir
+    Redmine::Plugin.directory = @original_plugin_dir
+>>>>>>> 6.0.1
     Redmine::PluginLoader.load
     RedmineApp::Application.instance.routes_reloader.reload!
   end
@@ -79,6 +95,7 @@ class RoutingPluginsTest < Redmine::RoutingTest
       :object_type => 'plugin_articles'
     )
   end
+<<<<<<< HEAD
 
   private
 
@@ -109,4 +126,6 @@ class RoutingPluginsTest < Redmine::RoutingTest
 
     return plugin_path
   end
+=======
+>>>>>>> 6.0.1
 end

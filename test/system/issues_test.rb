@@ -25,7 +25,11 @@ class IssuesSystemTest < ApplicationSystemTestCase
            :issue_statuses, :issues, :issue_categories,
            :enumerations, :custom_fields, :custom_values, :custom_fields_trackers,
            :watchers, :journals, :journal_details, :versions,
+<<<<<<< HEAD
            :workflows, :user_preferences
+=======
+           :workflows
+>>>>>>> 6.0.1
 
   def test_create_issue
     log_user('jsmith', 'jsmith')
@@ -274,7 +278,11 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     click_on 'Submit'
 
+<<<<<<< HEAD
     assert_equal 1, Issue.find(2).attachments.count
+=======
+    assert_equal 3, Issue.find(2).attachments.count
+>>>>>>> 6.0.1
   end
 
   test "removing issue shows confirm dialog" do

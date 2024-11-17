@@ -219,8 +219,11 @@ class MailerTest < ActiveSupport::TestCase
     mail = last_email
     assert_equal 'All', mail.header['X-Auto-Response-Suppress'].to_s
     assert_equal 'auto-generated', mail.header['Auto-Submitted'].to_s
+<<<<<<< HEAD
     # List-Id should not include the display name "Redmine"
     assert_equal '<redmine.example.net>', mail.header['List-Id'].to_s
+=======
+>>>>>>> 6.0.1
     assert_equal 'Bug', mail.header['X-Redmine-Issue-Tracker'].to_s
     assert_equal 'Low', mail.header['X-Redmine-Issue-Priority'].to_s
   end
@@ -327,6 +330,26 @@ class MailerTest < ActiveSupport::TestCase
     end
   end
 
+<<<<<<< HEAD
+=======
+  def test_list_id_header_should_include_project_identifier
+    with_settings :mail_from => 'Redmine <redmine@example.net>' do
+      content = WikiContent.find(1)
+      Mailer.deliver_wiki_content_added(content)
+      mail = last_email
+      assert_equal '<ecookbook.redmine.example.net>', mail.header['List-Id'].to_s
+    end
+  end
+
+  def test_list_id_header_excludes_project_identifier_for_non_project_emails
+    with_settings :mail_from => 'Redmine <redmine@example.net>' do
+      Mailer.deliver_test_email(User.find(1))
+      mail = last_email
+      assert_equal '<redmine.example.net>', mail.header['List-Id'].to_s
+    end
+  end
+
+>>>>>>> 6.0.1
   def test_should_not_send_email_without_recipient
     news = News.first
     user = news.author

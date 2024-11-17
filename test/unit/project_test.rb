@@ -1163,4 +1163,14 @@ class ProjectTest < ActiveSupport::TestCase
     r = Project.like('eco_k')
     assert_include project, r
   end
+<<<<<<< HEAD
+=======
+
+  def test_last_activity_date
+    # Note with id 3 is the last activity on Project 1
+    assert_equal Journal.find(3).created_on, Project.find(1).last_activity_date
+    # Project without activity should return nil
+    assert_nil Project.find(4).last_activity_date
+  end
+>>>>>>> 6.0.1
 end

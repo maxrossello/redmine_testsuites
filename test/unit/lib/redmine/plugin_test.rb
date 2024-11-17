@@ -62,7 +62,11 @@ class Redmine::PluginTest < ActiveSupport::TestCase
     assert_equal File.join(@klass.directory, 'foo_plugin', 'assets'), plugin.assets_directory
   end
 
+<<<<<<< HEAD
   ::FooModel = Class.new(ActiveRecord::Base)
+=======
+  ::FooModel = Class.new(ApplicationRecord)
+>>>>>>> 6.0.1
   def test_register_attachment_object_type
     Redmine::Acts::Attachable::ObjectTypeConstraint.expects(:register_object_type).with("foo_models")
     @klass.register :foo_plugin do
@@ -234,7 +238,11 @@ class Redmine::PluginTest < ActiveSupport::TestCase
     migration_dir = File.join(@klass.directory, 'db', 'migrate')
 
     Redmine::Plugin::Migrator.current_plugin = plugin
+<<<<<<< HEAD
     context = Redmine::Plugin::MigrationContext.new(migration_dir, ::ActiveRecord::Base.connection.schema_migration)
+=======
+    context = Redmine::Plugin::MigrationContext.new(migration_dir, ::ActiveRecord::Base.connection.pool.schema_migration)
+>>>>>>> 6.0.1
     # current_version should be zero because Foo plugin has no migration
     assert_equal 0, context.current_version
   end

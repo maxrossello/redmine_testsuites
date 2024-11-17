@@ -105,7 +105,11 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
   test "GET /issues.xml with invalid query params" do
     get '/issues.xml', :params => {:f => ['start_date'], :op => {:start_date => '='}}
 
+<<<<<<< HEAD
     assert_response :unprocessable_entity
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
     assert_equal 'application/xml', @response.media_type
     assert_select 'errors error', :text => "Start date cannot be blank"
   end
@@ -242,6 +246,8 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
 
     assert_select 'issue journals[type=array]' do
       assert_select 'journal[id="1"]' do
+        assert_select 'updated_on', :text => Issue.find(1).journals.order(:id)[0].updated_on.iso8601
+        assert_select 'updated_by[id="1"][name="Redmine Admin"]'
         assert_select 'private_notes', :text => 'false'
         assert_select 'details[type=array]' do
           assert_select 'detail[name=status_id]' do
@@ -723,7 +729,11 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
       '/issues.json',
       :params => {:issue => {:project_id => 999, :subject => "API"}},
       :headers => credentials('jsmith'))
+<<<<<<< HEAD
     assert_response 422
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
   end
 
   test "POST /issues.json with invalid project_id and any assigned_to_id should respond with 422" do
@@ -737,7 +747,11 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
         }
       },
       :headers => credentials('jsmith'))
+<<<<<<< HEAD
     assert_response 422
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
   end
 
   test "POST /issues.json with invalid project_id and any fixed_version_id should respond with 422" do
@@ -751,7 +765,11 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
         }
       },
       :headers => credentials('jsmith'))
+<<<<<<< HEAD
     assert_response 422
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
   end
 
   test "PUT /issues/:id.xml" do
@@ -883,7 +901,11 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
       '/issues/6.xml',
       :params => {:issue => {:subject => ''}},
       :headers => credentials('jsmith'))
+<<<<<<< HEAD
     assert_response :unprocessable_entity
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
     assert_select 'errors error', :text => "Subject cannot be blank"
   end
 
@@ -893,7 +915,11 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
       '/issues/6.xml',
       :params => {:issue => {:assigned_to_id => user.id}},
       :headers => credentials('jsmith'))
+<<<<<<< HEAD
     assert_response :unprocessable_entity
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
     assert_select 'errors error', :text => "Assignee is invalid"
   end
 
@@ -918,7 +944,11 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
       '/issues/6.json',
       :params => {:issue => {:subject => ''}},
       :headers => credentials('jsmith'))
+<<<<<<< HEAD
     assert_response :unprocessable_entity
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
     json = ActiveSupport::JSON.decode(response.body)
     assert json['errors'].include?("Subject cannot be blank")
   end

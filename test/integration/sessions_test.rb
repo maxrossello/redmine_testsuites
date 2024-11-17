@@ -38,7 +38,11 @@ class SessionsTest < Redmine::IntegrationTest
     jsmith.save!
 
     get '/my/account'
+<<<<<<< HEAD
     assert_response 302
+=======
+    assert_response :found
+>>>>>>> 6.0.1
     assert flash[:error].include?('Your session has expired')
   end
 
@@ -50,7 +54,11 @@ class SessionsTest < Redmine::IntegrationTest
     assert jsmith.activate!
 
     get '/my/account'
+<<<<<<< HEAD
     assert_response 302
+=======
+    assert_response :found
+>>>>>>> 6.0.1
     assert flash[:error].include?('Your session has expired')
   end
 
@@ -62,7 +70,7 @@ class SessionsTest < Redmine::IntegrationTest
     jsmith.save!
 
     get '/my/account'
-    assert_response 200
+    assert_response :ok
   end
 
   def test_change_password_generates_a_new_token_for_current_session
@@ -70,7 +78,11 @@ class SessionsTest < Redmine::IntegrationTest
     assert_not_nil token = session[:tk]
 
     get '/my/password'
+<<<<<<< HEAD
     assert_response 200
+=======
+    assert_response :ok
+>>>>>>> 6.0.1
     post(
       '/my/password',
       :params => {
@@ -79,11 +91,15 @@ class SessionsTest < Redmine::IntegrationTest
         :new_password_confirmation => 'secret123'
       }
     )
+<<<<<<< HEAD
     assert_response 302
+=======
+    assert_response :found
+>>>>>>> 6.0.1
     assert_not_equal token, session[:tk]
 
     get '/my/account'
-    assert_response 200
+    assert_response :ok
   end
 
   def test_simultaneous_sessions_should_be_valid

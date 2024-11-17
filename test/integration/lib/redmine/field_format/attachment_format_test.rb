@@ -68,7 +68,11 @@ class AttachmentFieldFormatTest < Redmine::IntegrationTest
             }
           }
         )
+<<<<<<< HEAD
         assert_response 302
+=======
+        assert_response :found
+>>>>>>> 6.0.1
       end
     end
 
@@ -108,7 +112,11 @@ class AttachmentFieldFormatTest < Redmine::IntegrationTest
             }
           }
         )
+<<<<<<< HEAD
         assert_response 302
+=======
+        assert_response :found
+>>>>>>> 6.0.1
       end
     end
 
@@ -166,7 +174,11 @@ class AttachmentFieldFormatTest < Redmine::IntegrationTest
             }
           }
         )
+<<<<<<< HEAD
         assert_response 302
+=======
+        assert_response :found
+>>>>>>> 6.0.1
       end
     end
 
@@ -193,7 +205,11 @@ class AttachmentFieldFormatTest < Redmine::IntegrationTest
             }
           }
         )
+<<<<<<< HEAD
         assert_response 302
+=======
+        assert_response :found
+>>>>>>> 6.0.1
       end
     end
   end

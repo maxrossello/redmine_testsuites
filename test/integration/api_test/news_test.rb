@@ -310,7 +310,11 @@ class Redmine::ApiTest::NewsTest < Redmine::ApiTest::Base
       '/news/1.xml',
       :params => {:news => {:title => ''}},
       :headers => credentials('jsmith'))
+<<<<<<< HEAD
     assert_response :unprocessable_entity
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
     assert_select 'errors error', :text => "Title cannot be blank"
   end
 
@@ -319,7 +323,11 @@ class Redmine::ApiTest::NewsTest < Redmine::ApiTest::Base
       '/news/1.json',
       :params => {:news => {:title => ''}},
       :headers => credentials('jsmith'))
+<<<<<<< HEAD
     assert_response :unprocessable_entity
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
     json = ActiveSupport::JSON.decode(response.body)
     assert json['errors'].include?("Title cannot be blank")
   end

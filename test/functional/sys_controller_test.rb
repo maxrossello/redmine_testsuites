@@ -95,7 +95,11 @@ class SysControllerTest < Redmine::ControllerTest
         :repository => {:url => 'invalid url'}
       }
     )
+<<<<<<< HEAD
     assert_response :unprocessable_entity
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
   end
 
   def test_fetch_changesets
@@ -118,13 +122,13 @@ class SysControllerTest < Redmine::ControllerTest
 
   def test_fetch_changesets_unknown_project
     get :fetch_changesets, :params => {:id => 'unknown'}
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_disabled_ws_should_respond_with_403_error
     with_settings :sys_api_enabled => '0' do
       get :projects
-      assert_response 403
+      assert_response :forbidden
       assert_include 'Access denied', response.body
     end
   end
@@ -139,7 +143,7 @@ class SysControllerTest < Redmine::ControllerTest
   def test_wrong_key_should_respond_with_403_error
     with_settings :sys_api_enabled => 'my_secret_key' do
       get :projects, :params => {:key => 'wrong_key'}
-      assert_response 403
+      assert_response :forbidden
       assert_include 'Access denied', response.body
     end
   end

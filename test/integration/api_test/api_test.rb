@@ -35,7 +35,11 @@ class Redmine::ApiTest::ApiTest < Redmine::ApiTest::Base
         },
         :headers => credentials('admin')
       )
+<<<<<<< HEAD
       assert_response 201
+=======
+      assert_response :created
+>>>>>>> 6.0.1
     end
   ensure
     ActionController::Base.allow_forgery_protection = false

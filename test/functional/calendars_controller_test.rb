@@ -155,15 +155,24 @@ class CalendarsControllerTest < Redmine::ControllerTest
   end
 
   def test_show_should_run_custom_queries
+<<<<<<< HEAD
     @query = IssueQuery.create!(:name => 'Calendar Query', :visibility => IssueQuery::VISIBILITY_PUBLIC)
     get(
       :show,
       :params => {
         :query_id => @query.id
+=======
+    query = IssueQuery.create!(:name => 'Calendar Query', :description => 'Description for Calendar Query', :visibility => IssueQuery::VISIBILITY_PUBLIC)
+    get(
+      :show,
+      :params => {
+        :query_id => query.id
+>>>>>>> 6.0.1
       }
     )
     assert_response :success
-    assert_select 'h2', :text => 'Calendar Query'
+    assert_select 'h2', :text => query.name
+    assert_select '#sidebar a.query.selected[title=?]', query.description, :text => query.name
   end
 
   def test_cross_project_calendar
@@ -218,14 +227,24 @@ class CalendarsControllerTest < Redmine::ControllerTest
 
     assert_select 'ul' do
       assert_select 'li.week-number:nth-of-type(2)', :text => /53$/
+<<<<<<< HEAD
       assert_select 'li.odd', :text => /^27/
       assert_select 'li.even', :text => /^2/
+=======
+      assert_select 'li.other-month', :text => /^27/
+      assert_select 'li.this-month', :text => /^2/
+>>>>>>> 6.0.1
     end
 
     assert_select 'ul' do
       assert_select 'li.week-number', :text => /1$/
+<<<<<<< HEAD
       assert_select 'li.odd', :text => /^3/
       assert_select 'li.even', :text => /^9/
+=======
+      assert_select 'li.other-month', :text => /^3/
+      assert_select 'li.this-month', :text => /^9/
+>>>>>>> 6.0.1
     end
 
     with_settings :start_of_week => 1 do
@@ -241,14 +260,24 @@ class CalendarsControllerTest < Redmine::ControllerTest
 
     assert_select 'ul' do
       assert_select 'li.week-number:nth-of-type(2)', :text => /53$/
+<<<<<<< HEAD
       assert_select 'li.even', :text => /^28/
       assert_select 'li.even', :text => /^3/
+=======
+      assert_select 'li.this-month', :text => /^28/
+      assert_select 'li.this-month', :text => /^3/
+>>>>>>> 6.0.1
     end
 
     assert_select 'ul' do
       assert_select 'li.week-number', :text => /1$/
+<<<<<<< HEAD
       assert_select 'li.even', :text => /^4/
       assert_select 'li.even', :text => /^10/
+=======
+      assert_select 'li.this-month', :text => /^4/
+      assert_select 'li.this-month', :text => /^10/
+>>>>>>> 6.0.1
     end
   end
 

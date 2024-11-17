@@ -78,7 +78,7 @@ class HookTest < Redmine::IntegrationTest
     Redmine::Hook.add_listener(ProjectBasedTemplate)
 
     get '/projects/ecookbook'
-    assert_select 'head link[href=?]', '/stylesheets/ecookbook.css'
+    assert_select 'head link[href=?]', '/assets/ecookbook.css'
   end
 
   def test_empty_sidebar_should_be_hidden
@@ -102,8 +102,8 @@ class HookTest < Redmine::IntegrationTest
     assert_response :success
     assert_select 'p', :text => 'ContentForInsideHook content'
     assert_select 'head' do
-      assert_select 'script[src="/plugin_assets/test_plugin/javascripts/test_plugin.js"]'
-      assert_select 'link[href="/plugin_assets/test_plugin/stylesheets/test_plugin.css"]'
+      assert_select 'script[src="/assets/plugin_assets/test_plugin/test_plugin.js"]'
+      assert_select 'link[href="/assets/plugin_assets/test_plugin/test_plugin.css"]'
     end
   end
 

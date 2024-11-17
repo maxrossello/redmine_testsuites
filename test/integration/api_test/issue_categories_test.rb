@@ -62,7 +62,11 @@ class Redmine::ApiTest::IssueCategoriesTest < Redmine::ApiTest::Base
         :params => {:issue_category => {:name => ''}},
         :headers => credentials('jsmith'))
     end
+<<<<<<< HEAD
     assert_response :unprocessable_entity
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
     assert_equal 'application/xml', @response.media_type
 
     assert_select 'errors error', :text => "Name cannot be blank"
@@ -87,7 +91,11 @@ class Redmine::ApiTest::IssueCategoriesTest < Redmine::ApiTest::Base
         :params => {:issue_category => {:name => ''}},
         :headers => credentials('jsmith'))
     end
+<<<<<<< HEAD
     assert_response :unprocessable_entity
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
     assert_equal 'application/xml', @response.media_type
 
     assert_select 'errors error', :text => "Name cannot be blank"

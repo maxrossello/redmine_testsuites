@@ -209,7 +209,11 @@ class UserQueryTest < ActiveSupport::TestCase
     users = q.results_scope
 
     assert_equal 2, users.size
+<<<<<<< HEAD
     assert_equal [2, 1], users.ids
+=======
+    assert_equal [2, 1], users.pluck(:id)
+>>>>>>> 6.0.1
   end
 
   def find_users_with_query(query)

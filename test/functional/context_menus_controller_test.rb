@@ -221,7 +221,11 @@ class ContextMenusControllerTest < Redmine::ControllerTest
       assert_select 'a[href="#"]', :text => 'List'
       assert_select 'ul' do
         assert_select 'a', 3
+<<<<<<< HEAD
         assert_select 'a.icon.icon-checked', :text => 'Bar'
+=======
+        assert_select 'a.icon', :text => 'Bar'
+>>>>>>> 6.0.1
       end
     end
   end
@@ -384,12 +388,16 @@ class ContextMenusControllerTest < Redmine::ControllerTest
         :ids => [1, 4] # issue 4 is not visible
       }
     )
+<<<<<<< HEAD
     assert_response 302
+=======
+    assert_response :found
+>>>>>>> 6.0.1
   end
 
   def test_should_respond_with_404_without_ids
     get :issues
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_time_entries_context_menu

@@ -23,13 +23,16 @@ class WatchersHelperTest < Redmine::HelperTest
   include WatchersHelper
   include AvatarsHelper
   include ERB::Util
+<<<<<<< HEAD
   include Rails.application.routes.url_helpers
+=======
+>>>>>>> 6.0.1
 
   fixtures :users, :issues
 
   test '#watcher_link with a non-watched object' do
     expected = link_to(
-      "Watch",
+      sprite_icon("fav", "Watch"),
       "/watchers/watch?object_id=1&object_type=issue",
       :remote => true, :method => 'post', :class => "issue-1-watcher icon icon-fav-off"
     )
@@ -38,7 +41,7 @@ class WatchersHelperTest < Redmine::HelperTest
 
   test '#watcher_link with a single object array' do
     expected = link_to(
-      "Watch",
+      sprite_icon("fav", "Watch"),
       "/watchers/watch?object_id=1&object_type=issue",
       :remote => true, :method => 'post', :class => "issue-1-watcher icon icon-fav-off"
     )
@@ -47,7 +50,7 @@ class WatchersHelperTest < Redmine::HelperTest
 
   test '#watcher_link with a multiple objects array' do
     expected = link_to(
-      "Watch",
+      sprite_icon("fav", "Watch"),
       "/watchers/watch?object_id%5B%5D=1&object_id%5B%5D=3&object_type=issue",
       :remote => true, :method => 'post', :class => "issue-bulk-watcher icon icon-fav-off"
     )
@@ -62,7 +65,7 @@ class WatchersHelperTest < Redmine::HelperTest
     Watcher.create!(:watchable => Issue.find(1), :user => User.find(1))
 
     expected = link_to(
-      "Unwatch",
+      sprite_icon("fav", "Unwatch"),
       "/watchers/watch?object_id=1&object_type=issue",
       :remote => true, :method => 'delete', :class => "issue-1-watcher icon icon-fav"
     )

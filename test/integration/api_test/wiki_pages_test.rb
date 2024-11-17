@@ -26,7 +26,11 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
 
   test "GET /projects/:project_id/wiki/index.xml should return wiki pages" do
     get '/projects/ecookbook/wiki/index.xml'
+<<<<<<< HEAD
     assert_response 200
+=======
+    assert_response :ok
+>>>>>>> 6.0.1
     assert_equal 'application/xml', response.media_type
     assert_select 'wiki_pages[type=array]' do
       assert_select 'wiki_page', :count => Wiki.find(1).pages.count
@@ -45,7 +49,11 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
 
   test "GET /projects/:project_id/wiki/:title.xml should return wiki page" do
     get '/projects/ecookbook/wiki/CookBook_documentation.xml'
+<<<<<<< HEAD
     assert_response 200
+=======
+    assert_response :ok
+>>>>>>> 6.0.1
     assert_equal 'application/xml', response.media_type
     assert_select 'wiki_page' do
       assert_select 'title', :text => 'CookBook_documentation'
@@ -60,7 +68,11 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
 
   test "GET /projects/:project_id/wiki/:title.xml?include=attachments should include attachments" do
     get '/projects/ecookbook/wiki/Page_with_an_inline_image.xml?include=attachments'
+<<<<<<< HEAD
     assert_response 200
+=======
+    assert_response :ok
+>>>>>>> 6.0.1
     assert_equal 'application/xml', response.media_type
     assert_select 'wiki_page' do
       assert_select 'title', :text => 'Page_with_an_inline_image'
@@ -75,13 +87,21 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
 
   test "GET /projects/:project_id/wiki/:title.xml with unknown title and edit permission should respond with 404" do
     get '/projects/ecookbook/wiki/Invalid_Page.xml', :headers => credentials('jsmith')
+<<<<<<< HEAD
     assert_response 404
+=======
+    assert_response :not_found
+>>>>>>> 6.0.1
     assert_equal 'application/xml', response.media_type
   end
 
   test "GET /projects/:project_id/wiki/:title/:version.xml should return wiki page version" do
     get '/projects/ecookbook/wiki/CookBook_documentation/2.xml'
+<<<<<<< HEAD
     assert_response 200
+=======
+    assert_response :ok
+>>>>>>> 6.0.1
     assert_equal 'application/xml', response.media_type
     assert_select 'wiki_page' do
       assert_select 'title', :text => 'CookBook_documentation'
@@ -98,7 +118,11 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
     Role.anonymous.remove_permission! :view_wiki_edits
 
     get '/projects/ecookbook/wiki/CookBook_documentation/2.xml'
+<<<<<<< HEAD
     assert_response 401
+=======
+    assert_response :unauthorized
+>>>>>>> 6.0.1
     assert_equal 'application/xml', response.media_type
   end
 
@@ -130,7 +154,11 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
     WikiContentVersion.find_by_id(2).update(author_id: nil)
 
     get '/projects/ecookbook/wiki/CookBook_documentation/2.xml'
+<<<<<<< HEAD
     assert_response 200
+=======
+    assert_response :ok
+>>>>>>> 6.0.1
     assert_equal 'application/xml', response.media_type
     assert_select 'wiki_page' do
       assert_select 'author', 0
@@ -176,7 +204,11 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
           },
           :headers => credentials('jsmith')
         )
+<<<<<<< HEAD
         assert_response 409
+=======
+        assert_response :conflict
+>>>>>>> 6.0.1
       end
     end
   end
@@ -194,7 +226,11 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
           },
           :headers => credentials('jsmith')
         )
+<<<<<<< HEAD
         assert_response 201
+=======
+        assert_response :created
+>>>>>>> 6.0.1
       end
     end
 
@@ -227,7 +263,11 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
           },
           :headers => credentials('jsmith')
         )
+<<<<<<< HEAD
         assert_response 201
+=======
+        assert_response :created
+>>>>>>> 6.0.1
       end
     end
 
@@ -251,7 +291,11 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
           },
           :headers => credentials('jsmith')
         )
+<<<<<<< HEAD
         assert_response 201
+=======
+        assert_response :created
+>>>>>>> 6.0.1
       end
     end
 

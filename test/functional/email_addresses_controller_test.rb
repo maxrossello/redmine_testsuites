@@ -59,7 +59,11 @@ class EmailAddressesControllerTest < Redmine::ControllerTest
   def test_index_by_another_user_should_be_denied
     @request.session[:user_id] = 3
     get(:index, :params => {:user_id => 2})
+<<<<<<< HEAD
     assert_response 403
+=======
+    assert_response :forbidden
+>>>>>>> 6.0.1
   end
 
   def test_create
@@ -74,7 +78,11 @@ class EmailAddressesControllerTest < Redmine::ControllerTest
           }
         }
       )
+<<<<<<< HEAD
       assert_response 302
+=======
+      assert_response :found
+>>>>>>> 6.0.1
       assert_redirected_to '/users/2/email_addresses'
     end
     email = EmailAddress.order('id DESC').first
@@ -95,7 +103,11 @@ class EmailAddressesControllerTest < Redmine::ControllerTest
         },
         :xhr => true
       )
+<<<<<<< HEAD
       assert_response 200
+=======
+      assert_response :ok
+>>>>>>> 6.0.1
     end
   end
 
@@ -188,7 +200,11 @@ class EmailAddressesControllerTest < Redmine::ControllerTest
         :notify => '0'
       }
     )
+<<<<<<< HEAD
     assert_response 302
+=======
+    assert_response :found
+>>>>>>> 6.0.1
 
     assert_equal false, email.reload.notify
   end
@@ -206,7 +222,11 @@ class EmailAddressesControllerTest < Redmine::ControllerTest
       },
       :xhr => true
     )
+<<<<<<< HEAD
     assert_response 200
+=======
+    assert_response :ok
+>>>>>>> 6.0.1
 
     assert_equal false, email.reload.notify
   end
@@ -245,7 +265,11 @@ class EmailAddressesControllerTest < Redmine::ControllerTest
           :id => email.id
         }
       )
+<<<<<<< HEAD
       assert_response 302
+=======
+      assert_response :found
+>>>>>>> 6.0.1
       assert_redirected_to '/users/2/email_addresses'
     end
   end
@@ -263,7 +287,11 @@ class EmailAddressesControllerTest < Redmine::ControllerTest
         },
         :xhr => true
       )
+<<<<<<< HEAD
       assert_response 200
+=======
+      assert_response :ok
+>>>>>>> 6.0.1
     end
   end
 
@@ -278,7 +306,11 @@ class EmailAddressesControllerTest < Redmine::ControllerTest
           :id => User.find(2).email_address.id
         }
       )
+<<<<<<< HEAD
       assert_response 404
+=======
+      assert_response :not_found
+>>>>>>> 6.0.1
     end
   end
 

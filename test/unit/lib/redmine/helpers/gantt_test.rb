@@ -29,7 +29,6 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
   include AvatarsHelper
 
   include ERB::Util
-  include Rails.application.routes.url_helpers
 
   def setup
     setup_with_controller
@@ -163,8 +162,13 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     setup_subjects
     @output_buffer = @gantt.subjects
     assert_select "div.issue-subject", /#{@issue.subject}/
+<<<<<<< HEAD
     # subject 56px: 44px + 12px(collapse/expand icon's width)
     assert_select 'div.issue-subject[style*="left:56px"]'
+=======
+    # subject 62px: 44px + 18px(collapse/expand icon's width)
+    assert_select 'div.issue-subject[style*="left:62px"]'
+>>>>>>> 6.0.1
   end
 
   test "#subjects issue assigned to a shared version of another project should be rendered" do
@@ -212,10 +216,17 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     assert_select 'div.issue-subject[style*="left:44px"]', /#{@issue.subject}/
     # children 64px
     assert_select 'div.issue-subject[style*="left:64px"]', /child1/
+<<<<<<< HEAD
     # children 76px: 64px + 12px(collapse/expand icon's width)
     assert_select 'div.issue-subject[style*="left:76px"]', /child2/
     # grandchild 96px: 84px + 12px(collapse/expand icon's width)
     assert_select 'div.issue-subject[style*="left:96px"]', /grandchild/, @output_buffer
+=======
+    # children 76px: 64px + 18px(collapse/expand icon's width)
+    assert_select 'div.issue-subject[style*="left:82px"]', /child2/
+    # grandchild 96px: 84px + 18px(collapse/expand icon's width)
+    assert_select 'div.issue-subject[style*="left:102px"]', /grandchild/, @output_buffer
+>>>>>>> 6.0.1
   end
 
   test "#lines" do
@@ -323,7 +334,11 @@ class Redmine::Helpers::GanttHelperTest < Redmine::HelperTest
     create_gantt
     @output_buffer = @gantt.subject('subject', :format => :html, :indent => 40)
     # subject 52px: 40px(indent) + 12px(collapse/expand icon's width)
+<<<<<<< HEAD
     assert_select 'div[style*="left:52px"]'
+=======
+    assert_select 'div[style*="left:58px"]'
+>>>>>>> 6.0.1
   end
 
   test "#line_for_project" do

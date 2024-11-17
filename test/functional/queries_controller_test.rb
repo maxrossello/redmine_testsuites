@@ -34,7 +34,7 @@ class QueriesControllerTest < Redmine::ControllerTest
   def test_index
     get :index
     # HTML response not implemented
-    assert_response 406
+    assert_response :not_acceptable
   end
 
   def test_new_project_query
@@ -62,7 +62,25 @@ class QueriesControllerTest < Redmine::ControllerTest
   def test_new_on_invalid_project
     @request.session[:user_id] = 2
     get(:new, :params => {:project_id => 'invalid'})
+<<<<<<< HEAD
     assert_response 404
+=======
+    assert_response :not_found
+  end
+
+  def test_new_should_not_render_show_inline_columns_option_for_query_without_available_inline_columns
+    @request.session[:user_id] = 1
+    get(:new, :params => {:type => 'ProjectQuery'})
+    assert_response :success
+    assert_select 'p[class=?]', 'block_columns', 0
+  end
+
+  def test_new_should_not_render_show_totals_option_for_query_without_totable_columns
+    @request.session[:user_id] = 1
+    get(:new, :params => {:type => 'ProjectQuery'})
+    assert_response :success
+    assert_select 'p[class=?]', 'totables_columns', 0
+>>>>>>> 6.0.1
   end
 
   def test_new_should_not_render_show_inline_columns_option_for_query_without_available_inline_columns
@@ -328,6 +346,25 @@ class QueriesControllerTest < Redmine::ControllerTest
     assert_equal [['due_date', 'desc'], ['tracker', 'asc']], query.sort_criteria
   end
 
+  def test_create_with_description
+    @request.session[:user_id] = 2
+    assert_difference '::Query.count', 1 do
+      post(
+        :create,
+        :params => {
+          :project_id => 'ecookbook',
+          :query => {
+            :name => 'test_new_with_description', :description => 'Description for test_new_with_description'
+          }
+        }
+      )
+    end
+    q = Query.find_by_name("test_new_with_description")
+    assert_redirected_to :controller => 'issues', :action => 'index', :project_id => 'ecookbook', :query_id => q
+
+    assert_equal 'Description for test_new_with_description', q.description
+  end
+
   def test_create_with_failure
     @request.session[:user_id] = 2
     assert_no_difference '::Query.count' do
@@ -359,7 +396,7 @@ class QueriesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_create_global_query_without_permission_should_fail
@@ -369,7 +406,7 @@ class QueriesControllerTest < Redmine::ControllerTest
     assert_no_difference '::Query.count' do
       post(:create, :params => {:query => {:name => 'Foo'}})
     end
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_create_global_query_from_gantt
@@ -393,7 +430,11 @@ class QueriesControllerTest < Redmine::ControllerTest
           }
         }
       )
+<<<<<<< HEAD
       assert_response 302
+=======
+      assert_response :found
+>>>>>>> 6.0.1
     end
     query = IssueQuery.order('id DESC').first
     assert_redirected_to "/issues/gantt?query_id=#{query.id}"
@@ -424,7 +465,11 @@ class QueriesControllerTest < Redmine::ControllerTest
           }
         }
       )
+<<<<<<< HEAD
       assert_response 302
+=======
+      assert_response :found
+>>>>>>> 6.0.1
     end
     query = IssueQuery.order('id DESC').first
     assert_redirected_to "/projects/ecookbook/issues/gantt?query_id=#{query.id}"
@@ -445,7 +490,11 @@ class QueriesControllerTest < Redmine::ControllerTest
           }
         }
       )
+<<<<<<< HEAD
       assert_response 302
+=======
+      assert_response :found
+>>>>>>> 6.0.1
     end
     assert_not_nil query.project
     assert_equal Query::VISIBILITY_PRIVATE, query.visibility
@@ -464,7 +513,11 @@ class QueriesControllerTest < Redmine::ControllerTest
           }
         }
       )
+<<<<<<< HEAD
       assert_response 302
+=======
+      assert_response :found
+>>>>>>> 6.0.1
     end
     assert_nil query.project
     assert_equal Query::VISIBILITY_PRIVATE, query.visibility
@@ -482,7 +535,11 @@ class QueriesControllerTest < Redmine::ControllerTest
           }
         }
       )
+<<<<<<< HEAD
       assert_response 302
+=======
+      assert_response :found
+>>>>>>> 6.0.1
     end
     assert_not_nil query.project
     assert_equal Query::VISIBILITY_PUBLIC, query.visibility
@@ -501,7 +558,11 @@ class QueriesControllerTest < Redmine::ControllerTest
           }
         }
       )
+<<<<<<< HEAD
       assert_response 302
+=======
+      assert_response :found
+>>>>>>> 6.0.1
     end
     assert_nil query.project
     assert_equal Query::VISIBILITY_PRIVATE, query.visibility
@@ -520,7 +581,11 @@ class QueriesControllerTest < Redmine::ControllerTest
           }
         }
       )
+<<<<<<< HEAD
       assert_response 302
+=======
+      assert_response :found
+>>>>>>> 6.0.1
     end
     assert_nil query.project
     assert_equal Query::VISIBILITY_PUBLIC, query.visibility
@@ -659,10 +724,22 @@ class QueriesControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_edit_description
+    @request.session[:user_id] = 1
+    get(:edit, :params => {:id => 5})
+    assert_response :success
+
+    assert_select 'input[name="query[description]"][value=?]', 'Description for Oepn issues by priority and tracker'
+  end
+
   def test_edit_invalid_query
     @request.session[:user_id] = 2
     get(:edit, :params => {:id => 99})
+<<<<<<< HEAD
     assert_response 404
+=======
+    assert_response :not_found
+>>>>>>> 6.0.1
   end
 
   def test_update_global_private_query
@@ -744,6 +821,26 @@ class QueriesControllerTest < Redmine::ControllerTest
     assert Query.find_by_name('test_project_query_updated')
   end
 
+<<<<<<< HEAD
+=======
+  def test_update_description
+    @request.session[:user_id] = 1
+    q = Query.find(5)
+    put(
+      :update,
+      :params => {
+        :id => q.id,
+        :query => {
+          :name => q.name,
+          :description => 'query description updated'
+        }
+      }
+    )
+    assert_redirected_to :controller => 'issues', :action => 'index', :query_id => q.id
+    assert_equal 'query description updated',  Query.find(5).description
+  end
+
+>>>>>>> 6.0.1
   def test_update_with_failure
     @request.session[:user_id] = 1
     put(

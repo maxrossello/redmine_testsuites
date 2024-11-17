@@ -20,7 +20,6 @@
 require_relative '../../test_helper'
 
 class RoutingRepositoriesTest < Redmine::RoutingTest
-
   def setup
     @paths = ['path/to/index.html',
               'path/to/file.c', 'path/to/file.yaml', 'path/to/file.txt',
@@ -66,7 +65,11 @@ class RoutingRepositoriesTest < Redmine::RoutingTest
     end
     @paths.each do |path|
       should_route "GET /projects/foo/repository/foo/revisions/2457/diff/#{path}" => "repositories#diff",
+<<<<<<< HEAD
         :id => 'foo', :repository_id => 'foo', :rev => '2457', :path => path
+=======
+        :id => 'foo', :repository_id => 'foo', :rev => '2457', :path => path, :format => 'html'
+>>>>>>> 6.0.1
     end
   end
 
@@ -85,7 +88,11 @@ class RoutingRepositoriesTest < Redmine::RoutingTest
     end
     @paths.each do |path|
       should_route "GET /projects/foo/repository/svn/diff/#{path}" => "repositories#diff",
+<<<<<<< HEAD
         :id => 'foo', :repository_id => 'svn', :path => path
+=======
+        :id => 'foo', :repository_id => 'svn', :path => path, :format => 'html'
+>>>>>>> 6.0.1
     end
   end
 

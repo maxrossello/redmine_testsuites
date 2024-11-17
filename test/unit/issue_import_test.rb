@@ -463,4 +463,39 @@ class IssueImportTest < ActiveSupport::TestCase
       assert_equal 'CP932', guessed_encoding
     end
   end
+<<<<<<< HEAD
+=======
+
+  def test_encoding_guessing_respects_multibyte_boundaries
+    # Reading a specified number of bytes from the beginning of this file
+    # may stop in the middle of a multi-byte character, which can lead to
+    # an invalid UTF-8 string.
+    test_file = 'mbcs-multiline-text.txt'
+    chunk = File.read(Rails.root.join('test', 'fixtures', 'files', test_file), 4096)
+    chunk.force_encoding('UTF-8') # => "...😃😄😅\xF0\x9F"
+    assert_not chunk.valid_encoding?
+
+    import = generate_import(test_file)
+    with_settings :repositories_encodings => 'UTF-8,ISO-8859-1' do
+      import.set_default_settings
+      guessed_encoding = import.settings['encoding']
+      assert_equal 'UTF-8', guessed_encoding
+    end
+  end
+
+  def test_set_default_settings_should_detect_field_wrapper
+    to_test = {
+      'import_issues.csv' => '"',
+      'import_issues_single_quotation.csv' => "'",
+      # Use '"' as a wrapper for CSV file with no wrappers
+      'import_dates.csv' => '"',
+    }
+
+    to_test.each do |file, expected|
+      import = generate_import(file)
+      import.set_default_settings
+      assert_equal expected, import.settings['wrapper']
+    end
+  end
+>>>>>>> 6.0.1
 end

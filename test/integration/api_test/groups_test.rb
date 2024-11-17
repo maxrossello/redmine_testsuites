@@ -24,7 +24,7 @@ class Redmine::ApiTest::GroupsTest < Redmine::ApiTest::Base
 
   test "GET /groups.xml should require authentication" do
     get '/groups.xml'
-    assert_response 401
+    assert_response :unauthorized
   end
 
   test "GET /groups.xml should return givable groups" do
@@ -61,7 +61,7 @@ class Redmine::ApiTest::GroupsTest < Redmine::ApiTest::Base
 
   test "GET /groups.json should require authentication" do
     get '/groups.json'
-    assert_response 401
+    assert_response :unauthorized
   end
 
   test "GET /groups.json should return groups" do
@@ -150,7 +150,11 @@ class Redmine::ApiTest::GroupsTest < Redmine::ApiTest::Base
         :headers => credentials('admin')
       )
     end
+<<<<<<< HEAD
     assert_response :unprocessable_entity
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
     assert_equal 'application/xml', response.media_type
 
     assert_select 'errors' do
@@ -179,7 +183,11 @@ class Redmine::ApiTest::GroupsTest < Redmine::ApiTest::Base
       :params => {:group => {:name => ''}},
       :headers => credentials('admin')
     )
+<<<<<<< HEAD
     assert_response :unprocessable_entity
+=======
+    assert_response :unprocessable_content
+>>>>>>> 6.0.1
     assert_equal 'application/xml', response.media_type
 
     assert_select 'errors' do
@@ -220,7 +228,11 @@ class Redmine::ApiTest::GroupsTest < Redmine::ApiTest::Base
         :params => {:user_id => 5},
         :headers => credentials('admin')
       )
+<<<<<<< HEAD
       assert_response :unprocessable_entity
+=======
+      assert_response :unprocessable_content
+>>>>>>> 6.0.1
     end
 
     assert_select 'errors' do

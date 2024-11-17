@@ -20,11 +20,9 @@
 require_relative '../../../../test_helper'
 
 class Redmine::WikiFormatting::MacrosTest < Redmine::HelperTest
-  include ApplicationHelper
   include ActionView::Helpers::TextHelper
   include ActionView::Helpers::SanitizeHelper
   include ERB::Util
-  include Rails.application.routes.url_helpers
   extend ActionView::Helpers::SanitizeHelper::ClassMethods
 
   fixtures :projects, :roles, :enabled_modules, :users,
@@ -278,6 +276,16 @@ class Redmine::WikiFormatting::MacrosTest < Redmine::HelperTest
       assert_select_in result, 'a.collapsible.icon-collapsed', :text => 'Show example'
       assert_select_in result, 'a.collapsible.icon-expanded', :text => 'Hide example'
     end
+<<<<<<< HEAD
+=======
+  end
+
+  def test_macro_collapse_with_arg_contains_comma
+    text = %|{{collapse("Click here, to see the example", Hide example)\n*Collapsed* block of text\n}}|
+    result = textilizable(text)
+    assert_select_in result, 'a.collapsible.icon-collapsed', :text => 'Click here, to see the example'
+    assert_select_in result, 'a.collapsible.icon-expanded', :text => 'Hide example'
+>>>>>>> 6.0.1
   end
 
   def test_macro_collapse_should_not_break_toc

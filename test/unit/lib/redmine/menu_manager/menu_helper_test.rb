@@ -22,7 +22,6 @@ require_relative '../../../../test_helper'
 class Redmine::MenuManager::MenuHelperTest < Redmine::HelperTest
   include Redmine::MenuManager::MenuHelper
   include ERB::Util
-  include Rails.application.routes.url_helpers
 
   fixtures :users, :members, :projects, :enabled_modules, :roles, :member_roles
 
@@ -41,6 +40,17 @@ class Redmine::MenuManager::MenuHelperTest < Redmine::HelperTest
     @output_buffer = render_single_menu_node(node, 'This is a test', node.url, false)
 
     assert_select("a.testing", "This is a test")
+  end
+
+  def test_render_single_menu_node_with_plugin_icon
+    node = Redmine::MenuManager::MenuItem.new(:testing, '/test', { :icon => 'plugin_icon_name', :plugin => 'test_plugin_name' })
+    @output_buffer = render_single_menu_node(node, 'This is a test', node.url, false)
+
+    assert_select("a.testing", "This is a test") do
+      assert_select("svg.icon-svg") do
+        assert_select("use[href=?]", "/assets/plugin_assets/test_plugin_name/icons.svg#icon--plugin_icon_name")
+      end
+    end
   end
 
   def test_render_menu_node

@@ -87,7 +87,7 @@ class ActiveSupport::TestCase
     Attachment.storage_path = "#{Rails.root}/test/fixtures/files"
   end
 
-  def with_settings(options, &block)
+  def with_settings(options, &)
     saved_settings = options.keys.inject({}) do |h, k|
       h[k] =
         case Setting[k]
@@ -105,7 +105,7 @@ class ActiveSupport::TestCase
   end
 
   # Yields the block with user as the current user
-  def with_current_user(user, &block)
+  def with_current_user(user, &)
     saved_user = User.current
     User.current = user
     yield
@@ -113,7 +113,7 @@ class ActiveSupport::TestCase
     User.current = saved_user
   end
 
-  def with_locale(locale, &block)
+  def with_locale(locale, &)
     saved_localed = ::I18n.locale
     ::I18n.locale = locale
     yield
@@ -219,13 +219,13 @@ class ActiveSupport::TestCase
 
   # Asserts that a new record for the given class is created
   # and returns it
-  def new_record(klass, &block)
-    new_records(klass, 1, &block).first
+  def new_record(klass, &)
+    new_records(klass, 1, &).first
   end
 
   # Asserts that count new records for the given class are created
   # and returns them as an array order by object id
-  def new_records(klass, count, &block)
+  def new_records(klass, count, &)
     assert_difference "#{klass}.count", count do
       yield
     end
@@ -252,17 +252,23 @@ class ActiveSupport::TestCase
     assert !s.include?(expected), (message || "\"#{expected}\" found in \"#{s}\"")
   end
 
+<<<<<<< HEAD
   def assert_select_in(text, *args, &block)
     d = Nokogiri::HTML(CGI.unescapeHTML(String.new(text))).root
     assert_select(d, *args, &block)
+=======
+  def assert_select_in(text, ...)
+    d = Nokogiri::HTML(CGI.unescapeHTML(String.new(text))).root
+    assert_select(d, ...)
+>>>>>>> 6.0.1
   end
 
-  def assert_select_email(*args, &block)
+  def assert_select_email(...)
     email = ActionMailer::Base.deliveries.last
     assert_not_nil email
     html_body = email.parts.detect {|part| part.content_type.include?('text/html')}.try(&:body)
     assert_not_nil html_body
-    assert_select_in html_body.encoded, *args, &block
+    assert_select_in(html_body.encoded, ...)
   end
 
   def assert_mail_body_match(expected, mail, message=nil)
@@ -334,6 +340,7 @@ module Redmine
 
   class HelperTest < ActionView::TestCase
     include Redmine::I18n
+    include Propshaft::Helper
 
     def setup
       super
@@ -490,7 +497,7 @@ module Redmine
 
         API_FORMATS.each do |format|
           format_request = request.sub /$/, ".#{format}"
-          super options.merge(format_request => arg[request], :format => format)
+          super(options.merge(format_request => arg[request], :format => format))
         end
       end
     end

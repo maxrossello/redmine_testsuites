@@ -72,7 +72,33 @@ class GroupsControllerTest < Redmine::ControllerTest
 
   def test_show_invalid_should_return_404
     get(:show, :params => {:id => 99})
+<<<<<<< HEAD
     assert_response 404
+=======
+    assert_response :not_found
+  end
+
+  def test_show_group_that_is_not_visible_should_return_404
+    Role.anonymous.update! :users_visibility => 'members_of_visible_projects'
+
+    @request.session[:user_id] = nil
+    get :show, :params => {:id => 10}
+    assert_response :not_found
+  end
+
+  def test_show_should_display_only_visible_users
+    group = Group.find(10)
+    locked_user = User.find(5)
+    group.users << locked_user
+    assert locked_user.locked?
+
+    @request.session[:user_id] = nil
+    get :show, :params => {:id => group.id}
+    assert_response :success
+
+    assert_select 'li', :text => 'User Misc'
+    assert_select 'li', :text => locked_user.name, :count => 0
+>>>>>>> 6.0.1
   end
 
   def test_show_group_that_is_not_visible_should_return_404

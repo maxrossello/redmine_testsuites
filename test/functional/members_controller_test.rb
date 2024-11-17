@@ -207,7 +207,11 @@ class MembersControllerTest < Redmine::ControllerTest
         }
       }
     )
+<<<<<<< HEAD
     assert_response 302
+=======
+    assert_response :found
+>>>>>>> 6.0.1
     member = Member.find(2)
     assert member.user.locked?
     assert_equal [1], member.role_ids

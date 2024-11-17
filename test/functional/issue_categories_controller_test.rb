@@ -170,7 +170,11 @@ class IssueCategoriesControllerTest < Redmine::ControllerTest
         }
       }
     )
+<<<<<<< HEAD
     assert_response 404
+=======
+    assert_response :not_found
+>>>>>>> 6.0.1
   end
 
   def test_destroy_category_not_in_use

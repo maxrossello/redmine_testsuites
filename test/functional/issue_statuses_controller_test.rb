@@ -42,7 +42,22 @@ class IssueStatusesControllerTest < Redmine::ControllerTest
   def test_index_by_user_should_respond_with_406
     @request.session[:user_id] = 2
     get :index
-    assert_response 406
+    assert_response :not_acceptable
+  end
+
+  def test_index_should_show_warning_when_no_workflow_is_defined
+    status = IssueStatus.new :name => "No workflow"
+    status.save!
+    get :index
+    assert_response :success
+    assert_select 'table.issue_statuses tbody' do
+      assert_select 'tr:not(:last-of-type) span.icon-warning', :count => 0
+      assert_select 'tr:last-of-type' do
+        assert_select 'td.name', :text => status.name
+        assert_select 'td span.icon-warning',
+                      :text => /#{I18n.t(:text_status_no_workflow)}/
+      end
+    end
   end
 
   def test_index_should_show_warning_when_no_workflow_is_defined

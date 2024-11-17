@@ -130,7 +130,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
     }
 
     assert_response :success
+<<<<<<< HEAD
     assert_select 'tr[id=?] td.name span[class=?]', 'project-5', 'icon icon-user my-project'
+=======
+    assert_select 'tr[id=?] td.name span[class=?]', 'project-5', 'icon-only icon-user my-project'
+>>>>>>> 6.0.1
   end
 
   def test_index_as_list_should_indent_projects
@@ -252,6 +256,32 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_select ".total-for-cf-#{field.id} span.value", :text => '9'
   end
 
+<<<<<<< HEAD
+=======
+  def test_index_with_last_activity_date_column
+    with_settings :project_list_defaults => {'column_names' => %w(name short_description last_activity_date)} do
+      get :index, :params => {
+        :display_type => 'list'
+      }
+      assert_response :success
+    end
+    assert_equal ['Name', 'Description', 'Last activity'], columns_in_list
+    activity_time = Journal.find(3).created_on
+    assert_select "tr#project-1 td.last_activity_date a[href=?]",
+      project_activity_path(Project.find(1), :from => User.current.time_to_date(activity_time)),
+      :text => format_time(activity_time)
+    assert_select 'tr#project-4 td.last_activity_date', :text => ''
+  end
+
+  def test_index_with_query
+    query = ProjectQuery.find(11)
+    get :index, :params => { :query_id => query.id }
+    assert_response :success
+    assert_select 'h2', :text => query.name
+    assert_select '#sidebar a.query.selected[title=?]', query.description, :text => query.name
+  end
+
+>>>>>>> 6.0.1
   def test_index_should_retrieve_default_query
     query = ProjectQuery.find(11)
     ProjectQuery.stubs(:default).returns query
@@ -260,6 +290,10 @@ class ProjectsControllerTest < Redmine::ControllerTest
       @request.session[:user_id] = user_id
       get :index
       assert_select 'h2', text: query.name
+<<<<<<< HEAD
+=======
+      assert_select '#sidebar a.query.selected[title=?]', query.description, :text => query.name
+>>>>>>> 6.0.1
     end
   end
 
@@ -732,7 +766,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
           }
         }
       )
+<<<<<<< HEAD
       assert_response 302
+=======
+      assert_response :found
+>>>>>>> 6.0.1
     end
     project = Project.order('id desc').first
     assert_equal 'inherited', project.name
@@ -827,7 +865,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
     project = Project.find_by_identifier('ecookbook')
     project.archive
     get(:show, :params => {:id => 'ecookbook'})
+<<<<<<< HEAD
     assert_response 403
+=======
+    assert_response :forbidden
+>>>>>>> 6.0.1
     assert_select 'p', :text => /archived/
     assert_not_include project.name, response.body
   end
@@ -837,7 +879,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
     project = Project.find_by_identifier('ecookbook')
     project.archive
     get(:show, :params => {:id => 'ecookbook'})
+<<<<<<< HEAD
     assert_response 403
+=======
+    assert_response :forbidden
+>>>>>>> 6.0.1
     assert_select 'a', :text => "Unarchive"
   end
 
@@ -908,13 +954,21 @@ class ProjectsControllerTest < Redmine::ControllerTest
     Project.find(1).close
     @request.session[:user_id] = 2 # manager
     get(:settings, :params => {:id => 1})
+<<<<<<< HEAD
     assert_response 403
+=======
+    assert_response :forbidden
+>>>>>>> 6.0.1
   end
 
   def test_settings_should_be_denied_for_anonymous_on_closed_project
     Project.find(1).close
     get(:settings, :params => {:id => 1})
+<<<<<<< HEAD
     assert_response 403
+=======
+    assert_response :forbidden
+>>>>>>> 6.0.1
   end
 
   def test_settings_should_accept_version_status_filter
@@ -1003,7 +1057,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
     role.permissions = []
     role.save
     get(:settings, :params => {:id => project.id})
+<<<<<<< HEAD
     assert_response 403
+=======
+    assert_response :forbidden
+>>>>>>> 6.0.1
 
     role.add_permission! :manage_repository, :manage_boards, :manage_project_activities
     get(:settings, :params => {:id => project.id})
@@ -1093,7 +1151,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
         }
       }
     )
+<<<<<<< HEAD
     assert_response 403
+=======
+    assert_response :forbidden
+>>>>>>> 6.0.1
     assert_equal 'eCookbook', Project.find(1).name
   end
 
@@ -1108,7 +1170,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
         }
       }
     )
+<<<<<<< HEAD
     assert_response 403
+=======
+    assert_response :forbidden
+>>>>>>> 6.0.1
     assert_equal 'eCookbook', Project.find(1).name
   end
 
@@ -1126,7 +1192,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
         }
       }
     )
+<<<<<<< HEAD
     assert_response 302
+=======
+    assert_response :found
+>>>>>>> 6.0.1
     assert_match /Successful update/, flash[:notice]
   end
 
@@ -1308,7 +1378,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :confirm => 'ecookbook'
         }
       )
+<<<<<<< HEAD
       assert_response 403
+=======
+      assert_response :forbidden
+>>>>>>> 6.0.1
     end
     assert Project.find(1)
   end
@@ -1316,7 +1390,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
   def test_bulk_destroy_should_require_admin
     @request.session[:user_id] = 2 # non-admin
     delete :bulk_destroy, params: { ids: [1, 2], confirm: 'Yes' }
+<<<<<<< HEAD
     assert_response 403
+=======
+    assert_response :forbidden
+>>>>>>> 6.0.1
   end
 
   def test_bulk_destroy_should_require_confirmation
@@ -1326,7 +1404,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
     end
     assert Project.find(1)
     assert Project.find(2)
+<<<<<<< HEAD
     assert_response 200
+=======
+    assert_response :ok
+>>>>>>> 6.0.1
   end
 
   def test_bulk_destroy_should_delete_projects
@@ -1403,7 +1485,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
   def test_get_copy_with_invalid_source_should_respond_with_404
     @request.session[:user_id] = 1
     get(:copy, :params => {:id => 99})
+<<<<<<< HEAD
     assert_response 404
+=======
+    assert_response :not_found
+>>>>>>> 6.0.1
   end
 
   def test_get_copy_should_preselect_custom_fields

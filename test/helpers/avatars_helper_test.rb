@@ -21,7 +21,10 @@ require_relative '../test_helper'
 
 class AvatarsHelperTest < Redmine::HelperTest
   include ERB::Util
+<<<<<<< HEAD
   include Rails.application.routes.url_helpers
+=======
+>>>>>>> 6.0.1
   include AvatarsHelper
 
   fixtures :users, :email_addresses
@@ -31,6 +34,7 @@ class AvatarsHelperTest < Redmine::HelperTest
   end
 
   def test_avatar_with_user
+<<<<<<< HEAD
     assert_include Digest::MD5.hexdigest('jsmith@somenet.foo'), avatar(User.find_by_mail('jsmith@somenet.foo'))
   end
 
@@ -44,6 +48,21 @@ class AvatarsHelperTest < Redmine::HelperTest
 
   def test_avatar_with_group
     assert_match %r{src="/images/group.png(\?\d+)?"}, avatar(Group.first)
+=======
+    assert_include Digest::SHA256.hexdigest('jsmith@somenet.foo'), avatar(User.find_by_mail('jsmith@somenet.foo'))
+  end
+
+  def test_avatar_with_email_string
+    assert_include Digest::SHA256.hexdigest('jsmith@somenet.foo'), avatar('jsmith <jsmith@somenet.foo>')
+  end
+
+  def test_avatar_with_anonymous_user
+    assert_match %r{src="/assets/anonymous(-\w+)?.png"}, avatar(User.anonymous)
+  end
+
+  def test_avatar_with_group
+    assert_match %r{src="/assets/group(-\w+)?.png"}, avatar(Group.first)
+>>>>>>> 6.0.1
   end
 
   def test_avatar_with_invalid_arg_should_return_nil
