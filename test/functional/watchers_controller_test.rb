@@ -448,7 +448,58 @@ class WatchersControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_include visible.name, response.body
-    assert_not_include hidden.name, response.body
+    if Redmine::Plugin.installed? :redmine_extended_watchers and Setting.plugin_redmine_extended_watchers["policy"] == "extended"
+      # extended mode overrides users visibility
+      assert_include hidden.name, response.body
+    else
+      assert_not_include hidden.name, response.body
+    end
+  end
+
+  def test_autocomplete_for_user_should_not_return_users_without_object_visibility
+    @request.session[:user_id] = 1
+    get :autocomplete_for_user, :params => {
+      q: 'rober',
+      project_id: 'onlinestore',
+      object_id: '4',
+      object_type: 'issue'
+    }, :xhr => true
+
+    assert_response :success
+
+    if Redmine::Plugin.installed? :redmine_extended_watchers
+      # being a watcher, the user has visibility
+      assert_select 'input', :count => 1
+      assert_select 'input[name=?][value="4"]', 'watcher[user_ids][]'
+    else
+      assert response.body.blank?
+    end
+  end
+
+  def test_autocomplete_with_multiple_objects_from_different_projects
+    @request.session[:user_id] = 2
+
+    # 7 => eCookbook
+    # 9 => Private child of eCookbook
+    get :autocomplete_for_user, :params => {
+      :object_id => [7, 9],
+      :object_type => 'issue'
+    }, :xhr => true
+
+    assert_response :success
+
+    # All users from two projects eCookbook (7) and Private child of eCookbook
+    # (9) who can see both issues
+    if Redmine::Plugin.installed? :redmine_extended_watchers
+      assert_select 'input', :count => 5
+      assert_select 'input[name=?][value="3"]', 'watcher[user_ids][]'
+    else
+      assert_select 'input', :count => 4
+    end
+    assert_select 'input[name=?][value="1"]', 'watcher[user_ids][]'
+    assert_select 'input[name=?][value="2"]', 'watcher[user_ids][]'
+    assert_select 'input[name=?][value="8"]', 'watcher[user_ids][]'
+    assert_select 'input[name=?][value="10"]', 'watcher[user_ids][]'
   end
 
   def test_autocomplete_for_user_should_not_return_users_without_object_visibility
