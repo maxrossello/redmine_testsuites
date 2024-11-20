@@ -97,11 +97,7 @@ class AccountTest < Redmine::IntegrationTest
             :autologin => 1
           }
         )
-<<<<<<< HEAD
-        assert_response 302
-=======
         assert_response :found
->>>>>>> 6.0.1
       end
       assert cookies['custom_autologin'].present?
       token = cookies['custom_autologin']

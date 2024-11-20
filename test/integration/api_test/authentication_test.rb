@@ -28,11 +28,7 @@ class Redmine::ApiTest::AuthenticationTest < Redmine::ApiTest::Base
 
   def test_api_should_deny_without_credentials
     get '/users/current.xml'
-<<<<<<< HEAD
-    assert_response 401
-=======
     assert_response :unauthorized
->>>>>>> 6.0.1
     assert response.headers.has_key?('WWW-Authenticate')
   end
 
@@ -41,11 +37,7 @@ class Redmine::ApiTest::AuthenticationTest < Redmine::ApiTest::Base
       user.password = 'my_password'
     end
     get '/users/current.xml', :headers => credentials(user.login, 'my_password')
-<<<<<<< HEAD
-    assert_response 200
-=======
     assert_response :ok
->>>>>>> 6.0.1
   end
 
   def test_api_should_deny_http_basic_auth_using_username_and_wrong_password
@@ -53,11 +45,7 @@ class Redmine::ApiTest::AuthenticationTest < Redmine::ApiTest::Base
       user.password = 'my_password'
     end
     get '/users/current.xml', :headers => credentials(user.login, 'wrong_password')
-<<<<<<< HEAD
-    assert_response 401
-=======
     assert_response :unauthorized
->>>>>>> 6.0.1
   end
 
   def test_api_should_deny_http_basic_auth_if_twofa_is_active
@@ -66,77 +54,49 @@ class Redmine::ApiTest::AuthenticationTest < Redmine::ApiTest::Base
       user.update(twofa_scheme: 'totp')
     end
     get '/users/current.xml', :headers => credentials(user.login, 'my_password')
-<<<<<<< HEAD
-    assert_response 401
-=======
     assert_response :unauthorized
->>>>>>> 6.0.1
   end
 
   def test_api_should_accept_http_basic_auth_using_api_key
     user = User.generate!
     token = Token.create!(:user => user, :action => 'api')
     get '/users/current.xml', :headers => credentials(token.value, 'X')
-<<<<<<< HEAD
-    assert_response 200
-=======
     assert_response :ok
->>>>>>> 6.0.1
   end
 
   def test_api_should_deny_http_basic_auth_using_wrong_api_key
     user = User.generate!
     token = Token.create!(:user => user, :action => 'feeds') # not the API key
     get '/users/current.xml', :headers => credentials(token.value, 'X')
-<<<<<<< HEAD
-    assert_response 401
-=======
     assert_response :unauthorized
->>>>>>> 6.0.1
   end
 
   def test_api_should_accept_auth_using_api_key_as_parameter
     user = User.generate!
     token = Token.create!(:user => user, :action => 'api')
     get "/users/current.xml?key=#{token.value}"
-<<<<<<< HEAD
-    assert_response 200
-=======
     assert_response :ok
->>>>>>> 6.0.1
   end
 
   def test_api_should_deny_auth_using_wrong_api_key_as_parameter
     user = User.generate!
     token = Token.create!(:user => user, :action => 'feeds') # not the API key
     get "/users/current.xml?key=#{token.value}"
-<<<<<<< HEAD
-    assert_response 401
-=======
     assert_response :unauthorized
->>>>>>> 6.0.1
   end
 
   def test_api_should_accept_auth_using_api_key_as_request_header
     user = User.generate!
     token = Token.create!(:user => user, :action => 'api')
     get "/users/current.xml", :headers => {'X-Redmine-API-Key' => token.value.to_s}
-<<<<<<< HEAD
-    assert_response 200
-=======
     assert_response :ok
->>>>>>> 6.0.1
   end
 
   def test_api_should_deny_auth_using_wrong_api_key_as_request_header
     user = User.generate!
     token = Token.create!(:user => user, :action => 'feeds') # not the API key
     get "/users/current.xml", :headers => {'X-Redmine-API-Key' => token.value.to_s}
-<<<<<<< HEAD
-    assert_response 401
-=======
     assert_response :unauthorized
->>>>>>> 6.0.1
   end
 
   def test_api_should_trigger_basic_http_auth_with_basic_authorization_header

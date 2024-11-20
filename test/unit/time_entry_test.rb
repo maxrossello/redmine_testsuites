@@ -87,12 +87,9 @@ class TimeEntryTest < ActiveSupport::TestCase
       "3 hours"  => 3.0,
       "12min"    => 0.2,
       "12 Min"    => 0.2,
-<<<<<<< HEAD
-=======
       "0:23"   => Rational(23, 60), # 0.38333333333333336
       "0.9913888888888889" => Rational(59, 60), # 59m 29s is rounded to 59m
       "0.9919444444444444" => 1     # 59m 30s is rounded to 60m
->>>>>>> 6.0.1
     }
     assertions.each do |k, v|
       t = TimeEntry.new(:hours => k)

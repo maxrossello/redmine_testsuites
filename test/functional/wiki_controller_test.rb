@@ -215,11 +215,7 @@ class WikiControllerTest < Redmine::ControllerTest
   def test_show_unexistent_version_page
     @request.session[:user_id] = 2
     get :show, :params => {:project_id => 1, :id => 'CookBook_documentation', :version => 100}
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 
   def test_show_should_not_show_history_without_permission

@@ -445,11 +445,7 @@ class CustomFieldsControllerTest < Redmine::ControllerTest
           }
         }
       )
-<<<<<<< HEAD
-      assert_response 302
-=======
       assert_response :found
->>>>>>> 6.0.1
     end
     field = IssueCustomField.order("id desc").first
     assert_equal [1, 3], field.projects.map(&:id).sort
@@ -518,11 +514,7 @@ class CustomFieldsControllerTest < Redmine::ControllerTest
           :custom_field => {:name => 'Copy'}
         }
       )
-<<<<<<< HEAD
-      assert_response 302
-=======
       assert_response :found
->>>>>>> 6.0.1
     end
     field = IssueCustomField.order('id desc').first
     assert_equal 'Copy', field.name
@@ -548,11 +540,7 @@ class CustomFieldsControllerTest < Redmine::ControllerTest
         :id => 99
       }
     )
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 
   def test_update
@@ -606,17 +594,10 @@ class CustomFieldsControllerTest < Redmine::ControllerTest
   end
 
   def custom_field_classes
-<<<<<<< HEAD
-    files =
-      Dir.glob(File.join(Rails.root, 'app/models/*_custom_field.rb')).
-        map {|f| File.basename(f).sub(/\.rb$/, '')}
-    classes = files.map {|x| x.classify.constantize}
-=======
     classes =
       Dir.glob(Rails.root.join('app/models/*_custom_field.rb')).map do |f|
         File.basename(f, '.rb').classify.constantize
       end
->>>>>>> 6.0.1
     assert classes.size > 0
     classes
   end

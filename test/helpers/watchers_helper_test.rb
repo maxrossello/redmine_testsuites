@@ -23,10 +23,6 @@ class WatchersHelperTest < Redmine::HelperTest
   include WatchersHelper
   include AvatarsHelper
   include ERB::Util
-<<<<<<< HEAD
-  include Rails.application.routes.url_helpers
-=======
->>>>>>> 6.0.1
 
   fixtures :users, :issues
 

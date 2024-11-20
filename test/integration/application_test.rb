@@ -61,11 +61,7 @@ class ApplicationTest < Redmine::IntegrationTest
 
     atom_key = User.find(2).atom_key
     get "/issues/4.atom?key=#{atom_key}"
-<<<<<<< HEAD
-    assert_response 200
-=======
     assert_response :ok
->>>>>>> 6.0.1
     assert_nil session[:user_id]
   end
 
@@ -105,11 +101,7 @@ class ApplicationTest < Redmine::IntegrationTest
     Role.anonymous.remove_permission! :view_gantt
     with_settings :login_required => '0' do
       get '/projects/nonexistingproject/issues/gantt'
-<<<<<<< HEAD
-      assert_response 302
-=======
       assert_response :found
->>>>>>> 6.0.1
     end
   end
 
@@ -117,10 +109,6 @@ class ApplicationTest < Redmine::IntegrationTest
     log_user('jsmith', 'jsmith')
 
     get '/projects/nonexistingproject/issues/gantt'
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 end

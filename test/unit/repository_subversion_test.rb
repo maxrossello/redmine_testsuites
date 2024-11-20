@@ -24,11 +24,7 @@ class RepositorySubversionTest < ActiveSupport::TestCase
 
   include Redmine::I18n
 
-<<<<<<< HEAD
-  NUM_REV = 14
-=======
   NUM_REV = 16
->>>>>>> 6.0.1
 
   def setup
     User.current = nil
@@ -104,11 +100,7 @@ class RepositorySubversionTest < ActiveSupport::TestCase
       @project.reload
 
       assert_equal NUM_REV, @repository.changesets.count
-<<<<<<< HEAD
-      assert_equal 24, @repository.filechanges.count
-=======
       assert_equal 26, @repository.filechanges.count
->>>>>>> 6.0.1
       assert_equal 'Initial import.', @repository.changesets.find_by_revision('1').comments
     end
 

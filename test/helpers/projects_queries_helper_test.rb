@@ -22,10 +22,6 @@ require_relative '../test_helper'
 class ProjectsQueriesHelperTest < Redmine::HelperTest
   include ProjectsQueriesHelper
 
-<<<<<<<< HEAD:test/helpers/projects_queries_helper_test.rb
-  fixtures :projects, :enabled_modules,
-           :custom_fields, :custom_values
-========
   def self.default(project=nil)
     default_activity = super()
 
@@ -48,7 +44,6 @@ class ProjectsQueriesHelperTest < Redmine::HelperTest
   def option_name
     OptionName
   end
->>>>>>>> 6.0.1:app/models/time_entry_activity.rb
 
   def test_csv_value
     c_status = QueryColumn.new(:status)

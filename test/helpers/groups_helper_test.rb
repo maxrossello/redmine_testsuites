@@ -23,10 +23,6 @@ class GroupsHelperTest < Redmine::HelperTest
   include ERB::Util
   include GroupsHelper
   include AvatarsHelper
-<<<<<<< HEAD
-  include Rails.application.routes.url_helpers
-=======
->>>>>>> 6.0.1
 
   fixtures :users
 

@@ -58,11 +58,7 @@ class DestroyProjectsJobTest < ActiveJob::TestCase
       assert_match /deleted successfully/, m.text_part.to_s
     else
       assert_enqueued_with(
-<<<<<<< HEAD
-        job: ActionMailer::MailDeliveryJob,
-=======
         job: Mailer::DeliveryJob,
->>>>>>> 6.0.1
         args: ->(job_args){
           job_args[1] == 'security_notification' &&
           job_args[3].to_s.include?("mail_destroy_project_with_subprojects_successful")
@@ -70,11 +66,8 @@ class DestroyProjectsJobTest < ActiveJob::TestCase
       )
     end
   end
-<<<<<<< HEAD
-=======
 
   def queue_adapter_for_test
     ActiveJob::QueueAdapters::TestAdapter.new
   end
->>>>>>> 6.0.1
 end

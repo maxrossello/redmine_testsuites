@@ -44,11 +44,7 @@ class BoardsControllerTest < Redmine::ControllerTest
         :project_id => 97
       }
     )
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 
   def test_index_should_show_messages_if_only_one_board
@@ -163,11 +159,7 @@ class BoardsControllerTest < Redmine::ControllerTest
         :id => 97
       }
     )
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 
   def test_new

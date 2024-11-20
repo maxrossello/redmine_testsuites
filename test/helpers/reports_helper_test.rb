@@ -21,10 +21,6 @@ require_relative '../test_helper'
 
 class ReportsHlperTest < Redmine::HelperTest
   include ReportsHelper
-<<<<<<< HEAD
-  include Rails.application.routes.url_helpers
-=======
->>>>>>> 6.0.1
 
   fixtures :projects, :users
 

@@ -252,15 +252,9 @@ class ActiveSupport::TestCase
     assert !s.include?(expected), (message || "\"#{expected}\" found in \"#{s}\"")
   end
 
-<<<<<<< HEAD
-  def assert_select_in(text, *args, &block)
-    d = Nokogiri::HTML(CGI.unescapeHTML(String.new(text))).root
-    assert_select(d, *args, &block)
-=======
   def assert_select_in(text, ...)
     d = Nokogiri::HTML(CGI.unescapeHTML(String.new(text))).root
     assert_select(d, ...)
->>>>>>> 6.0.1
   end
 
   def assert_select_email(...)

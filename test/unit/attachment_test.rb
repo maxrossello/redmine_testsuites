@@ -467,11 +467,7 @@ class AttachmentTest < ActiveSupport::TestCase
     assert(
       Attachment.update_attachments(
         attachments,
-<<<<<<< HEAD
-        {2 => {:filename => 'newname?.txt'},}
-=======
         {2 => {:filename => 'newname?.txt'}}
->>>>>>> 6.0.1
       )
     )
     attachment = Attachment.find(2)
@@ -628,8 +624,6 @@ class AttachmentTest < ActiveSupport::TestCase
       end
     ensure
       set_tmp_attachments_directory
-<<<<<<< HEAD
-=======
     end
 
     def test_thumbnail_should_timeout
@@ -649,7 +643,6 @@ class AttachmentTest < ActiveSupport::TestCase
       assert_nil thumbnail
     ensure
       set_tmp_attachments_directory
->>>>>>> 6.0.1
     end
   else
     puts '(ImageMagick convert not available)'

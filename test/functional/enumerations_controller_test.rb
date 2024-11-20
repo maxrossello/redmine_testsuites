@@ -48,11 +48,7 @@ class EnumerationsControllerTest < Redmine::ControllerTest
 
   def test_new_with_invalid_type_should_respond_with_404
     get(:new, :params => {:type => 'UnknownType'})
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 
   def test_create
@@ -132,11 +128,7 @@ class EnumerationsControllerTest < Redmine::ControllerTest
 
   def test_edit_invalid_should_respond_with_404
     get(:edit, :params => {:id => 999})
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 
   def test_update
@@ -185,11 +177,7 @@ class EnumerationsControllerTest < Redmine::ControllerTest
         }
       }
     )
-<<<<<<< HEAD
-    assert_response 302
-=======
     assert_response :found
->>>>>>> 6.0.1
     assert_equal 1, Enumeration.find(2).position
   end
 
@@ -206,11 +194,7 @@ class EnumerationsControllerTest < Redmine::ControllerTest
         }
       }
     )
-<<<<<<< HEAD
-    assert_response 302
-=======
     assert_response :found
->>>>>>> 6.0.1
     assert_equal "sample", enumeration.reload.custom_field_values.last.value
   end
 

@@ -197,10 +197,7 @@ queries_011:
   type: ProjectQuery
   visibility: 2
   name: Projects as list
-<<<<<<< HEAD
-=======
   description: Description for Projects as list
->>>>>>> 6.0.1
   filters: |
     ---
     id:
@@ -219,10 +216,7 @@ queries_012:
   type: ProjectQuery
   visibility: 1
   name: My bookmarks
-<<<<<<< HEAD
-=======
   description: Description for My bookmarks
->>>>>>> 6.0.1
   filters: |
     ---
     id:

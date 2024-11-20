@@ -159,11 +159,7 @@ class WatchersControllerTest < Redmine::ControllerTest
   def test_new_as_html_should_respond_with_404
     @request.session[:user_id] = 2
     get :new, :params => {:object_type => 'issue', :object_id => '2'}
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 
   def test_new_for_message

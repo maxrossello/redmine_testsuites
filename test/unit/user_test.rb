@@ -563,8 +563,6 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-<<<<<<< HEAD
-=======
   def test_validate_password_complexity
     user = users(:users_002)
     bad_passwords = [
@@ -583,7 +581,6 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
->>>>>>> 6.0.1
   def test_name_format
     assert_equal 'John S.', @jsmith.name(:firstname_lastinitial)
     assert_equal 'Smith, John', @jsmith.name(:lastname_comma_firstname)

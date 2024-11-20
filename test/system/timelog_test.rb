@@ -70,11 +70,7 @@ class TimelogTest < ApplicationSystemTestCase
     page.first(:button, 'Submit').click
 
     assert_current_path "/projects/ecookbook/time_entries"
-<<<<<<< HEAD
-    entries = TimeEntry.where(:id => [1,2,3]).to_a
-=======
     entries = TimeEntry.where(:id => [1, 2, 3]).to_a
->>>>>>> 6.0.1
     assert entries.all? {|entry| entry.hours == 7.0}
   end
 

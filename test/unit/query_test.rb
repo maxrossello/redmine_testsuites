@@ -1373,11 +1373,7 @@ class QueryTest < ActiveSupport::TestCase
     result = query.results_scope
 
     bookmarks = User.current.bookmarked_project_ids
-<<<<<<< HEAD
-    assert_equal Project.where(parent_id: bookmarks).ids, result.map(&:id).sort
-=======
     assert_equal Project.where(parent_id: bookmarks).ids.sort, result.map(&:id).sort
->>>>>>> 6.0.1
   end
 
   def test_filter_watched_issues_by_user
@@ -2884,8 +2880,6 @@ class QueryTest < ActiveSupport::TestCase
 
     assert ! query.available_filters["assigned_to_role"][:values].include?(['Non member', '4'])
     assert ! query.available_filters["assigned_to_role"][:values].include?(['Anonymous', '5'])
-<<<<<<< HEAD
-=======
   end
 
   def test_available_filters_should_include_author_group_filter
@@ -2908,7 +2902,6 @@ class QueryTest < ActiveSupport::TestCase
 
     assert_not query.available_filters["author.role"][:values].include?(['Non member', '4'])
     assert_not query.available_filters["author.role"][:values].include?(['Anonymous', '5'])
->>>>>>> 6.0.1
   end
 
   def test_available_filters_should_include_custom_field_according_to_user_visibility

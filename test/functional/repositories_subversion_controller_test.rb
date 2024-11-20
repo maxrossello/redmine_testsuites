@@ -27,11 +27,7 @@ class RepositoriesSubversionControllerTest < Redmine::RepositoryControllerTest
            :issue_categories, :enumerations, :custom_fields, :custom_values, :trackers
 
   PRJ_ID = 3
-<<<<<<< HEAD
-  NUM_REV = 14
-=======
   NUM_REV = 16
->>>>>>> 6.0.1
 
   def setup
     super
@@ -125,11 +121,7 @@ class RepositoriesSubversionControllerTest < Redmine::RepositoryControllerTest
       assert_response :success
 
       assert_select 'table.entries tbody' do
-<<<<<<< HEAD
-        assert_select 'tr', 6
-=======
         assert_select 'tr', 7
->>>>>>> 6.0.1
         assert_select 'tr.dir td.filename a', :text => '[folder_with_brackets]'
         assert_select 'tr.dir td.filename a', :text => 'folder'
         assert_select 'tr.file td.filename a', :text => '+.md'
@@ -422,11 +414,7 @@ class RepositoriesSubversionControllerTest < Redmine::RepositoryControllerTest
           :rev => 'something_weird'
         }
       )
-<<<<<<< HEAD
-      assert_response 404
-=======
       assert_response :not_found
->>>>>>> 6.0.1
       assert_select_error /was not found/
     end
 
@@ -440,11 +428,7 @@ class RepositoriesSubversionControllerTest < Redmine::RepositoryControllerTest
           :rev_to => 'something_weird'
         }
       )
-<<<<<<< HEAD
-      assert_response 404
-=======
       assert_response :not_found
->>>>>>> 6.0.1
       assert_select_error /was not found/
     end
 
@@ -462,11 +446,7 @@ class RepositoriesSubversionControllerTest < Redmine::RepositoryControllerTest
             :rev => r
           }
         )
-<<<<<<< HEAD
-        assert_response 404
-=======
         assert_response :not_found
->>>>>>> 6.0.1
         assert_select_error /was not found/
       end
     end

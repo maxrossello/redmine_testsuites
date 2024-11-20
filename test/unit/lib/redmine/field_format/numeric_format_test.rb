@@ -21,13 +21,9 @@ require_relative '../../../../test_helper'
 require 'redmine/field_format'
 
 class Redmine::NumericFieldFormatTest < ActionView::TestCase
-<<<<<<< HEAD
-  include ApplicationHelper
-=======
   fixtures :projects, :users, :issue_statuses, :enumerations,
            :trackers, :projects_trackers, :roles, :member_roles,
            :members, :enabled_modules
->>>>>>> 6.0.1
 
   def setup
     User.current = nil
@@ -40,8 +36,6 @@ class Redmine::NumericFieldFormatTest < ActionView::TestCase
     assert_equal 3, field.format.formatted_custom_value(self, custom_value, false)
     assert_equal '<a href="http://foo/3" class="external">3</a>', field.format.formatted_custom_value(self, custom_value, true)
   end
-<<<<<<< HEAD
-=======
 
   def test_float_field_value_should_validate_when_given_with_various_separator
     field = IssueCustomField.generate!(field_format: 'float')
@@ -77,5 +71,4 @@ class Redmine::NumericFieldFormatTest < ActionView::TestCase
       end
     end
   end
->>>>>>> 6.0.1
 end

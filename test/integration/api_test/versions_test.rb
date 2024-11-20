@@ -120,11 +120,7 @@ class Redmine::ApiTest::VersionsTest < Redmine::ApiTest::Base
         :params => {:version => {:name => ''}},
         :headers => credentials('jsmith'))
     end
-<<<<<<< HEAD
-    assert_response :unprocessable_entity
-=======
     assert_response :unprocessable_content
->>>>>>> 6.0.1
     assert_select 'errors error', :text => "Name cannot be blank"
   end
 

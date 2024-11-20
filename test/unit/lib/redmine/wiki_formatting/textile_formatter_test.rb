@@ -19,10 +19,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 require_relative '../../../../test_helper'
-<<<<<<< HEAD
-require 'digest/md5'
-=======
->>>>>>> 6.0.1
 
 class Redmine::WikiFormatting::TextileFormatterTest < ActionView::TestCase
   def setup
@@ -494,11 +490,7 @@ class Redmine::WikiFormatting::TextileFormatterTest < ActionView::TestCase
     assert_equal(
       [STR_WITHOUT_PRE[0], replacement, STR_WITHOUT_PRE[2..4]].flatten.join("\n\n"),
       @formatter.new(TEXT_WITHOUT_PRE).
-<<<<<<< HEAD
-        update_section(2, replacement, Digest::MD5.hexdigest(STR_WITHOUT_PRE[1]))
-=======
         update_section(2, replacement, ActiveSupport::Digest.hexdigest(STR_WITHOUT_PRE[1]))
->>>>>>> 6.0.1
     )
   end
 

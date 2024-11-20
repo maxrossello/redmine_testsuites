@@ -42,11 +42,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
 
           # No one has changed password.
           assert_select user_element, 'passwd_changed_on', :text => ''
-<<<<<<< HEAD
-          assert_select user_element, 'avatar_url', :text => %r|\Ahttps://gravatar.com/avatar/\h{32}\?default=mm|
-=======
           assert_select user_element, 'avatar_url', :text => %r|\Ahttps://gravatar.com/avatar/\h{64}\?default=mm|
->>>>>>> 6.0.1
 
           if user == users.last
             assert_select user_element, 'twofa_scheme', :text => 'totp'
@@ -74,10 +70,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     json['users'].zip(users) do |user_json, user|
       assert_equal user.id, user_json['id']
       assert_equal user.updated_on.iso8601, user_json['updated_on']
-<<<<<<< HEAD
-=======
       assert_equal user.status, user_json['status']
->>>>>>> 6.0.1
 
       # No one has changed password.
       assert_nil user_json['passwd_changed_on']
@@ -105,16 +98,6 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     users = User.logged
     assert_equal users.size, json['users'].size
 
-<<<<<<< HEAD
-    get '/users.json', headers: credentials('admin'), params: { status: ''}
-    assert_response :success
-    json = ActiveSupport::JSON.decode(response.body)
-    assert json.key?('users')
-    users = User.logged
-    assert_equal users.size, json['users'].size
-
-=======
->>>>>>> 6.0.1
     get '/users.json', headers: credentials('admin'), params: { name: 'jsmith' }
     assert_response :success
     json = ActiveSupport::JSON.decode(response.body)
@@ -145,8 +128,6 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     assert_equal 0, json['users'].size
   end
 
-<<<<<<< HEAD
-=======
   test "GET /users.json with include=auth_source" do
     user = User.find(2)
     user.update(:auth_source_id => 1)
@@ -166,7 +147,6 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     end
   end
 
->>>>>>> 6.0.1
   test "GET /users.json with short filters" do
     get '/users.json', headers: credentials('admin'), params: { status: "1|3" }
     assert_response :success
@@ -187,11 +167,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     assert_select 'user id', :text => '2'
     assert_select 'user updated_on', :text => Time.zone.parse('2006-07-19T20:42:15Z').iso8601
     assert_select 'user passwd_changed_on', :text => ''
-<<<<<<< HEAD
-    assert_select 'user avatar_url', :text => %r|\Ahttps://gravatar.com/avatar/\h{32}\?default=robohash|
-=======
     assert_select 'user avatar_url', :text => %r|\Ahttps://gravatar.com/avatar/\h{64}\?default=robohash|
->>>>>>> 6.0.1
   end
 
   test "GET /users/:id.xml should not return avatar_url when not set email address" do
@@ -223,10 +199,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     assert_equal Time.zone.parse('2006-07-19T20:42:15Z').iso8601, json['user']['updated_on']
     assert_nil json['user']['passwd_changed_on']
     assert_nil json['user']['twofa_scheme']
-<<<<<<< HEAD
-=======
     assert_nil json['user']['auth_source']
->>>>>>> 6.0.1
   end
 
   test "GET /users/:id.xml with include=memberships should include memberships" do
@@ -444,11 +417,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
         :headers => credentials('admin'))
     end
 
-<<<<<<< HEAD
-    assert_response :unprocessable_entity
-=======
     assert_response :unprocessable_content
->>>>>>> 6.0.1
     assert_equal 'application/xml', @response.media_type
     assert_select 'errors error', :text => "First name cannot be blank"
   end
@@ -465,11 +434,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
         :headers => credentials('admin'))
     end
 
-<<<<<<< HEAD
-    assert_response :unprocessable_entity
-=======
     assert_response :unprocessable_content
->>>>>>> 6.0.1
     assert_equal 'application/json', @response.media_type
     json = ActiveSupport::JSON.decode(response.body)
     assert_kind_of Hash, json
@@ -538,11 +503,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
         :headers => credentials('admin'))
     end
 
-<<<<<<< HEAD
-    assert_response :unprocessable_entity
-=======
     assert_response :unprocessable_content
->>>>>>> 6.0.1
     assert_equal 'application/xml', @response.media_type
     assert_select 'errors error', :text => "First name cannot be blank"
   end
@@ -560,11 +521,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
         :headers => credentials('admin'))
     end
 
-<<<<<<< HEAD
-    assert_response :unprocessable_entity
-=======
     assert_response :unprocessable_content
->>>>>>> 6.0.1
     assert_equal 'application/json', @response.media_type
     json = ActiveSupport::JSON.decode(response.body)
     assert_kind_of Hash, json

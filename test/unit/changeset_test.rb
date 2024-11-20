@@ -510,11 +510,7 @@ class ChangesetTest < ActiveSupport::TestCase
                       :revision     => '123',
                       :scmid        => '12345',
                       :comments     => str)
-<<<<<<< HEAD
-    assert( c.save )
-=======
     assert(c.save)
->>>>>>> 6.0.1
     assert_equal 'Texte encodé en ISO-8859-1.', c.comments
   end
 

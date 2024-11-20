@@ -78,11 +78,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
         }
       }
     )
-<<<<<<< HEAD
-    assert_response 302
-=======
     assert_response :found
->>>>>>> 6.0.1
     repo2 = Repository.find(repository.id)
     assert_equal false, repo2.report_last_commit
   end
@@ -768,11 +764,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
             :rev => r
           }
         )
-<<<<<<< HEAD
-        assert_response 404
-=======
         assert_response :not_found
->>>>>>> 6.0.1
         assert_select_error /was not found/
       end
     end
@@ -830,11 +822,7 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
 
   private
 
-<<<<<<< HEAD
-  def with_cache(&block)
-=======
   def with_cache(&)
->>>>>>> 6.0.1
     before = ActionController::Base.perform_caching
     ActionController::Base.perform_caching = true
     yield
@@ -844,10 +832,6 @@ class RepositoriesGitControllerTest < Redmine::RepositoryControllerTest
   def puts_pass_on_not_utf8
     puts "TODO: This test fails " +
          "when Encoding.default_external is not UTF-8. " +
-<<<<<<< HEAD
-         "Current value is '#{Encoding.default_external.to_s}'"
-=======
          "Current value is '#{Encoding.default_external}'"
->>>>>>> 6.0.1
   end
 end

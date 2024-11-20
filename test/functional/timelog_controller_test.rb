@@ -838,11 +838,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     assert ! user.allowed_to?(action, TimeEntry.find(5).project)
 
     post :bulk_update, :params => {:ids => [1, 5], :time_entry => {:activity_id => 9}}
-<<<<<<< HEAD
-    assert_response 403
-=======
     assert_response :forbidden
->>>>>>> 6.0.1
   end
 
   def test_bulk_update_with_edit_own_time_entries_permission
@@ -852,11 +848,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     ids = (0..1).map {TimeEntry.generate!(:user => User.find(2)).id}
 
     post :bulk_update, :params => {:ids => ids, :time_entry => {:activity_id => 9}}
-<<<<<<< HEAD
-    assert_response 302
-=======
     assert_response :found
->>>>>>> 6.0.1
   end
 
   def test_bulk_update_with_edit_own_time_entries_permissions_should_be_denied_for_time_entries_of_other_user
@@ -865,11 +857,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     Role.find_by_name('Manager').add_permission! :edit_own_time_entries
 
     post :bulk_update, :params => {:ids => [1, 2], :time_entry => {:activity_id => 9}}
-<<<<<<< HEAD
-    assert_response 403
-=======
     assert_response :forbidden
->>>>>>> 6.0.1
   end
 
   def test_bulk_update_custom_field
@@ -881,11 +869,7 @@ class TimelogControllerTest < Redmine::ControllerTest
         :time_entry => {:custom_field_values => {'10' => '0'}}
       }
     )
-<<<<<<< HEAD
-    assert_response 302
-=======
     assert_response :found
->>>>>>> 6.0.1
     assert_equal ["0", "0"], TimeEntry.where(:id => [1, 2]).collect {|i| i.custom_value_for(10).value}
   end
 
@@ -899,11 +883,7 @@ class TimelogControllerTest < Redmine::ControllerTest
         :time_entry => {:custom_field_values => {field.id.to_s => '__none__'}}
       }
     )
-<<<<<<< HEAD
-    assert_response 302
-=======
     assert_response :found
->>>>>>> 6.0.1
     assert_equal ["", ""], TimeEntry.where(:id => [1, 2]).collect {|i| i.custom_value_for(field).value}
   end
 
@@ -928,11 +908,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     Role.find_by_name('Manager').remove_permission! :edit_time_entries
 
     post :bulk_update, :params => {:ids => [1, 2]}
-<<<<<<< HEAD
-    assert_response 403
-=======
     assert_response :forbidden
->>>>>>> 6.0.1
   end
 
   def test_destroy

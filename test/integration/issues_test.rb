@@ -104,11 +104,7 @@ class IssuesTest < Redmine::IntegrationTest
           }
         }
       )
-<<<<<<< HEAD
-      assert_response 302
-=======
       assert_response :found
->>>>>>> 6.0.1
     end
     assert_equal User.anonymous, issue.author
   end
@@ -345,11 +341,7 @@ class IssuesTest < Redmine::IntegrationTest
           }
         }
       )
-<<<<<<< HEAD
-      assert_response 302
-=======
       assert_response :found
->>>>>>> 6.0.1
     end
 
     # Issue view
@@ -414,10 +406,6 @@ class IssuesTest < Redmine::IntegrationTest
       'v' => {'cf_9' => ['2021-05-25']}
     }
 
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 end

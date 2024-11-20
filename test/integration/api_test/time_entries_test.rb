@@ -141,11 +141,7 @@ class Redmine::ApiTest::TimeEntriesTest < Redmine::ApiTest::Base
         :params => {:time_entry => {:project_id => '1', :spent_on => '2010-12-02', :activity_id => '11'}},
         :headers => credentials('jsmith'))
     end
-<<<<<<< HEAD
-    assert_response :unprocessable_entity
-=======
     assert_response :unprocessable_content
->>>>>>> 6.0.1
     assert_equal 'application/xml', @response.media_type
 
     assert_select 'errors error', :text => "Hours cannot be blank"
@@ -204,11 +200,7 @@ class Redmine::ApiTest::TimeEntriesTest < Redmine::ApiTest::Base
         :params => {:time_entry => {:hours => '', :comments => 'API Update'}},
         :headers => credentials('jsmith'))
     end
-<<<<<<< HEAD
-    assert_response :unprocessable_entity
-=======
     assert_response :unprocessable_content
->>>>>>> 6.0.1
     assert_equal 'application/xml', @response.media_type
 
     assert_select 'errors error', :text => "Hours cannot be blank"
@@ -219,11 +211,7 @@ class Redmine::ApiTest::TimeEntriesTest < Redmine::ApiTest::Base
       '/time_entries/2.xml',
       :params => {:time_entry => {:hours => '2.3', :comments => 'API Update'}},
       :headers => credentials('dlopper'))
-<<<<<<< HEAD
-    assert_response 403
-=======
     assert_response :forbidden
->>>>>>> 6.0.1
   end
 
   test "DELETE /time_entries/:id.xml should destroy time entry" do
@@ -241,11 +229,7 @@ class Redmine::ApiTest::TimeEntriesTest < Redmine::ApiTest::Base
     assert_no_difference 'TimeEntry.count' do
       delete '/time_entries/2.xml', :headers => credentials('jsmith')
     end
-<<<<<<< HEAD
-    assert_response :unprocessable_entity
-=======
     assert_response :unprocessable_content
->>>>>>> 6.0.1
     assert_equal 'application/xml', @response.media_type
     assert_select 'errors'
   end

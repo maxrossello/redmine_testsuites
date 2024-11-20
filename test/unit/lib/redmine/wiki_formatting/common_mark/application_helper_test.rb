@@ -23,10 +23,6 @@ class Redmine::WikiFormatting::CommonMark::ApplicationHelperTest < Redmine::Help
   if Object.const_defined?(:CommonMarker)
 
     include ERB::Util
-<<<<<<< HEAD
-    include Rails.application.routes.url_helpers
-=======
->>>>>>> 6.0.1
 
     fixtures :projects, :enabled_modules,
              :users, :email_addresses,
@@ -65,8 +61,6 @@ class Redmine::WikiFormatting::CommonMark::ApplicationHelperTest < Redmine::Help
       end
     end
 
-<<<<<<< HEAD
-=======
     def test_attached_image_alt_attribute_with_madkrown
       attachments = Attachment.all
       with_settings text_formatting: 'common_mark' do
@@ -95,6 +89,5 @@ class Redmine::WikiFormatting::CommonMark::ApplicationHelperTest < Redmine::Help
           textilizable('![alt text](logo.gif)', attachments: [])
       end
     end
->>>>>>> 6.0.1
   end
 end

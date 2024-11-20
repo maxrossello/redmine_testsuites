@@ -90,11 +90,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
   end
 
   def test_keyboard_shortcuts_for_wiki_toolbar_buttons_using_markdown
-<<<<<<< HEAD
-    with_settings :text_formatting => 'markdown' do
-=======
     with_settings :text_formatting => 'common_mark' do
->>>>>>> 6.0.1
       log_user('jsmith', 'jsmith')
       visit 'issues/new'
 
@@ -104,11 +100,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
       # Clear textarea value
       fill_in 'Description', :with => ''
       find('#issue_description').send_keys([modifier_key, 'u'])
-<<<<<<< HEAD
-      assert_equal '__', find('#issue_description').value
-=======
       assert_equal '<u></u>', find('#issue_description').value
->>>>>>> 6.0.1
 
       # Clear textarea value
       fill_in 'Description', :with => ''

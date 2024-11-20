@@ -300,11 +300,7 @@ class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
           }
         }
       )
-<<<<<<< HEAD
-      assert_response 302
-=======
       assert_response :found
->>>>>>> 6.0.1
     end
 
     assert_equal users_to_test.keys.size, ActionMailer::Base.deliveries.size
@@ -345,11 +341,7 @@ class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
         }
       }
     )
-<<<<<<< HEAD
-    assert_response 302
-=======
     assert_response :found
->>>>>>> 6.0.1
     assert_equal users_to_test.keys.size, ActionMailer::Base.deliveries.size
     # tests that each user receives 1 email with the custom fields he is allowed to see only
     users_to_test.each do |user, fields|
@@ -386,17 +378,10 @@ class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
         }
       }
     )
-<<<<<<< HEAD
-    assert_response 302
-    users_to_test.each do |user, fields|
-      mails = ActionMailer::Base.deliveries.select {|m| m.to.include? user.mail}
-      if (fields & [@field2, @field3]).any?
-=======
     assert_response :found
     users_to_test.each do |user, fields|
       mails = ActionMailer::Base.deliveries.select {|m| m.to.include? user.mail}
       if fields.intersect?([@field2, @field3])
->>>>>>> 6.0.1
         assert_equal 1, mails.size, "User #{user.id} was not notified"
       else
         assert_equal 0, mails.size, "User #{user.id} was notified"

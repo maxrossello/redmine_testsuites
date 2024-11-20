@@ -33,11 +33,6 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   if ENV['SELENIUM_REMOTE_URL']
     options[:url] = ENV['SELENIUM_REMOTE_URL']
     options[:browser] = :remote
-<<<<<<< HEAD
-  elsif Gem.ruby_version < Gem::Version.new('3.0')
-    require 'webdrivers/chromedriver'
-=======
->>>>>>> 6.0.1
   end
 
   # Allow running tests using a remote Selenium hub

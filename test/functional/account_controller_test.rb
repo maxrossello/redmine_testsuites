@@ -230,11 +230,7 @@ class AccountControllerTest < Redmine::ControllerTest
         :password => 'jsmith'
       }
     )
-<<<<<<< HEAD
-    assert_response 500
-=======
     assert_response :internal_server_error
->>>>>>> 6.0.1
     assert_select_error /Something wrong/
   end
 
@@ -247,11 +243,7 @@ class AccountControllerTest < Redmine::ControllerTest
         :password => 'jsmith'
       }
     )
-<<<<<<< HEAD
-    assert_response 302
-=======
     assert_response :found
->>>>>>> 6.0.1
   end
 
   def test_login_should_strip_whitespaces_from_user_name
@@ -262,11 +254,7 @@ class AccountControllerTest < Redmine::ControllerTest
         :password => 'jsmith'
       }
     )
-<<<<<<< HEAD
-    assert_response 302
-=======
     assert_response :found
->>>>>>> 6.0.1
     assert_equal 2, @request.session[:user_id]
   end
 

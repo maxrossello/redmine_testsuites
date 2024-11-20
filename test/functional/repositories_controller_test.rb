@@ -138,11 +138,7 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
         }
       }
     )
-<<<<<<< HEAD
-    assert_response 302
-=======
     assert_response :found
->>>>>>> 6.0.1
     assert_equal 'test_update', Repository.find(11).password
   end
 
@@ -241,11 +237,7 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
       role.add_permission! :manage_repository
       Repository::Subversion.any_instance.expects(:fetch_changesets).once
       post(:fetch_changesets, :params => {:id => 1, :repository_id => 10})
-<<<<<<< HEAD
-      assert_response :success
-=======
       assert_redirected_to '/projects/ecookbook/repository/10'
->>>>>>> 6.0.1
 
       role.remove_permission! :manage_repository
       Repository::Subversion.any_instance.expects(:fetch_changesets).never
@@ -287,11 +279,7 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
         :repository_id => 'foo'
       }
     )
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 
   def test_revision
@@ -535,11 +523,7 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
           }
         }
       )
-<<<<<<< HEAD
-      assert_response 302
-=======
       assert_response :found
->>>>>>> 6.0.1
       assert_equal User.find(2), c.reload.user
     end
   end

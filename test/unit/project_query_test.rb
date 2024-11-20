@@ -26,12 +26,8 @@ class ProjectQueryTest < ActiveSupport::TestCase
            :groups_users,
            :enabled_modules,
            :custom_fields, :custom_values,
-<<<<<<< HEAD
-           :queries
-=======
            :queries,
            :issues, :journals, :journal_details
->>>>>>> 6.0.1
 
   include Redmine::I18n
 
@@ -154,8 +150,6 @@ class ProjectQueryTest < ActiveSupport::TestCase
     q.admin_projects = 1
     assert_equal Project.all, q.base_scope
   end
-<<<<<<< HEAD
-=======
 
   def test_results_scope_has_last_activity_date
     q = ProjectQuery.generate!(column_names: [:last_activity_date])
@@ -168,5 +162,4 @@ class ProjectQueryTest < ActiveSupport::TestCase
     assert_not_nil last_activitiy_date
     assert_equal Redmine::Activity::Fetcher.new(User.current).events(nil, nil, :project => Project.find(1)).first.updated_on, last_activitiy_date
   end
->>>>>>> 6.0.1
 end

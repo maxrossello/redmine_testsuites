@@ -353,14 +353,7 @@ class MercurialAdapterTest < ActiveSupport::TestCase
     end
 
     def test_branches
-<<<<<<< HEAD
-      branches = []
-      @adapter.branches.each do |b|
-        branches << b
-      end
-=======
       branches = @adapter.branches
->>>>>>> 6.0.1
       assert_equal 10, branches.length
 
       branch = branches[-10]

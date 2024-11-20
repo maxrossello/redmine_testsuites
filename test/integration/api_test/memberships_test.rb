@@ -101,11 +101,7 @@ class Redmine::ApiTest::MembershipsTest < Redmine::ApiTest::Base
         :params => {:membership => {:role_ids => [2, 3]}},
         :headers => credentials('jsmith')
       )
-<<<<<<< HEAD
-      assert_response :unprocessable_entity
-=======
       assert_response :unprocessable_content
->>>>>>> 6.0.1
       assert_equal 'application/xml', @response.media_type
       assert_select 'errors error', :text => 'User or Group cannot be blank'
     end
@@ -162,11 +158,7 @@ class Redmine::ApiTest::MembershipsTest < Redmine::ApiTest::Base
       :params => {:membership => {:user_id => 3, :role_ids => [99]}},
       :headers => credentials('jsmith')
     )
-<<<<<<< HEAD
-    assert_response :unprocessable_entity
-=======
     assert_response :unprocessable_content
->>>>>>> 6.0.1
     assert_equal 'application/xml', @response.media_type
     assert_select 'errors error', :text => "Role cannot be empty"
   end

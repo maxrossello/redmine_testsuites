@@ -33,8 +33,6 @@ class IssuesPdfHelperTest < ActiveSupport::TestCase
     time_entry = TimeEntry.create!(:spent_on => Date.today, :hours => 4.3432, :user => user, :author => user,
                      :project_id => 1, :issue => issue, :activity => TimeEntryActivity.first)
 
-<<<<<<< HEAD
-=======
     to_test = {'en' => '4.34', 'de' => '4,34'}
     to_test.each do |locale, expected|
       with_locale locale do
@@ -51,7 +49,6 @@ class IssuesPdfHelperTest < ActiveSupport::TestCase
     issue.parent = Issue.find(1)
     issue.save!
 
->>>>>>> 6.0.1
     results = fetch_row_values(issue, query, 0)
     assert_equal ['2', 'Add ingredients categories', 'Cannot print recipes'], results
   end

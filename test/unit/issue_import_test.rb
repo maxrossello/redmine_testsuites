@@ -463,8 +463,6 @@ class IssueImportTest < ActiveSupport::TestCase
       assert_equal 'CP932', guessed_encoding
     end
   end
-<<<<<<< HEAD
-=======
 
   def test_encoding_guessing_respects_multibyte_boundaries
     # Reading a specified number of bytes from the beginning of this file
@@ -497,5 +495,4 @@ class IssueImportTest < ActiveSupport::TestCase
       assert_equal expected, import.settings['wrapper']
     end
   end
->>>>>>> 6.0.1
 end

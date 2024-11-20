@@ -75,11 +75,7 @@ class CommentsControllerTest < Redmine::ControllerTest
           }
         }
       )
-<<<<<<< HEAD
-      assert_response 403
-=======
       assert_response :forbidden
->>>>>>> 6.0.1
     end
   end
 

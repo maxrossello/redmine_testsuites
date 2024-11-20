@@ -160,11 +160,7 @@ class RolesControllerTest < Redmine::ControllerTest
           }
         }
       )
-<<<<<<< HEAD
-      assert_response 302
-=======
       assert_response :found
->>>>>>> 6.0.1
     end
     assert_equal false, role.all_roles_managed
     assert_equal [2, 3], role.managed_role_ids.sort

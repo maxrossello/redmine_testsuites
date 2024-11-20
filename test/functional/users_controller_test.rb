@@ -187,8 +187,6 @@ class UsersControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select 'tr#user-1', 1
-<<<<<<< HEAD
-=======
   end
 
   def test_index_with_query
@@ -198,7 +196,6 @@ class UsersControllerTest < Redmine::ControllerTest
 
     assert_select 'h2', :text => query.name
     assert_select '#sidebar a.query.selected[title=?]', query.description, :text => query.name
->>>>>>> 6.0.1
   end
 
   def test_index_csv
@@ -668,9 +665,6 @@ class UsersControllerTest < Redmine::ControllerTest
 
     get :edit, :params => {:id => 6}
 
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
   end
 
@@ -681,7 +675,6 @@ class UsersControllerTest < Redmine::ControllerTest
     get :edit, :params => {:id => 2}
 
     assert_response :success
->>>>>>> 6.0.1
   end
 
   def test_edit_user_with_full_text_formatting_custom_field_should_not_fail
@@ -1142,11 +1135,7 @@ class UsersControllerTest < Redmine::ControllerTest
       assert_no_difference 'User.count' do
         delete :destroy, params: {id: user.id}
       end
-<<<<<<< HEAD
-      assert_response 422
-=======
       assert_response :unprocessable_content
->>>>>>> 6.0.1
     end
   end
 
@@ -1157,11 +1146,7 @@ class UsersControllerTest < Redmine::ControllerTest
       assert_no_difference 'User.count' do
         delete :destroy, params: {id: user.id}
       end
-<<<<<<< HEAD
-      assert_response 422
-=======
       assert_response :unprocessable_content
->>>>>>> 6.0.1
     end
   end
 
@@ -1181,17 +1166,6 @@ class UsersControllerTest < Redmine::ControllerTest
     assert_nil User.find_by_id(2)
   end
 
-<<<<<<< HEAD
-  def test_bulk_destroy_with_lock_param_should_lock_instead
-    assert_no_difference 'User.count' do
-      delete :bulk_destroy, :params => {:ids => [2], :lock => 'lock'}
-    end
-    assert_redirected_to '/users'
-    assert User.find_by_id(2).locked?
-  end
-
-=======
->>>>>>> 6.0.1
   def test_bulk_destroy_should_require_confirmation
     assert_no_difference 'User.count' do
       delete :bulk_destroy, :params => {:ids => [2]}
@@ -1214,11 +1188,7 @@ class UsersControllerTest < Redmine::ControllerTest
     assert_no_difference 'User.count' do
       delete :bulk_destroy, :params => {:ids => [2], :confirm => 'Yes'}
     end
-<<<<<<< HEAD
-    assert_response 403
-=======
     assert_response :forbidden
->>>>>>> 6.0.1
   end
 
   def test_bulk_destroy_should_be_denied_for_anonymous
@@ -1226,9 +1196,6 @@ class UsersControllerTest < Redmine::ControllerTest
     assert_no_difference 'User.count' do
       delete :bulk_destroy, :params => {:ids => [6], :confirm => "Yes"}
     end
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
   end
 
@@ -1280,6 +1247,5 @@ class UsersControllerTest < Redmine::ControllerTest
       delete :bulk_lock, :params => {:ids => [6]}
     end
     assert_response :not_found
->>>>>>> 6.0.1
   end
 end

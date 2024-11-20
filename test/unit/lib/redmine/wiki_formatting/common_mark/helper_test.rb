@@ -17,12 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-<<<<<<< HEAD:test/unit/lib/redmine/wiki_formatting/common_mark/helper_test.rb
 require_relative '../../../../../test_helper'
-=======
-class WikiRedirect < ApplicationRecord
-  belongs_to :wiki
->>>>>>> 6.0.1:app/models/wiki_redirect.rb
 
 class Redmine::WikiFormatting::CommonMark::HelperTest < Redmine::HelperTest
   if Object.const_defined?(:CommonMarker)

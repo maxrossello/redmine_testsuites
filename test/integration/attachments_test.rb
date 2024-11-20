@@ -75,11 +75,7 @@ class AttachmentsTest < Redmine::IntegrationTest
           }
         }
       )
-<<<<<<< HEAD
-      assert_response 302
-=======
       assert_response :found
->>>>>>> 6.0.1
     end
 
     issue = Issue.order('id DESC').first
@@ -163,11 +159,7 @@ class AttachmentsTest < Redmine::IntegrationTest
           }
         }
       )
-<<<<<<< HEAD
-      assert_response 302
-=======
       assert_response :found
->>>>>>> 6.0.1
     end
 
     issue = Issue.order('id DESC').first
@@ -193,11 +185,7 @@ class AttachmentsTest < Redmine::IntegrationTest
           :attachments => {'p0' => {:filename => filename, :token => token}}
         }
       )
-<<<<<<< HEAD
-      assert_response 302
-=======
       assert_response :found
->>>>>>> 6.0.1
     end
     issue = Issue.order('id DESC').first
     assert_equal 'Issue with upload', issue.subject
@@ -270,11 +258,7 @@ class AttachmentsTest < Redmine::IntegrationTest
 
     with_settings :login_required => '0' do
       get "/attachments/journals/3/download"
-<<<<<<< HEAD
-      assert_response 403
-=======
       assert_response :forbidden
->>>>>>> 6.0.1
     end
     with_settings :login_required => '1' do
       get "/attachments/journals/3/download"

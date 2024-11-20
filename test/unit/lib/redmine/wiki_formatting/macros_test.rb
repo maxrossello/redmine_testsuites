@@ -276,8 +276,6 @@ class Redmine::WikiFormatting::MacrosTest < Redmine::HelperTest
       assert_select_in result, 'a.collapsible.icon-collapsed', :text => 'Show example'
       assert_select_in result, 'a.collapsible.icon-expanded', :text => 'Hide example'
     end
-<<<<<<< HEAD
-=======
   end
 
   def test_macro_collapse_with_arg_contains_comma
@@ -285,7 +283,6 @@ class Redmine::WikiFormatting::MacrosTest < Redmine::HelperTest
     result = textilizable(text)
     assert_select_in result, 'a.collapsible.icon-collapsed', :text => 'Click here, to see the example'
     assert_select_in result, 'a.collapsible.icon-expanded', :text => 'Hide example'
->>>>>>> 6.0.1
   end
 
   def test_macro_collapse_should_not_break_toc

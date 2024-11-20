@@ -44,9 +44,6 @@ class NewsControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
 
     get(:index, :params => {:project_id => 999})
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
   end
 
@@ -56,7 +53,6 @@ class NewsControllerTest < Redmine::ControllerTest
       get(:index, :params => {:project_id => 999})
       assert_response :found
     end
->>>>>>> 6.0.1
   end
 
   def test_index_with_invalid_project_should_respond_with_302_for_anonymous
@@ -131,11 +127,7 @@ class NewsControllerTest < Redmine::ControllerTest
 
   def test_show_not_found
     get(:show, :params => {:id => 999})
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 
   def test_get_new_with_project_id

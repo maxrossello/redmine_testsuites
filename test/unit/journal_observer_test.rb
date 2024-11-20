@@ -23,11 +23,7 @@ class JournalObserverTest < ActiveSupport::TestCase
   fixtures :issues, :issue_statuses, :journals, :journal_details, :projects,
            :projects_trackers, :trackers, :enabled_modules, :enumerations,
            :users, :user_preferences, :email_addresses, :roles, :members, :member_roles,
-<<<<<<< HEAD
-           :versions, :issue_categories
-=======
            :versions, :issue_categories, :attachments
->>>>>>> 6.0.1
 
   def setup
     User.current = nil
@@ -202,8 +198,6 @@ class JournalObserverTest < ActiveSupport::TestCase
       assert_equal 0, ActionMailer::Base.deliveries.size
     end
   end
-<<<<<<< HEAD
-=======
 
   def test_create_should_send_email_notification_with_issue_attachment_added
     set_tmp_attachments_directory
@@ -234,5 +228,4 @@ class JournalObserverTest < ActiveSupport::TestCase
       assert_equal 0, ActionMailer::Base.deliveries.size
     end
   end
->>>>>>> 6.0.1
 end

@@ -101,11 +101,7 @@ class CustomFieldEnumerationsControllerTest < Redmine::ControllerTest
         }
       }
     )
-<<<<<<< HEAD
-    assert_response 302
-=======
     assert_response :found
->>>>>>> 6.0.1
 
     @bar.reload
     assert_equal "Baz", @bar.name
@@ -168,11 +164,7 @@ class CustomFieldEnumerationsControllerTest < Redmine::ControllerTest
           :reassign_to_id => @bar.id
         }
       )
-<<<<<<< HEAD
-      assert_response 302
-=======
       assert_response :found
->>>>>>> 6.0.1
     end
 
     assert_equal @bar.id.to_s, group.reload.custom_field_value(@field)

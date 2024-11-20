@@ -81,18 +81,11 @@ class MessagesControllerTest < Redmine::ControllerTest
 
   def test_show_message_not_found
     get(:show, :params => {:board_id => 1, :id => 99999})
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 
   def test_show_message_from_invalid_board_should_respond_with_404
     get(:show, :params => {:board_id => 999, :id => 1})
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
   end
 
@@ -130,7 +123,6 @@ class MessagesControllerTest < Redmine::ControllerTest
     get(:show, :params => {:board_id => 1, :id => 1})
     assert_select 'div#watchers ul', 0
     assert_select 'h3', {text: /Watchers \(\d*\)/, count: 0}
->>>>>>> 6.0.1
   end
 
   def test_show_should_display_watchers
@@ -180,11 +172,7 @@ class MessagesControllerTest < Redmine::ControllerTest
   def test_get_new_with_invalid_board
     @request.session[:user_id] = 2
     get(:new, :params => {:board_id => 99})
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 
   def test_post_new
@@ -336,11 +324,7 @@ class MessagesControllerTest < Redmine::ControllerTest
 
   def test_quote_if_message_is_root
     @request.session[:user_id] = 2
-<<<<<<< HEAD
-    get(
-=======
     post(
->>>>>>> 6.0.1
       :quote,
       :params => {
         :board_id => 1,
@@ -358,11 +342,7 @@ class MessagesControllerTest < Redmine::ControllerTest
 
   def test_quote_if_message_is_not_root
     @request.session[:user_id] = 2
-<<<<<<< HEAD
-    get(
-=======
     post(
->>>>>>> 6.0.1
       :quote,
       :params => {
         :board_id => 1,
@@ -378,11 +358,6 @@ class MessagesControllerTest < Redmine::ControllerTest
     assert_include '> An other reply', response.body
   end
 
-<<<<<<< HEAD
-  def test_quote_as_html_should_respond_with_404
-    @request.session[:user_id] = 2
-    get(
-=======
   def test_quote_with_partial_quote_if_message_is_root
     @request.session[:user_id] = 2
 
@@ -415,7 +390,6 @@ class MessagesControllerTest < Redmine::ControllerTest
   def test_quote_as_html_should_respond_with_404
     @request.session[:user_id] = 2
     post(
->>>>>>> 6.0.1
       :quote,
       :params => {
         :board_id => 1,
@@ -423,11 +397,7 @@ class MessagesControllerTest < Redmine::ControllerTest
       }
     )
 
-<<<<<<< HEAD
-    assert_response 404
-=======
     assert_response :not_found
->>>>>>> 6.0.1
   end
 
   def test_preview_new

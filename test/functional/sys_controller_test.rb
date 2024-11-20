@@ -95,11 +95,7 @@ class SysControllerTest < Redmine::ControllerTest
         :repository => {:url => 'invalid url'}
       }
     )
-<<<<<<< HEAD
-    assert_response :unprocessable_entity
-=======
     assert_response :unprocessable_content
->>>>>>> 6.0.1
   end
 
   def test_fetch_changesets

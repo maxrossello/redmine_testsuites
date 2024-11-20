@@ -304,11 +304,7 @@ class Redmine::ApiTest::ProjectsTest < Redmine::ApiTest::Base
       )
     end
 
-<<<<<<< HEAD
-    assert_response :unprocessable_entity
-=======
     assert_response :unprocessable_content
->>>>>>> 6.0.1
     assert_equal 'application/xml', @response.media_type
     assert_select 'errors error', :text => "Identifier cannot be blank"
   end
@@ -370,11 +366,7 @@ class Redmine::ApiTest::ProjectsTest < Redmine::ApiTest::Base
       )
     end
 
-<<<<<<< HEAD
-    assert_response :unprocessable_entity
-=======
     assert_response :unprocessable_content
->>>>>>> 6.0.1
     assert_equal 'application/xml', @response.media_type
     assert_select 'errors error', :text => "Name cannot be blank"
   end
@@ -423,12 +415,9 @@ class Redmine::ApiTest::ProjectsTest < Redmine::ApiTest::Base
     assert_equal '', @response.body
     assert p = Project.find(1)
     assert p.active?
-<<<<<<< HEAD
-=======
   end
 
   def queue_adapter_for_test
     ActiveJob::QueueAdapters::TestAdapter.new
->>>>>>> 6.0.1
   end
 end

@@ -97,11 +97,7 @@ class MailHandlerControllerTest < Redmine::ControllerTest
         end
       end
     end
-<<<<<<< HEAD
-    assert_response 201
-=======
     assert_response :created
->>>>>>> 6.0.1
   end
 
   def test_should_respond_with_422_if_not_created
