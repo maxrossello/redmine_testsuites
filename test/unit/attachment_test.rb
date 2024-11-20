@@ -80,7 +80,6 @@ class AttachmentTest < ActiveSupport::TestCase
   end
 
   def test_copy_should_preserve_attributes
-
     # prevent re-use of data from other attachments with equal contents
     Attachment.where('id <> 1').destroy_all
 
@@ -114,13 +113,13 @@ class AttachmentTest < ActiveSupport::TestCase
   end
 
   def test_filesize_greater_than_2gb_should_be_supported
-    with_settings :attachment_max_size => (50.gigabyte / 1024) do
+    with_settings :attachment_max_size => (50.gigabytes / 1024) do
       a = Attachment.create!(:container => Issue.find(1),
                              :file => uploaded_test_file("testfile.txt", "text/plain"),
                              :author => User.find(1))
-      a.filesize = 20.gigabyte
+      a.filesize = 20.gigabytes
       a.save!
-      assert_equal 20.gigabyte, a.reload.filesize
+      assert_equal 20.gigabytes, a.reload.filesize
     end
   end
 
@@ -468,7 +467,7 @@ class AttachmentTest < ActiveSupport::TestCase
     assert(
       Attachment.update_attachments(
         attachments,
-        {2 => {:filename => 'newname?.txt'},}
+        {2 => {:filename => 'newname?.txt'}}
       )
     )
     attachment = Attachment.find(2)
@@ -623,6 +622,25 @@ class AttachmentTest < ActiveSupport::TestCase
           "8e0294de2441577c529f170b6fb8f638_2654_#{generated_size}.thumb",
           File.basename(thumbnail))
       end
+    ensure
+      set_tmp_attachments_directory
+    end
+
+    def test_thumbnail_should_timeout
+      dummy_pid = 37530
+      Process.stubs(:spawn).returns(dummy_pid)
+      Process.stubs(:wait2).raises(Timeout::Error)
+      Process.stubs(:kill).returns(1)
+      Process.stubs(:wait).returns(dummy_pid)
+      Rails.logger.expects(:error).with(regexp_matches(/Creating thumbnail timed out/))
+
+      set_fixtures_attachments_directory
+      Attachment.clear_thumbnails
+
+      attachment = Attachment.find(16)
+      thumbnail = attachment.thumbnail
+
+      assert_nil thumbnail
     ensure
       set_tmp_attachments_directory
     end

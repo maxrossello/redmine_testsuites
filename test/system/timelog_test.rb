@@ -55,7 +55,7 @@ class TimelogTest < ApplicationSystemTestCase
     select 'QA', :from => 'Activity'
     page.first(:button, 'Submit').click
 
-    entries = TimeEntry.where(:id => [1,2,3]).to_a
+    entries = TimeEntry.where(:id => [1, 2, 3]).to_a
     assert entries.all? {|entry| entry.hours == 8.5}
     assert entries.all? {|entry| entry.activity.name == 'QA'}
   end
@@ -72,7 +72,7 @@ class TimelogTest < ApplicationSystemTestCase
     page.first(:button, 'Submit').click
 
     assert_current_path "/projects/ecookbook/time_entries"
-    entries = TimeEntry.where(:id => [1,2,3]).to_a
+    entries = TimeEntry.where(:id => [1, 2, 3]).to_a
     assert entries.all? {|entry| entry.hours == 7.0}
   end
 

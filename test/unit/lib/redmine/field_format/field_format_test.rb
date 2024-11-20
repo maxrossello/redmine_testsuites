@@ -20,8 +20,6 @@
 require_relative '../../../../test_helper'
 
 class Redmine::FieldFormatTest < ActionView::TestCase
-  include ApplicationHelper
-
   def setup
     User.current = nil
     set_language_if_valid 'en'
@@ -112,5 +110,11 @@ class Redmine::FieldFormatTest < ActionView::TestCase
 
     assert_equal "foo bar", field.format.formatted_custom_value(self, custom_value, false)
     assert_equal '<a href="http://foo/foo%20bar#anchor" class="external">foo bar</a>', field.format.formatted_custom_value(self, custom_value, true)
+  end
+
+  def test_as_select_should_return_enumeration_for_all_classes
+    %w(Issue TimeEntry Project Version Document User Group TimeEntryActivity IssuePriority DocumentCategory).each do |klass|
+      assert_include ['Key/value list', 'enumeration'], Redmine::FieldFormat.as_select(klass)
+    end
   end
 end

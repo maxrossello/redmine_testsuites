@@ -33,9 +33,9 @@ class ProjectsTest < Redmine::IntegrationTest
     assert !Project.find(1).active?
 
     get '/projects/1'
-    assert_response 403
+    assert_response :forbidden
     get "/projects/#{subproject.id}"
-    assert_response 403
+    assert_response :forbidden
 
     post "/projects/1/unarchive"
     assert_redirected_to "/admin/projects"
@@ -49,7 +49,25 @@ class ProjectsTest < Redmine::IntegrationTest
 
     assert_no_difference 'EnabledModule.count' do
       get '/projects/1/modules', :params => {:enabled_module_names => ['']}
-      assert_response 404
+      assert_response :not_found
+    end
+  end
+
+  def test_list_layout_when_show_projects_scheduled_for_deletion
+    project = Project.find(1)
+    project.update_attribute :status, Project::STATUS_SCHEDULED_FOR_DELETION
+
+    log_user('admin', 'admin')
+
+    get '/admin/projects', :params => { :f => ['status'], :v => { 'status' => ['10'] } }
+    assert_response :success
+
+    assert_select '#project-1' do
+      assert_select 'td.checkbox.hide-when-print'
+      assert_select 'td.name'
+      assert_select 'td.identifier'
+      assert_select 'td.short_description'
+      assert_select 'td.buttons', text: ''
     end
   end
 

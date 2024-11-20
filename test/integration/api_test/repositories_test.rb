@@ -70,7 +70,7 @@ class Redmine::ApiTest::RepositoriesTest < Redmine::ApiTest::Base
     assert_no_difference 'Changeset.find(103).issues.size' do
       post '/projects/1/repository/10/revisions/4/issues.xml', :headers => credentials('jsmith'), :params => {:issue_id => '9999'}
     end
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     #assert_select 'errors error', :text => 'Issue is invalid'
     assert_select 'errors error', :text => "#{I18n.t :field_issue} #{I18n.t('activerecord.errors.messages.invalid')}"
   end
@@ -79,7 +79,7 @@ class Redmine::ApiTest::RepositoriesTest < Redmine::ApiTest::Base
     assert_no_difference 'Changeset.find(103).issues.size' do
       post '/projects/1/repository/10/revisions/4/issues.json', :headers => credentials('jsmith'), :params => {:issue_id => '9999'}
     end
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     json = ActiveSupport::JSON.decode(response.body)
     #assert json['errors'].include?('Issue is invalid')
     assert json['errors'].include?("#{I18n.t :field_issue} #{I18n.t('activerecord.errors.messages.invalid')}")

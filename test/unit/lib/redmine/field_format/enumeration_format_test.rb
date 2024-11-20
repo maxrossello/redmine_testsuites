@@ -21,8 +21,6 @@ require_relative '../../../../test_helper'
 require 'redmine/field_format'
 
 class Redmine::EnumerationFieldFormatTest < ActionView::TestCase
-  include ApplicationHelper
-
   def setup
     User.current = nil
     set_language_if_valid 'en'
@@ -99,5 +97,9 @@ class Redmine::EnumerationFieldFormatTest < ActionView::TestCase
     assert_equal [@foo.id, @bar.id], @field.value_from_keyword('foo, bar', nil)
     assert_equal [@foo.id], @field.value_from_keyword('foo, baz', nil)
     assert_equal [], @field.value_from_keyword('baz', nil)
+  end
+
+  def test_customized_class_names_should_overrided_to_nil
+    assert_nil Redmine::FieldFormat::EnumerationFormat.customized_class_names
   end
 end

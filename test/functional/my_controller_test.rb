@@ -734,7 +734,7 @@ class MyControllerTest < Redmine::ControllerTest
         :block => 'invalid'
       }
     )
-    assert_response 422
+    assert_response :unprocessable_content
   end
 
   def test_remove_block

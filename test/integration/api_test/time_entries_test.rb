@@ -63,7 +63,7 @@ class Redmine::ApiTest::TimeEntriesTest < Redmine::ApiTest::Base
 
   test "GET /time_entries/:id.xml with invalid id should 404" do
     get '/time_entries/999.xml', :headers => credentials('jsmith')
-    assert_response 404
+    assert_response :not_found
   end
 
   test "POST /time_entries.xml with issue_id should create time entry" do
@@ -141,7 +141,7 @@ class Redmine::ApiTest::TimeEntriesTest < Redmine::ApiTest::Base
         :params => {:time_entry => {:project_id => '1', :spent_on => '2010-12-02', :activity_id => '11'}},
         :headers => credentials('jsmith'))
     end
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     assert_equal 'application/xml', @response.media_type
 
     assert_select 'errors error', :text => "Hours cannot be blank"
@@ -200,7 +200,7 @@ class Redmine::ApiTest::TimeEntriesTest < Redmine::ApiTest::Base
         :params => {:time_entry => {:hours => '', :comments => 'API Update'}},
         :headers => credentials('jsmith'))
     end
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     assert_equal 'application/xml', @response.media_type
 
     assert_select 'errors error', :text => "Hours cannot be blank"
@@ -211,7 +211,7 @@ class Redmine::ApiTest::TimeEntriesTest < Redmine::ApiTest::Base
       '/time_entries/2.xml',
       :params => {:time_entry => {:hours => '2.3', :comments => 'API Update'}},
       :headers => credentials('dlopper'))
-    assert_response 403
+    assert_response :forbidden
   end
 
   test "DELETE /time_entries/:id.xml should destroy time entry" do
@@ -229,7 +229,7 @@ class Redmine::ApiTest::TimeEntriesTest < Redmine::ApiTest::Base
     assert_no_difference 'TimeEntry.count' do
       delete '/time_entries/2.xml', :headers => credentials('jsmith')
     end
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     assert_equal 'application/xml', @response.media_type
     assert_select 'errors'
   end

@@ -19,9 +19,23 @@
 
 require_relative '../test_helper'
 
-class ApplicationControllerTest < Redmine::ControllerTest
-  def test_back_url_should_remove_utf8_checkmark_from_referer
-    @request.set_header 'HTTP_REFERER', "/path?utf8=\u2713&foo=bar"
-    assert_equal "/path?foo=bar", @controller.back_url
+class ContextMenusHelperTest < Redmine::HelperTest
+  include ContextMenusHelper
+
+  test '#context_menu_link' do
+    html = context_menu_link('name', 'url', class: 'class-a')
+    assert_select_in html, 'a.class-a[href=?]', 'url'
+
+    # When :selected is true
+    html = context_menu_link('name', 'url', selected: true, class: 'class-a class-b')
+    assert_select_in html, 'a.class-a.class-b.icon.disabled[href=?]', '#' do
+      assert_select 'svg.icon-svg'
+    end
+
+    # When :disabled is true
+    html = context_menu_link('name', 'url', disabled: true, method: 'patch', data: { key: 'value' })
+    assert_select_in html,
+      'a.disabled[href=?][onclick=?]:not([method]):not([data-key])',
+      '#', 'return false;'
   end
 end

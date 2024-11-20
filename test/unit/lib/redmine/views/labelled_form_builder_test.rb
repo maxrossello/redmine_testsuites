@@ -20,8 +20,6 @@
 require_relative '../../../../test_helper'
 
 class Redmine::Views::LabelledFormBuilderTest < Redmine::HelperTest
-  include Rails.application.routes.url_helpers
-
   def test_label_should_output_one_element
     set_language_if_valid 'en'
     labelled_form_for(Issue.new) do |f|
@@ -35,7 +33,9 @@ class Redmine::Views::LabelledFormBuilderTest < Redmine::HelperTest
     entry.validate
 
     labelled_form_for(entry) do |f|
-      assert_include 'value="2:30"', f.hours_field(:hours)
+      field_html = f.hours_field(:hours)
+      assert_include 'value="2:30"', field_html
+      assert_include 'placeholder="h:mm"', field_html
     end
   end
 

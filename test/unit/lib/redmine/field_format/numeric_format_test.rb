@@ -21,7 +21,9 @@ require_relative '../../../../test_helper'
 require 'redmine/field_format'
 
 class Redmine::NumericFieldFormatTest < ActionView::TestCase
-  include ApplicationHelper
+  fixtures :projects, :users, :issue_statuses, :enumerations,
+           :trackers, :projects_trackers, :roles, :member_roles,
+           :members, :enabled_modules
 
   def setup
     User.current = nil
@@ -33,5 +35,40 @@ class Redmine::NumericFieldFormatTest < ActionView::TestCase
 
     assert_equal 3, field.format.formatted_custom_value(self, custom_value, false)
     assert_equal '<a href="http://foo/3" class="external">3</a>', field.format.formatted_custom_value(self, custom_value, true)
+  end
+
+  def test_float_field_value_should_validate_when_given_with_various_separator
+    field = IssueCustomField.generate!(field_format: 'float')
+    issue = Issue.generate!(tracker: Tracker.find(1), status: IssueStatus.find(1), priority: IssuePriority.find(6))
+    to_test = {'en' => '3.33', 'de' => '3,33'}
+    to_test.each do |locale, expected|
+      with_locale locale do
+        assert field.format.validate_single_value(field, expected, issue)
+      end
+    end
+  end
+
+  def test_float_field_should_format_with_various_locale_separator
+    field = IssueCustomField.generate!(field_format: 'float')
+    issue = Issue.generate!(tracker: Tracker.find(1), status: IssueStatus.find(1), priority: IssuePriority.find(6))
+    issue.custom_field_values = { field.id => '1234.56' }
+    issue.save!
+    to_test = {'en' => '1234.56', 'de' => '1234,56'}
+    to_test.each do |locale, expected|
+      with_locale locale do
+        assert_equal expected, format_object(issue.reload.custom_field_values.last, html: false)
+      end
+    end
+  end
+
+  def test_integer_field_should_format_with_thousands_delimiter
+    field = IssueCustomField.generate!(field_format: 'int', thousands_delimiter: '1')
+    custom_value = CustomValue.new(custom_field: field, customized: Issue.find(1), value: '1234567')
+    to_test = {'en' => '1,234,567', 'de' => '1.234.567', 'fr' => '1 234 567'}
+    to_test.each do |locale, expected|
+      with_locale locale do
+        assert_equal expected, format_object(custom_value, html: false), locale
+      end
+    end
   end
 end

@@ -21,7 +21,6 @@ require_relative '../test_helper'
 
 class ApplicationHelperTest < Redmine::HelperTest
   include ERB::Util
-  include Rails.application.routes.url_helpers
   include AvatarsHelper
 
   fixtures :projects, :enabled_modules,
@@ -198,6 +197,39 @@ class ApplicationHelperTest < Redmine::HelperTest
     end
   end
 
+  def test_attached_image_alt_attribute_with_textile
+    attachments = Attachment.all
+    with_settings text_formatting: 'textile' do
+      # When alt text is set
+      assert_match %r[<img src=".+?" title="alt text" alt="alt text" loading=".+?" />],
+        textilizable('!logo.gif(alt text)!', attachments: attachments)
+
+      # When alt text and style are set
+      assert_match %r[<img src=".+?" title="alt text" alt="alt text" loading=".+?" style="width:100px;" />],
+        textilizable('!{width:100px}logo.gif(alt text)!', attachments: attachments)
+
+      # When alt text is not set
+      assert_match %r[<img src=".+?" title="This is a logo" alt="This is a logo" loading=".+?" />],
+        textilizable('!logo.gif!', attachments: attachments)
+
+      # When alt text is not set and the attachment has no description
+      assert_match %r[<img src=".+?" alt="" loading=".+?" />],
+        textilizable('!testfile.PNG!', attachments: attachments)
+
+      # When no matching attachments are found
+      assert_match %r[<img src=".+?" alt="" />],
+        textilizable('!no-match.jpg!', attachments: attachments)
+      assert_match %r[<img src=".+?" alt="alt text" />],
+        textilizable('!no-match.jpg(alt text)!', attachments: attachments)
+
+      # When no attachment is registered
+      assert_match %r[<img src=".+?" alt="" />],
+        textilizable('!logo.gif!', attachments: [])
+      assert_match %r[<img src=".+?" alt="alt text" />],
+        textilizable('!logo.gif(alt text)!', attachments: [])
+    end
+  end
+
   def test_attached_images_on_issue
     issue = Issue.generate!
     attachment_1 = Attachment.generate!(:file => mock_file_with_options(:original_filename => "attached_on_issue.png"), :container => issue)
@@ -231,16 +263,16 @@ class ApplicationHelperTest < Redmine::HelperTest
   end
 
   def test_attached_images_with_markdown_and_non_ascii_filename
-    skip unless Object.const_defined?(:Redcarpet)
+    skip unless Object.const_defined?(:CommonMarker)
 
     to_test = {
       'CAFÉ.JPG' => 'CAF%C3%89.JPG',
       'crème.jpg' => 'cr%C3%A8me.jpg',
     }
-    with_settings :text_formatting => 'markdown' do
+    with_settings :text_formatting => 'common_mark' do
       to_test.each do |filename, result|
         attachment = Attachment.generate!(:filename => filename)
-        assert_include %(<img src="/attachments/download/#{attachment.id}/#{result}" alt="" loading="lazy" />),
+        assert_include %(<img src="/attachments/download/#{attachment.id}/#{result}" alt="" loading="lazy">),
                        textilizable("![](#{filename})", :attachments => [attachment])
       end
     end
@@ -614,9 +646,9 @@ class ApplicationHelperTest < Redmine::HelperTest
   end
 
   def test_user_links_with_email_as_login_name_should_not_be_parsed_markdown
-    with_settings :text_formatting => 'markdown' do
+    with_settings :text_formatting => 'common_mark' do
       u = User.generate!(:login => 'jsmith@somenet.foo')
-      html = '<a href=\"mailto:jsmith@somenet.foo\">jsmith@somenet.foo</a>'
+      html = '<a href=\"mailto:jsmith@somenet.foo\" class=\"email\">jsmith@somenet.foo</a>'
 
       # user link format: @jsmith@somenet.foo
       raw = "@jsmith@somenet.foo should not be parsed in jsmith@somenet.foo"
@@ -981,7 +1013,7 @@ class ApplicationHelperTest < Redmine::HelperTest
         %r{<p><a class="attachment" href="/attachments/#{attachment.id}">image@2x.png</a> should not be parsed in image@2x.png</p>},
         textilizable(raw, :attachments => [attachment]))
     end
-    with_settings :text_formatting => 'markdown' do
+    with_settings :text_formatting => 'common_mark' do
       raw = "attachment:image@2x.png should not be parsed in image@2x.png"
       assert_match(
         %r{<p><a class="attachment" href="/attachments/#{attachment.id}">image@2x.png</a> should not be parsed in image@2x.png</p>},
@@ -1104,7 +1136,7 @@ class ApplicationHelperTest < Redmine::HelperTest
     to_test = wiki_links_with_special_characters
 
     @project = Project.find(1)
-    with_settings :text_formatting => 'markdown' do
+    with_settings :text_formatting => 'common_mark' do
       to_test.each {|text, result| assert_equal "<p>#{result}</p>", textilizable(text).strip}
     end
   end
@@ -1146,7 +1178,7 @@ class ApplicationHelperTest < Redmine::HelperTest
     with_settings :text_formatting => 'textile' do
       to_test.each {|text, result| assert_equal "<p>#{result}</p>", textilizable(text)}
     end
-    with_settings :text_formatting => 'markdown' do
+    with_settings :text_formatting => 'common_mark' do
       to_test.each {|text, result| assert_equal "<p>#{result}</p>", textilizable(text).strip}
     end
   end
@@ -1640,9 +1672,9 @@ class ApplicationHelperTest < Redmine::HelperTest
     end
   end
 
-  if Object.const_defined?(:Redcarpet)
+  if Object.const_defined?(:CommonMarker)
     def test_toc_with_markdown_formatting_should_be_parsed
-      with_settings :text_formatting => 'markdown' do
+      with_settings :text_formatting => 'common_mark' do
         assert_select_in textilizable("{{toc}}\n\n# Heading"), 'ul.toc li', :text => 'Heading'
         assert_select_in textilizable("{{<toc}}\n\n# Heading"), 'ul.toc.left li', :text => 'Heading'
         assert_select_in textilizable("{{>toc}}\n\n# Heading"), 'ul.toc.right li', :text => 'Heading'
@@ -1687,7 +1719,8 @@ class ApplicationHelperTest < Redmine::HelperTest
         Regexp.new(
           '<div class="contextual heading-2" title="Edit this section" id="section-4">' \
           '<a class="icon-only icon-edit" href="/projects/1/wiki/Test/edit\?section=4">' \
-          'Edit this section' \
+          '<svg class="s18 icon-svg" aria-hidden="true"><use href="\/assets\/icons-.*.svg#icon--edit"></use></svg>' \
+          '<span class="icon-label">Edit this section</span>' \
           '</a></div>' \
           '<a name="Subtitle-with-inline-code"></a>' \
           '<h2 >Subtitle with ' \
@@ -1701,7 +1734,8 @@ class ApplicationHelperTest < Redmine::HelperTest
         Regexp.new(
           '<div class="contextual heading-2" title="Edit this section" id="section-5">' \
           '<a class="icon-only icon-edit" href="/projects/1/wiki/Test/edit\?section=5">' \
-          'Edit this section' \
+          '<svg class="s18 icon-svg" aria-hidden="true"><use href="\/assets\/icons-.*.svg#icon--edit"></use></svg>' \
+          '<span class="icon-label">Edit this section</span>' \
           '</a></div>' \
           '<a name="Subtitle-after-pre-tag"></a>' \
           '<h2 >Subtitle after pre tag' \
@@ -1837,8 +1871,8 @@ class ApplicationHelperTest < Redmine::HelperTest
 
   def test_link_to_principal_should_link_to_group
     group = Group.find(10)
-    result = link_to('A Team', '/groups/10', :class => 'group')
-    assert_equal result, link_to_principal(group)
+    result = %r{<a class="group" href="/groups/10"><svg class="s18 icon-svg" aria-hidden="true"><use href="/assets/icons-\w+.svg#icon--group"></use></svg>A Team</a>}
+    assert_match result, link_to_principal(group)
   end
 
   def test_link_to_principal_should_return_string_representation_for_unknown_type_principal
@@ -1901,7 +1935,7 @@ class ApplicationHelperTest < Redmine::HelperTest
     a = Attachment.find(3)
     assert_select_in(
       thumbnail_tag(a),
-      'a[href=?][title=?] img[src=?][loading="lazy"]',
+      'a[href=?] img[title=?][src=?][loading="lazy"]',
       "/attachments/3", "logo.gif", "/attachments/thumbnail/3/200")
   end
 
@@ -1996,7 +2030,7 @@ class ApplicationHelperTest < Redmine::HelperTest
       tags = principals_check_box_tags(name, principals)
       principals.each_with_index do |principal, i|
         assert_not_include avatar_tags[i], tags
-        assert_include content_tag('span', nil, :class => "name icon icon-#{principal.class.name.downcase}"), tags
+        assert_include content_tag('span', principal_icon(principal), :class => "name icon icon-#{principal.class.name.downcase}"), tags
       end
     end
   end
@@ -2021,10 +2055,16 @@ class ApplicationHelperTest < Redmine::HelperTest
     User.current = nil
     set_language_if_valid 'en'
     users = [User.find(2), Group.find(11), User.find(4), Group.find(10)]
-    assert_equal(
-      %(<option value="2">John Smith</option><option value="4">Robert Hill</option>) +
-      %(<optgroup label="Groups"><option value="10">A Team</option><option value="11">B Team</option></optgroup>),
-      principals_options_for_select(users))
+    result = principals_options_for_select(users)
+
+    assert_select_in result, 'optgroup[label="Users"]' do
+      assert_select 'option[value="2"]', text: 'John Smith'
+      assert_select 'option[value="4"]', text: 'Robert Hill'
+    end
+    assert_select_in result, 'optgroup[label="Groups"]' do
+      assert_select 'option[value="10"]', text: 'A Team'
+      assert_select 'option[value="11"]', text: 'B Team'
+    end
   end
 
   def test_principals_options_for_select_with_empty_collection
@@ -2039,17 +2079,32 @@ class ApplicationHelperTest < Redmine::HelperTest
                    principals_options_for_select(users)
   end
 
+  def test_principals_options_for_select_should_include_author_and_previous_assignee
+    set_language_if_valid 'en'
+    users = [User.find(2), User.find(3), User.find(1)]
+    @issue = Issue.generate!(author_id: 1, assigned_to_id: 2)
+    @issue.init_journal(users.first, 'update')
+    @issue.assigned_to_id = 3
+    @issue.save
+
+    result = principals_options_for_select(users)
+    assert_select_in result, 'optgroup[label="Author / Previous assignee"]' do
+      assert_select 'option:nth-of-type(1)', text: 'Redmine Admin'  # Author
+      assert_select 'option:nth-of-type(2)', text: 'John Smith'     # Prior assignee
+    end
+  end
+
   def test_stylesheet_link_tag_should_pick_the_default_stylesheet
-    assert_match 'href="/stylesheets/styles.css"', stylesheet_link_tag("styles")
+    assert_match 'href="/assets/styles.css"', stylesheet_link_tag("styles")
   end
 
   def test_stylesheet_link_tag_for_plugin_should_pick_the_plugin_stylesheet
-    assert_match 'href="/plugin_assets/foo/stylesheets/styles.css"',
+    assert_match 'href="/assets/plugin_assets/foo/styles.css"',
                  stylesheet_link_tag("styles", :plugin => :foo)
   end
 
   def test_image_tag_should_pick_the_default_image
-    assert_match 'src="/images/image.png"', image_tag("image.png")
+    assert_match 'src="/assets/image.png"', image_tag("image.png")
   end
 
   def test_image_tag_should_pick_the_theme_image_if_it_exists
@@ -2057,24 +2112,24 @@ class ApplicationHelperTest < Redmine::HelperTest
     theme.images << 'image.png'
 
     with_settings :ui_theme => theme.id do
-      #assert_match %|src="/themes/#{theme.dir}/images/image.png"|, image_tag("image.png")
-      assert_match %r(src="(/plugin_assets/redmine_themes)?/themes/#{theme.dir}/images/image.png"), image_tag("image.png")
-      assert_match %|src="/images/other.png"|, image_tag("other.png")
+      #assert_match %|src="/assets/themes/#{theme.dir}/image.png"|, image_tag("image.png")
+      assert_match %|src="(/plugin_assets/redmine_themes)?/assets/themes/#{theme.dir}/image.png"|, image_tag("image.png")
+      assert_match %|src="/assets/other.png"|, image_tag("other.png")
     end
   ensure
     theme.images.delete 'image.png'
   end
 
   def test_image_tag_sfor_plugin_should_pick_the_plugin_image
-    assert_match 'src="/plugin_assets/foo/images/image.png"', image_tag("image.png", :plugin => :foo)
+    assert_match 'src="/assets/plugin_assets/foo/image.png"', image_tag("image.png", :plugin => :foo)
   end
 
   def test_javascript_include_tag_should_pick_the_default_javascript
-    assert_match 'src="/javascripts/scripts.js"', javascript_include_tag("scripts")
+    assert_match 'src="/assets/scripts.js"', javascript_include_tag("scripts")
   end
 
   def test_javascript_include_tag_for_plugin_should_pick_the_plugin_javascript
-    assert_match 'src="/plugin_assets/foo/javascripts/scripts.js"', javascript_include_tag("scripts", :plugin => :foo)
+    assert_match 'src="/assets/plugin_assets/foo/scripts.js"', javascript_include_tag("scripts", :plugin => :foo)
   end
 
   def test_raw_json_should_escape_closing_tags
@@ -2122,23 +2177,23 @@ class ApplicationHelperTest < Redmine::HelperTest
   end
 
   def test_favicon_path
-    assert_match %r{^/favicon\.ico}, favicon_path
+    assert_match %r{^/assets/favicon-\w+\.ico}, favicon_path
   end
 
   def test_favicon_path_with_suburi
     Redmine::Utils.relative_url_root = '/foo'
-    assert_match %r{^/foo/favicon\.ico}, favicon_path
+    assert_match %r{^/foo/assets/favicon-\w+\.ico}, favicon_path
   ensure
     Redmine::Utils.relative_url_root = ''
   end
 
   def test_favicon_url
-    assert_match %r{^http://test\.host/favicon\.ico}, favicon_url
+    assert_match %r{^http://test\.host/assets/favicon-\w+\.ico}, favicon_url
   end
 
   def test_favicon_url_with_suburi
     Redmine::Utils.relative_url_root = '/foo'
-    assert_match %r{^http://test\.host/foo/favicon\.ico}, favicon_url
+    assert_match %r{^http://test\.host/foo/assets/favicon-\w+\.ico}, favicon_url
   ensure
     Redmine::Utils.relative_url_root = ''
   end
@@ -2175,6 +2230,32 @@ class ApplicationHelperTest < Redmine::HelperTest
     end
   end
 
+  def test_format_hours_rounds_to_nearest_minute
+    set_language_if_valid 'en'
+
+    # 7h 59m 29s (7.991388888888889) -> 7h 59m (7.98)
+    # 7h 59m 30s (7.991666666666667) -> 8h  0m (8.00)
+    with_settings :timespan_format => 'minutes' do
+      assert_equal '7:59', format_hours(7.991388888888889)
+      assert_equal '8:00', format_hours(7.991666666666667)
+    end
+    with_settings :timespan_format => 'decimal' do
+      assert_equal '7.98', format_hours(7.991388888888889)
+      assert_equal '8.00', format_hours(7.991666666666667)
+    end
+  end
+
+  def test_format_hours_should_use_locale_decimal_separator
+    to_test = {'en' => '0.75', 'de' => '0,75'}
+    with_settings :timespan_format => 'decimal' do
+      to_test.each do |locale, expected|
+        with_locale locale do
+          assert_equal expected, format_hours(0.75)
+        end
+      end
+    end
+  end
+
   def test_html_hours
     assert_equal '<span class="hours hours-int">0</span><span class="hours hours-dec">:45</span>',
                  html_hours('0:45')
@@ -2190,14 +2271,26 @@ class ApplicationHelperTest < Redmine::HelperTest
     assert_match(/name="new_issue-[a-z0-9]{8}"/, labelled_form_for(Issue.new){})
   end
 
-  def test_redner_if_exist_should_be_render_partial
+  # TODO: Remove this test when ApplicationHelper#render_if_exist is removed
+  def test_render_if_exist_should_be_render_partial
+    saved_behavior = Rails.application.deprecators[:active_support].behavior
+    Rails.application.deprecators[:active_support].behavior = :silence
+
     controller.prepend_view_path "test/fixtures/views"
     assert_equal "partial html\n", render_if_exist(:partial => 'partial')
+  ensure
+    Rails.application.deprecators[:active_support].behavior = saved_behavior
   end
 
-  def test_redner_if_exist_should_be_render_nil
+  # TODO: Remove this test when ApplicationHelper#render_if_exist is removed
+  def test_render_if_exist_should_be_render_nil
+    saved_behavior = Rails.application.deprecators[:active_support].behavior
+    Rails.application.deprecators[:active_support].behavior = :silence
+
     controller.prepend_view_path "test/fixtures/views"
     assert_nil render_if_exist(:partial => 'non_exist_partial')
+  ensure
+    Rails.application.deprecators[:active_support].behavior = saved_behavior
   end
 
   def test_export_csv_encoding_select_tag_should_return_nil_when_general_csv_encoding_is_UTF8
@@ -2209,12 +2302,10 @@ class ApplicationHelperTest < Redmine::HelperTest
 
   def test_export_csv_encoding_select_tag_should_have_two_option_when_general_csv_encoding_is_not_UTF8
     with_locale 'en' do
-      assert_not_equal l(:general_csv_encoding), 'UTF-8'
+      assert_equal l(:general_csv_encoding), 'ISO-8859-1'
       result = export_csv_encoding_select_tag
-      assert_select_in result,
-                       "option[selected='selected'][value=#{l(:general_csv_encoding)}]",
-                       :text => l(:general_csv_encoding)
-      assert_select_in result, "option[value='UTF-8']", :text => 'UTF-8'
+      assert_select_in result, "option[selected='selected'][value='UTF-8']", :text => 'UTF-8'
+      assert_select_in result, "option[value='ISO-8859-1']", :text => 'ISO-8859-1'
     end
   end
 
@@ -2230,20 +2321,6 @@ class ApplicationHelperTest < Redmine::HelperTest
 
         @project = Project.find(1)
         assert_equal "<a title=\"12/28/2022 01:00 AM\" href=\"/projects/ecookbook/activity?from=2022-12-28\">2 days</a>", time_tag(2.days.ago)
-      end
-    end
-  end
-
-  # TODO: Remove this test when Redcarpet-based Markdown formatter is removed
-  def test_markdown_formatter
-    [
-      ['markdown', 'markdown'],
-      ['common_mark', 'common_mark'],
-      ['textile', 'common_mark'],
-      ['', 'common_mark']
-    ].each do |text_formatting, expected|
-      with_settings text_formatting: text_formatting do
-        assert_equal expected, markdown_formatter
       end
     end
   end

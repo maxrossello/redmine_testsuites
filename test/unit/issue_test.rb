@@ -2208,6 +2208,28 @@ class IssueTest < ActiveSupport::TestCase
     end
   end
 
+  def test_destroy_should_delete_attachments_on_custom_values
+    cf = IssueCustomField.create!(:name => 'Attachable field', :field_format => 'attachment', :is_for_all => true, :tracker_ids => [1])
+    user = User.find(2)
+    issue = Issue.new(:project_id => 1, :tracker_id => 1, :subject => 'test', :author_id => user.id)
+    attachment = Attachment.create!(:container => issue, :file => uploaded_test_file('testfile.txt', 'text/plain'), :author_id => user.id)
+    issue.send(
+      :safe_attributes=,
+      {
+        'custom_fields' =>
+          [
+            {'id' => cf.id.to_s, 'value' => attachment.id.to_s},
+          ]
+      }, user
+    )
+
+    assert_difference 'CustomValue.where(:customized_type => "Issue").count', -(issue.custom_values.count) do
+      assert_difference 'Attachment.count', -1 do
+        issue.destroy
+      end
+    end
+  end
+
   def test_destroying_a_deleted_issue_should_not_raise_an_error
     issue = Issue.find(1)
     Issue.find(1).destroy
@@ -3077,7 +3099,7 @@ class IssueTest < ActiveSupport::TestCase
   end
 
   test "Issue#recipients should include the author if the author is active" do
-    issue = Issue.generate!(:author => User.generate!)
+    issue = Issue.generate!(:author => User.generate!(:mail_notification => 'only_my_events'))
     assert issue.author, "No author set for Issue"
     assert issue.recipients.include?(issue.author.mail)
   end
@@ -3283,6 +3305,15 @@ class IssueTest < ActiveSupport::TestCase
     issue.reload
     assert !issue.closed?
     assert_equal was_closed_on, issue.closed_on
+  end
+
+  def test_prior_assigned_to
+    issue = Issue.generate!(assigned_to_id: 2)
+    issue.init_journal(User.find(2), 'update')
+    issue.assigned_to_id = 3
+    issue.save
+
+    assert_equal User.find(2), issue.prior_assigned_to
   end
 
   def test_status_was_should_return_nil_for_new_issue

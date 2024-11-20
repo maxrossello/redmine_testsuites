@@ -23,7 +23,7 @@ class JournalObserverTest < ActiveSupport::TestCase
   fixtures :issues, :issue_statuses, :journals, :journal_details, :projects,
            :projects_trackers, :trackers, :enabled_modules, :enumerations,
            :users, :user_preferences, :email_addresses, :roles, :members, :member_roles,
-           :versions, :issue_categories
+           :versions, :issue_categories, :attachments
 
   include ActiveJob::TestHelper  # redmine_testsuites
 
@@ -225,6 +225,36 @@ class JournalObserverTest < ActiveSupport::TestCase
       perform_enqueued_jobs do  # redmine_testsuites
         assert issue.save
       end
+      assert_equal 0, ActionMailer::Base.deliveries.size
+    end
+  end
+
+  def test_create_should_send_email_notification_with_issue_attachment_added
+    set_tmp_attachments_directory
+    with_settings :notified_events => %w(issue_attachment_added) do
+      user = User.find_by_login('jsmith')
+      issue = issues(:issues_001)
+      issue.init_journal(user)
+      issue.save_attachments(
+        { 'p0' => {'file' => mock_file_with_options(:original_filename => 'upload')} }
+      )
+
+      assert issue.save
+      assert_equal 2, ActionMailer::Base.deliveries.size
+    end
+  end
+
+  def test_create_should_not_send_email_notification_without_issue_attachment_added
+    set_tmp_attachments_directory
+    with_settings :notified_events => [] do
+      user = User.find_by_login('jsmith')
+      issue = issues(:issues_001)
+      issue.init_journal(user)
+      issue.save_attachments(
+        { 'p0' => {'file' => mock_file_with_options(:original_filename => 'upload')} }
+      )
+
+      assert issue.save
       assert_equal 0, ActionMailer::Base.deliveries.size
     end
   end
