@@ -21,10 +21,6 @@ require_relative '../../../../test_helper'
 require 'redmine/field_format'
 
 class Redmine::LinkFieldFormatTest < ActionView::TestCase
-<<<<<<< HEAD
-
-=======
->>>>>>> 6.0.1
   def setup
     User.current = nil
   end

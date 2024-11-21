@@ -17,12 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-<<<<<<<< HEAD:test/unit/lib/redmine/wiki_formatting/common_mark/markdown_filter_test.rb
 require_relative '../../../../../test_helper'
-========
-class JournalDetail < ApplicationRecord
-  belongs_to :journal
->>>>>>>> 6.0.1:app/models/journal_detail.rb
 
 if Object.const_defined?(:CommonMarker)
   require 'redmine/wiki_formatting/common_mark/markdown_filter'
