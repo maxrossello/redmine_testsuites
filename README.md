@@ -53,7 +53,6 @@ The plugin repository comes with a tag for each supported Redmine core version.
 - [redmine_pluggable_themes](https://github.com/maxrossello/redmine_pluggable_themes.git) : allows Redmine plugins to export themes in their assets
 - [redmine_translation_terms](https://github.com/maxrossello/redmine_translation_terms) : allows to customize specific terms in Redmine translations (e.g. issue -> work item, project -> workspace) in order to better adapt the issue tracker to a specific task
 - [redwine](https://github.com/maxrossello/redwine) : Redmine profile holding some enhancements and fixes encountered against the official Redmine release
-- [sidebar_hide](https://github.com/maxrossello/sidebar_hide) : adds simple hide button for sidebar of Redmine
 
 ## How to support further plugins
 
