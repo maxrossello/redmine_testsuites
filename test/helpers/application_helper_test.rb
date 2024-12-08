@@ -2113,7 +2113,7 @@ class ApplicationHelperTest < Redmine::HelperTest
 
     with_settings :ui_theme => theme.id do
       #assert_match %|src="/assets/themes/#{theme.dir}/image.png"|, image_tag("image.png")
-      assert_match %|src="(/plugin_assets/redmine_themes)?/assets/themes/#{theme.dir}/image.png"|, image_tag("image.png")
+      assert_match %r|src="(/plugin_assets/redmine_themes)?/assets/themes/#{theme.dir}/image.png"|, image_tag("image.png")
       assert_match %|src="/assets/other.png"|, image_tag("other.png")
     end
   ensure

@@ -29,6 +29,7 @@ end
 
 class RoutingPluginsTest < Redmine::RoutingTest
   def setup
+    @saved_plugins = Redmine::Plugin.registered_plugins   # redmine_testsuites
     @original_plugin_dir = Redmine::PluginLoader.directory
 
     Redmine::Plugin.clear
@@ -45,8 +46,12 @@ class RoutingPluginsTest < Redmine::RoutingTest
     Redmine::Plugin.clear
     Redmine::PluginLoader.directory = @original_plugin_dir
     Redmine::Plugin.directory = @original_plugin_dir
+    Redmine::Plugin.reload_plugins(@saved_plugins)    # redmine_testsuites    
     Redmine::PluginLoader.load
-    Redmine::Plugin.reload_plugins(@saved_plugins)    # redmine_testsuites
+    # redmine_testsuites start: skipped because under unexecuted Rails.application.config.to_prepare
+    Redmine::PluginLoader.directories.each(&:run_initializer)
+    Redmine::Hook.call_hook :after_plugins_loaded
+    # redmine_testsuites end
     RedmineApp::Application.instance.routes_reloader.reload!
   end
 

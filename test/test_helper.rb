@@ -56,6 +56,8 @@ end
 
 class ActiveSupport::TestCase
   parallelize(workers: 1)
+  
+  self.fixture_paths = [File.expand_path('../fixtures', __FILE__)] #redmine_testsuites
 
   include ActionDispatch::TestProcess
 
@@ -401,6 +403,8 @@ module Redmine
   end
 
   class IntegrationTest < ActionDispatch::IntegrationTest
+    self.fixture_paths = [File.expand_path('../fixtures', __FILE__)] #redmine_testsuites
+
     def setup
       ActionMailer::MailDeliveryJob.disable_test_adapter
       super
