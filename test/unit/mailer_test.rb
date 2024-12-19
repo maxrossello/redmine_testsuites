@@ -31,7 +31,7 @@ class MailerTest < ActiveSupport::TestCase
            :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions,
            :versions,
            :comments,
-           :groups_users, :watchers
+           :groups_users, :watchers, :issue_categories
 
   def setup
     ActionMailer::Base.deliveries.clear
@@ -217,10 +217,8 @@ class MailerTest < ActiveSupport::TestCase
   end
 
   def test_email_headers
-    with_settings :mail_from => 'Redmine <redmine@example.net>' do
-      issue = Issue.find(1)
-      Mailer.deliver_issue_add(issue)
-    end
+    issue = Issue.find(1)
+    Mailer.deliver_issue_add(issue)
     mail = last_email
     assert_equal 'All', mail.header['X-Auto-Response-Suppress'].to_s
     assert_equal 'auto-generated', mail.header['Auto-Submitted'].to_s

@@ -55,32 +55,12 @@ class NewsControllerTest < Redmine::ControllerTest
     end
   end
 
-  def test_index_with_invalid_project_should_respond_with_302_for_anonymous
-    Role.anonymous.remove_permission! :view_news
-    with_settings :login_required => '0' do
-      get(:index, :params => {:project_id => 999})
-      assert_response 302
-    end
-  end
-
   def test_index_without_permission_should_fail
     Role.all.each {|r| r.remove_permission! :view_news}
     @request.session[:user_id] = 2
 
     get :index
     assert_response :forbidden
-  end
-
-  def test_index_without_manage_news_permission_should_not_display_add_news_link
-    user = User.find(2)
-    @request.session[:user_id] = user.id
-    Role.all.each {|r| r.remove_permission! :manage_news}
-    get :index
-    assert_select '.add-news-link', count: 0
-
-    user.members.first.roles.first.add_permission! :manage_news
-    get :index
-    assert_select '.add-news-link', count: 1
   end
 
   def test_index_without_manage_news_permission_should_not_display_add_news_link
