@@ -106,43 +106,8 @@ class MessagesControllerTest < Redmine::ControllerTest
           assert_select 'a[class*=delete]'
         end
         assert_select "li.user-10" do
-          assert_select 'img.gravatar[title=?]', 'A Team', is_display_gravatar
-          assert_select 'a[href="/users/10"]', false
-          assert_select 'a[class*=delete]'
-        end
-      end
-    end
-  end
-
-  def test_show_should_not_display_watchers_without_permission
-    @request.session[:user_id] = 2
-    Role.find(1).remove_permission! :view_message_watchers
-    message = Message.find(1)
-    message.add_watcher User.find(2)
-    message.add_watcher Group.find(10)
-    get(:show, :params => {:board_id => 1, :id => 1})
-    assert_select 'div#watchers ul', 0
-    assert_select 'h3', {text: /Watchers \(\d*\)/, count: 0}
-  end
-
-  def test_show_should_display_watchers
-    @request.session[:user_id] = 2
-    message = Message.find(1)
-    message.add_watcher User.find(2)
-    message.add_watcher Group.find(10)
-    [['1', true], ['0', false]].each do |(gravatar_enabled, is_display_gravatar)|
-      with_settings :gravatar_enabled => gravatar_enabled do
-        get(:show, :params => {:board_id => 1, :id => 1})
-      end
-
-      assert_select 'div#watchers ul' do
-        assert_select 'li.user-2' do
-          assert_select 'img.gravatar[title=?]', 'John Smith', is_display_gravatar
-          assert_select 'a[href="/users/2"]'
-          assert_select 'a[class*=delete]'
-        end
-        assert_select "li.user-10" do
-          assert_select 'img.gravatar[title=?]', 'A Team', is_display_gravatar
+          assert_select 'a.group', :text => 'A Team'
+          assert_select 'svg'
           assert_select 'a[href="/users/10"]', false
           assert_select 'a[class*=delete]'
         end

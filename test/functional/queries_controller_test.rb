@@ -79,20 +79,6 @@ class QueriesControllerTest < Redmine::ControllerTest
     assert_select 'p[class=?]', 'totables_columns', 0
   end
 
-  def test_new_should_not_render_show_inline_columns_option_for_query_without_available_inline_columns
-    @request.session[:user_id] = 1
-    get(:new, :params => {:type => 'ProjectQuery'})
-    assert_response :success
-    assert_select 'p[class=?]', 'block_columns', 0
-  end
-
-  def test_new_should_not_render_show_totals_option_for_query_without_totable_columns
-    @request.session[:user_id] = 1
-    get(:new, :params => {:type => 'ProjectQuery'})
-    assert_response :success
-    assert_select 'p[class=?]', 'totables_columns', 0
-  end
-
   def test_new_time_entry_query
     @request.session[:user_id] = 2
     get(:new, :params => {:project_id => 1, :type => 'TimeEntryQuery'})

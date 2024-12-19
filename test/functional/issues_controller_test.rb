@@ -2827,7 +2827,8 @@ class IssuesControllerTest < Redmine::ControllerTest
         assert_select 'a[class*=delete]'
       end
       assert_select "li.user-10" do
-        assert_select 'img.gravatar[title=?]', 'A Team'
+        assert_select 'a.group', :text => 'A Team'
+        assert_select 'svg'
         assert_select 'a[href="/groups/10"]'
         assert_select 'a[class*=delete]'
       end
@@ -5992,7 +5993,10 @@ class IssuesControllerTest < Redmine::ControllerTest
 
     assert_response :success
     reason = l(:notice_issue_not_closable_by_blocking_issue)
-    assert_select 'span.icon-warning[title=?]', reason, :text => reason
+    assert_select 'span.icon-warning[title=?]', reason do
+      assert_select "svg.icon-svg use:match('href', ?)", /assets\/icons-\w+.svg#icon--warning/
+      assert_select 'span.icon-label', test: reason
+    end
   end
 
   def test_get_edit_should_display_visible_spent_time_custom_field

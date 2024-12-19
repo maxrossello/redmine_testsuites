@@ -55,7 +55,7 @@ class RoutingRepositoriesTest < Redmine::RoutingTest
 
     should_route 'GET /projects/foo/repository/foo/revisions/2457' => 'repositories#revision', :id => 'foo', :repository_id => 'foo', :rev => '2457'
     should_route 'GET /projects/foo/repository/foo/revisions/2457/show' => 'repositories#show', :id => 'foo', :repository_id => 'foo', :rev => '2457', :format => 'html'
-    should_route 'GET /projects/foo/repository/foo/revisions/2457/diff' => 'repositories#diff', :id => 'foo', :repository_id => 'foo', :rev => '2457'
+    should_route 'GET /projects/foo/repository/foo/revisions/2457/diff' => 'repositories#diff', :id => 'foo', :repository_id => 'foo', :rev => '2457', :format => 'html'
 
     %w(show entry raw annotate).each do |action|
       @paths.each do |path|

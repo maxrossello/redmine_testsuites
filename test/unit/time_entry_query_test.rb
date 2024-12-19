@@ -136,8 +136,6 @@ class TimeEntryQueryTest < ActiveSupport::TestCase
     assert !query.available_filters.has_key?('project.status')
   end
 
-<<<<<<< HEAD
-=======
   def test_user_group_filter_should_consider_spacified_groups_time_entries
     Group.find(10).users << User.find(2)
     Group.find(11).users << User.find(3)
@@ -201,7 +199,6 @@ class TimeEntryQueryTest < ActiveSupport::TestCase
     assert_equal 7.0, query.results_scope.sum(:hours)
   end
 
->>>>>>> 6.0.1
   def test_results_scope_should_be_in_the_same_order_when_paginating
     4.times {TimeEntry.generate!}
     q = TimeEntryQuery.new

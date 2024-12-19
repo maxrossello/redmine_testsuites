@@ -68,13 +68,10 @@ class EmailAddressTest < ActiveSupport::TestCase
   def test_should_reject_invalid_email
     assert_not EmailAddress.new(address: 'invalid,email@example.com').valid?
   end
-<<<<<<< HEAD
-=======
 
   def test_should_normalize_idn_email_address
     email = EmailAddress.new(address: 'marie@société.example')
     assert_equal 'marie@xn--socit-esab.example', email.address
     assert email.valid?
   end
->>>>>>> 6.0.1
 end

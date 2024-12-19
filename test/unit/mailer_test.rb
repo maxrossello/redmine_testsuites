@@ -31,7 +31,7 @@ class MailerTest < ActiveSupport::TestCase
            :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions,
            :versions,
            :comments,
-           :groups_users, :watchers
+           :groups_users, :watchers, :issue_categories
 
   def setup
     ActionMailer::Base.deliveries.clear
@@ -212,18 +212,11 @@ class MailerTest < ActiveSupport::TestCase
   end
 
   def test_email_headers
-    with_settings :mail_from => 'Redmine <redmine@example.net>' do
-      issue = Issue.find(1)
-      Mailer.deliver_issue_add(issue)
-    end
+    issue = Issue.find(1)
+    Mailer.deliver_issue_add(issue)
     mail = last_email
     assert_equal 'All', mail.header['X-Auto-Response-Suppress'].to_s
     assert_equal 'auto-generated', mail.header['Auto-Submitted'].to_s
-<<<<<<< HEAD
-    # List-Id should not include the display name "Redmine"
-    assert_equal '<redmine.example.net>', mail.header['List-Id'].to_s
-=======
->>>>>>> 6.0.1
     assert_equal 'Bug', mail.header['X-Redmine-Issue-Tracker'].to_s
     assert_equal 'Low', mail.header['X-Redmine-Issue-Priority'].to_s
   end
@@ -330,8 +323,6 @@ class MailerTest < ActiveSupport::TestCase
     end
   end
 
-<<<<<<< HEAD
-=======
   def test_list_id_header_should_include_project_identifier
     with_settings :mail_from => 'Redmine <redmine@example.net>' do
       content = WikiContent.find(1)
@@ -349,7 +340,6 @@ class MailerTest < ActiveSupport::TestCase
     end
   end
 
->>>>>>> 6.0.1
   def test_should_not_send_email_without_recipient
     news = News.first
     user = news.author

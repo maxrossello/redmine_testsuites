@@ -677,15 +677,6 @@ class UsersControllerTest < Redmine::ControllerTest
     assert_response :success
   end
 
-  def test_edit_user_with_full_text_formatting_custom_field_should_not_fail
-    field = UserCustomField.find(4)
-    field.update_attribute :text_formatting, 'full'
-
-    get :edit, :params => {:id => 2}
-
-    assert_response :success
-  end
-
   def test_update
     ActionMailer::Base.deliveries.clear
 
@@ -1015,19 +1006,6 @@ class UsersControllerTest < Redmine::ControllerTest
     assert User.find(6).anonymous?
     put :update, :params => {:id => 6}
     assert_response :not_found
-  end
-
-  def test_update_with_blank_email_should_not_raise_exception
-    assert_no_difference 'User.count' do
-      with_settings :gravatar_enabled => '1' do
-        put :update, :params => {
-          :id => 2,
-          :user => {:mail => ''}
-        }
-      end
-    end
-    assert_response :success
-    assert_select_error /Email cannot be blank/
   end
 
   def test_update_with_blank_email_should_not_raise_exception

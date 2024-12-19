@@ -13,13 +13,8 @@ issues_001:
   assigned_to_id:
   author_id: 2
   status_id: 1
-<<<<<<< HEAD
-  start_date: <%= 1.day.ago.to_date.to_s(:db) %>
-  due_date: <%= 10.day.from_now.to_date.to_s(:db) %>
-=======
   start_date: <%= 1.day.ago.to_date.to_fs(:db) %>
   due_date: <%= 10.day.from_now.to_date.to_fs(:db) %>
->>>>>>> 6.0.1
   estimated_hours: 200.0
   root_id: 1
   lft: 1
@@ -61,13 +56,8 @@ issues_003:
   assigned_to_id: 3
   author_id: 2
   status_id: 1
-<<<<<<< HEAD
-  start_date: <%= 15.day.ago.to_date.to_s(:db) %>
-  due_date: <%= 5.day.ago.to_date.to_s(:db) %>
-=======
   start_date: <%= 15.day.ago.to_date.to_fs(:db) %>
   due_date: <%= 5.day.ago.to_date.to_fs(:db) %>
->>>>>>> 6.0.1
   estimated_hours: 1.0
   root_id: 3
   lft: 1

@@ -98,27 +98,21 @@ namespace :test do
 
     desc 'Runs all Redmine unit tests along with all the plugins unit tests.'
     task(:units => "db:test:prepare") do |t|
-      $: << "plugins/redmine_testsuites/test"
-      Rails::TestUnit::Runner.run_from_rake TestsuitesTests::unit_tests
+      $: << "test"
+      Rails::TestUnit::Runner.run_from_rake 'test', FileList['test/unit/repository*_test.rb'] + FileList['test/unit/lib/redmine/scm/**/*_test.rb']
     end
 
     desc 'Runs all Redmine functional tests along with all the plugins functional tests.'
     task(:functionals => "db:test:prepare") do |t|
-      $: << "plugins/redmine_testsuites/test"
-      Rails::TestUnit::Runner.run_from_rake TestsuitesTests::functional_tests
-    end
-
-    desc 'Runs all Redmine integration tests along with all the plugins integration tests.'
-    task(:integration => "db:test:prepare") do |t|
-      $: << "plugins/redmine_testsuites/test"
-      Rails::TestUnit::Runner.run_from_rake TestsuitesTests::integration_tests
+      $: << "test"
+      Rails::TestUnit::Runner.run_from_rake 'test', FileList['test/functional/repositories*_test.rb']
     end
 
   task(:routing) do |t|
-      $: << "plugins/redmine_testsuites/test"
-      Rails::TestUnit::Runner.run_from_rake TestsuitesTests::routing_tests
+    $: << "test"
+    Rails::TestUnit::Runner.run_from_rake 'test', FileList['test/integration/routing/*_test.rb'] + FileList['test/integration/api_test/*_routing_test.rb']
   end
-  Rake::Task['test:routing'].comment = "Runs all Redmine routing tests along with all the plugins routing tests."
+  Rake::Task['test:routing'].comment = "Run the routing tests"
 
   task(:autoload) do |t|
     $: << "test"
