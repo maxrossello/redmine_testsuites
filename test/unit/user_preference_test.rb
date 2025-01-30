@@ -20,7 +20,9 @@
 require_relative '../test_helper'
 
 class UserPreferenceTest < ActiveSupport::TestCase
-  fixtures :users, :user_preferences
+  def setup
+    User.current = nil
+  end
 
   def setup
     User.current = nil

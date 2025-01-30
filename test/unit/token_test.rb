@@ -20,7 +20,9 @@
 require_relative '../test_helper'
 
 class TokenTest < ActiveSupport::TestCase
-  fixtures :tokens, :users, :email_addresses
+  def setup
+    User.current = nil
+  end
 
   def setup
     User.current = nil
