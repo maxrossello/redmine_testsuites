@@ -20,8 +20,6 @@
 require_relative '../test_helper'
 
 class IssuePriorityTest < ActiveSupport::TestCase
-  fixtures :enumerations, :issues
-
   def setup
     User.current = nil
   end
@@ -157,5 +155,21 @@ class IssuePriorityTest < ActiveSupport::TestCase
   def test_destroying_a_priority_should_update_position_names
     IssuePriority.find_by_position_name('highest').destroy
     assert_equal %w(lowest default high2 highest), IssuePriority.active.to_a.sort.map(&:position_name)
+  end
+
+  def test_high_should_return_false_when_no_default_priority_and_no_active_priorities
+    IssuePriority.update_all(active: false, is_default: false)
+    priority = IssuePriority.order(:position).last # Highest priority
+    assert_nothing_raised do
+      assert_equal false, priority.high?
+    end
+  end
+
+  def test_low_should_return_false_when_no_default_priority_and_no_active_priorities
+    IssuePriority.update_all(active: false, is_default: false)
+    priority = IssuePriority.order(:position).first # Lowest priority
+    assert_nothing_raised do
+      assert_equal false, priority.low?
+    end
   end
 end

@@ -21,15 +21,6 @@ require_relative '../test_helper'
 
 class VersionsControllerTest < Redmine::ControllerTest
   include Redmine::I18n
-  fixtures :projects, :enabled_modules,
-           :trackers, :projects_trackers,
-           :versions, :issue_statuses, :issue_categories, :enumerations,
-           :issues,
-           :users, :email_addresses,
-           :roles, :members, :member_roles
-
-  include Redmine::I18n  # redmine_testsuites
-  
   def setup
     User.current = nil
   end
