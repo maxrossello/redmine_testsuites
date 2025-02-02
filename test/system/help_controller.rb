@@ -17,16 +17,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require_relative '../test_helper'
+class HelpController < ApplicationController
+  def show_wiki_syntax
+    type = params[:type].nil? ? "" : "#{params[:type]}_"
 
-class ProjectsQueriesHelperTest < Redmine::HelperTest
-  include ProjectsQueriesHelper
+    lang = current_language.to_s
+    template = "help/wiki_syntax/#{Setting.text_formatting}/#{lang}/wiki_syntax_#{type}#{Setting.text_formatting}"
+    unless lookup_context.exists?(template)
+      lang = "en"
+    end
+    render template: "help/wiki_syntax/#{Setting.text_formatting}/#{lang}/wiki_syntax_#{type}#{Setting.text_formatting}", layout: nil
+  end
 
-  def test_csv_value
-    c_status = QueryColumn.new(:status)
-    c_parent_id = QueryColumn.new(:parent_id)
-
-    assert_equal "active", csv_value(c_status, Project.find(1), 1)
-    assert_equal "eCookbook", csv_value(c_parent_id, Project.find(4), 1)
+  def show_code_highlighting
+    @available_lexers = Rouge::Lexer.all.sort_by(&:tag)
+    render template: "help/wiki_syntax/code_highlighting_languages", layout: nil
   end
 end

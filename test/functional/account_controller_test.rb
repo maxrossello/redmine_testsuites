@@ -20,8 +20,6 @@
 require_relative '../test_helper'
 
 class AccountControllerTest < Redmine::ControllerTest
-  fixtures :users, :email_addresses, :roles
-
   def setup
     User.current = nil
   end
@@ -659,5 +657,23 @@ class AccountControllerTest < Redmine::ControllerTest
         assert_redirected_to '/'
       end
     end
+  end
+
+  def test_validate_back_url
+    request.host = 'example.com'
+
+    assert_equal '/admin', @controller.send(:validate_back_url, 'http://example.com/admin')
+    assert_equal '/admin', @controller.send(:validate_back_url, 'http://dlopper:foo@example.com/admin')
+    assert_equal '/issues?query_id=1#top', @controller.send(:validate_back_url, 'http://example.com/issues?query_id=1#top')
+    assert_equal false, @controller.send(:validate_back_url, 'http://invalid.example.com/issues')
+  end
+
+  def test_validate_back_url_with_port
+    request.host = 'example.com:3000'
+
+    assert_equal '/admin', @controller.send(:validate_back_url, 'http://example.com:3000/admin')
+    assert_equal '/admin', @controller.send(:validate_back_url, 'http://dlopper:foo@example.com:3000/admin')
+    assert_equal '/issues?query_id=1#top', @controller.send(:validate_back_url, 'http://example.com:3000/issues?query_id=1#top')
+    assert_equal false, @controller.send(:validate_back_url, 'http://invalid.example.com:3000/issues')
   end
 end

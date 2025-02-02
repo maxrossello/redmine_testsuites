@@ -23,17 +23,6 @@ class ApplicationHelperTest < Redmine::HelperTest
   include ERB::Util
   include AvatarsHelper
 
-  fixtures :projects, :enabled_modules,
-           :users, :email_addresses,
-           :members, :member_roles, :roles,
-           :repositories, :changesets,
-           :projects_trackers,
-           :trackers, :issue_statuses, :issues, :versions, :documents, :journals,
-           :wikis, :wiki_pages, :wiki_contents,
-           :boards, :messages, :news,
-           :attachments, :enumerations,
-           :custom_values, :custom_fields, :custom_fields_projects
-
   def setup
     super
     set_tmp_attachments_directory
@@ -1932,8 +1921,8 @@ class ApplicationHelperTest < Redmine::HelperTest
     a = Attachment.find(3)
     assert_select_in(
       thumbnail_tag(a),
-      'a[href=?] img[title=?][src=?][loading="lazy"]',
-      "/attachments/3", "logo.gif", "/attachments/thumbnail/3/200")
+      'a[href=?] img[title=?][alt=?][src=?][loading="lazy"]',
+      "/attachments/3", "logo.gif", "logo.gif", "/attachments/thumbnail/3/200")
   end
 
   def test_link_to_project
