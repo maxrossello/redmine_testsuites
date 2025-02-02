@@ -22,11 +22,11 @@ module TestsuitesTests
   end
 
   def self.helper_tests
-    FileList["plugins/*/test/helpers/*_test.rb"]
+    FileList["plugins/*/test/helpers/**/*_test.rb"]
   end
 
   def self.system_tests
-    FileList["plugins/*/test/system/*_test.rb"]
+    FileList["plugins/*/test/system/**/*_test.rb"]
   end
 
   def self.all_tests

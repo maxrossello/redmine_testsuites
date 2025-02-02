@@ -20,13 +20,6 @@
 require_relative '../test_helper'
 
 class QueriesControllerTest < Redmine::ControllerTest
-  fixtures :projects, :enabled_modules,
-           :users, :email_addresses,
-           :members, :member_roles, :roles,
-           :trackers, :issue_statuses, :issue_categories, :enumerations, :versions,
-           :issues, :custom_fields, :custom_values,
-           :queries
-
   def setup
     User.current = nil
   end
@@ -683,7 +676,7 @@ class QueriesControllerTest < Redmine::ControllerTest
     get(:edit, :params => {:id => 5})
     assert_response :success
 
-    assert_select 'input[name="query[description]"][value=?]', 'Description for Open issues by priority and tracker'
+    assert_select 'input[name="query[description]"][value=?]', 'Description for Oepn issues by priority and tracker'
   end
 
   def test_edit_invalid_query

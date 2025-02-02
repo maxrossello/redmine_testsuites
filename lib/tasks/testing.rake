@@ -64,16 +64,17 @@ namespace :redmine do
     Rake::Task['redmine:test:routing'].comment = "Runs all Redmine routing tests along with all the plugins routing tests."
 
     desc 'Run all Redmine helpers tests along with all the plugins helpers tests.'
-    task(:helpers) do |t|
+    task(:helpers => "db:test:prepare") do |t|
       $: << "plugins/redmine_testsuites/test"
       Rails::TestUnit::Runner.run_from_rake 'test', TestsuitesTests::helper_tests
     end
     
     desc 'Run all Redmine system tests along with all the plugins system tests.'
-    task(:system) do |t|
+    task(:system => "db:test:prepare") do |t|
       $: << "plugins/redmine_testsuites/test"
       Rails::TestUnit::Runner.run_from_rake 'test', TestsuitesTests::system_tests
     end
+    
   end
 end
 

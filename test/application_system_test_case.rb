@@ -68,6 +68,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # Should not depend on locale since Redmine displays login page
   # using default browser locale which depend on system locale for "real" browsers drivers
   def log_user(login, password)
+    reset_session! # redmine_testsuites
     visit '/my/page'
     # redmine_testsuites start
     if current_path != '/login'
