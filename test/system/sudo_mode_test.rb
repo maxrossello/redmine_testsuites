@@ -46,6 +46,7 @@ class SudoModeSystemTest < ApplicationSystemTestCase
         fill_in 'Confirmation', :with => 'password'
         # click_button 'Create' would match both 'Create' and 'Create and continue' buttons
         find('input[name=commit]').click
+        sleep 0.2 #redmine_testsuites
       end
 
       assert_equal '/users', current_path

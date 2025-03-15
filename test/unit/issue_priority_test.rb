@@ -24,10 +24,6 @@ class IssuePriorityTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_named_scope
     assert_equal Enumeration.find_by_name('Normal'), Enumeration.named('normal').first
   end

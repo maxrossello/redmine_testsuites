@@ -24,10 +24,6 @@ class IssueSubtaskingTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_leaf_planning_fields_should_be_editable
     issue = Issue.generate!
     user = User.find(1)

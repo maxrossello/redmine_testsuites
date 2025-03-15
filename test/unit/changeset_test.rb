@@ -20,7 +20,6 @@
 require_relative '../test_helper'
 
 class ChangesetTest < ActiveSupport::TestCase
-
   def setup
     User.current = nil
   end

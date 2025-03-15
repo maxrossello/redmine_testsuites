@@ -24,10 +24,6 @@ class WikiTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_create
     wiki = Wiki.new(:project => Project.find(3))
     assert !wiki.save
