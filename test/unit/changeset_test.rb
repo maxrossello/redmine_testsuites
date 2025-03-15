@@ -24,10 +24,6 @@ class ChangesetTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_ref_keywords_any
     ActionMailer::Base.deliveries.clear
     Setting.commit_ref_keywords = '*'

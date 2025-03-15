@@ -24,10 +24,6 @@ class EnabledModuleTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_enabling_wiki_should_create_a_wiki
     CustomField.delete_all
     project = Project.create!(:name => 'Project with wiki', :identifier => 'wikiproject', :enabled_module_names => [])

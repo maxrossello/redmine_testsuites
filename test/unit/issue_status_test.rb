@@ -24,10 +24,6 @@ class IssueStatusTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_create
     status = IssueStatus.new :name => "Assigned"
     assert !status.save

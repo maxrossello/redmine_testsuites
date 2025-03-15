@@ -24,10 +24,6 @@ class UserPreferenceTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_hide_mail_should_default_to_true
     preference = UserPreference.new
     assert_equal true, preference.hide_mail

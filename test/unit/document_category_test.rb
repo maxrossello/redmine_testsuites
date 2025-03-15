@@ -24,10 +24,6 @@ class DocumentCategoryTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_should_be_an_enumeration
     assert DocumentCategory <= Enumeration
   end

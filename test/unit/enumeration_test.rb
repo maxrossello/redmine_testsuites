@@ -24,10 +24,6 @@ class EnumerationTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_objects_count
     # low priority
     assert_equal 6, Enumeration.find(4).objects_count
