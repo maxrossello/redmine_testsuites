@@ -233,7 +233,9 @@ class ActiveSupport::TestCase
   # and returns them as an array order by object id
   def new_records(klass, count, &block)
     assert_difference "#{klass}.count", count do
+      sleep 0.2 #redmine_testsuites
       yield
+      sleep 0.2 #redmine_testsuites
     end
     klass.order(:id => :desc).limit(count).to_a.reverse
   end

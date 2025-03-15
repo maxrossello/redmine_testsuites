@@ -3,6 +3,7 @@ config/overrides
 .buildpath
 .byebug_history
 .project
+.pydevproject
 .metadata/
 Gemfile.lock
 config/

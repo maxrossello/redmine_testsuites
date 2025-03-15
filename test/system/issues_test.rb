@@ -34,6 +34,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       fill_in 'Searchable field', :with => 'Value for field 2'
       # click_button 'Create' would match both 'Create' and 'Create and continue' buttons
       find('input[name=commit]').click
+      sleep 0.2 #redmine_testsuites
     end
 
     # find created issue
@@ -91,6 +92,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     fill_in field2.name, :with => 'CF2 value'
     assert_difference 'Issue.count' do
       page.first(:button, 'Create').click
+      sleep 0.2 #redmine_testsuites
     end
 
     issue = Issue.order('id desc').first
@@ -131,6 +133,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     end
     assert_difference 'Issue.count' do
       find('input[name=commit]').click
+      sleep 0.2 #redmine_testsuites
     end
 
     issue = Issue.order('id desc').first
@@ -187,6 +190,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
           click_on 'Create'
         end
         click_on 'Create'
+        sleep 0.2 #redmine_testsuites
       end
     end
 
@@ -206,6 +210,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     end
     assert_difference 'Issue.count' do
       click_button('Create')
+      sleep 0.2 #redmine_testsuites
     end
 
     issue = Issue.order('id desc').first
@@ -274,6 +279,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     assert page.has_css?('span#attachments_1')
 
     click_on 'Submit'
+    sleep 0.2 #redmine_testsuites
 
     #assert_equal 1, Issue.find(2).attachments.count
     assert_equal attachments+1, Issue.find(2).attachments.count
@@ -524,9 +530,10 @@ class IssuesSystemTest < ApplicationSystemTestCase
     assert_equal 'Copy', submit_buttons[0].value
 
     page.find('#issue_project_id').select('OnlineStore')
-    # wait for ajax response
+    # Verify that the target version field has been rewritten by the OnlineStore project settings
+    # and wait for the project change to complete.
     loop until page.evaluate_script('jQuery.active').zero? #redmine_testsuites
-    assert page.has_select?('issue_project_id', selected: 'OnlineStore')
+    assert_select 'issue_fixed_version_id', options: ['(No change)', 'none', 'Alpha', 'Systemwide visible version']
 
     assert_selector 'input[type=submit]', count: 2
     submit_buttons = page.all('input[type=submit]')
@@ -562,6 +569,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       within('#query_form') do
         click_link 'Apply'
       end
+      sleep 0.2 #redmine_testsuites
       # Check that Totals are not present in the reloaded page
       assert !page.has_css?('p.query-totals')
       assert !page.has_css?('span.total-for-estimated-hours')
