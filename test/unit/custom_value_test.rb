@@ -24,10 +24,6 @@ class CustomValueTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_new_without_value_should_set_default_value
     field = CustomField.generate!(:default_value => 'Default string')
 

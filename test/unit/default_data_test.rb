@@ -25,10 +25,6 @@ class DefaultDataTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_no_data
     assert !Redmine::DefaultData::Loader::no_data?
     clear_data

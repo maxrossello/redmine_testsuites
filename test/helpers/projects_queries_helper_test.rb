@@ -29,4 +29,38 @@ class ProjectsQueriesHelperTest < Redmine::HelperTest
     assert_equal "active", csv_value(c_status, Project.find(1), 1)
     assert_equal "eCookbook", csv_value(c_parent_id, Project.find(4), 1)
   end
+
+  def self.default_activity_id(user=nil, project=nil)
+    default_activities = []
+    default_activity = nil
+    available_activities = self.available_activities(project)
+
+    if project && user
+      user_membership = user.membership(project)
+      if user_membership
+        default_activities = user_membership.roles.where.not(:default_time_entry_activity_id => nil).sort.pluck(:default_time_entry_activity_id)
+      end
+
+      project_default_activity = self.default(project)
+      if project_default_activity && !default_activities.include?(project_default_activity.id)
+        default_activities << project_default_activity.id
+      end
+    end
+
+    global_activity = self.default
+    if global_activity && !default_activities.include?(global_activity.id)
+      default_activities << global_activity.id
+    end
+
+    if available_activities.count == 1 && !default_activities.include?(available_activities.first.id)
+      default_activities << available_activities.first.id
+    end
+
+    default_activities.each do |id|
+      default_activity = available_activities.detect{ |a| a.id == id || a.parent_id == id }
+      break unless default_activity.nil?
+    end
+
+    default_activity&.id
+  end
 end

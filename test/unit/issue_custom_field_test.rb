@@ -26,10 +26,6 @@ class IssueCustomFieldTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_custom_field_with_visible_set_to_false_should_validate_roles
     set_language_if_valid 'en'
     field = IssueCustomField.new(:name => 'Field', :field_format => 'string', :visible => false)

@@ -24,10 +24,6 @@ class IssueScopesTest < ActiveSupport::TestCase
     User.current = nil
   end
 
-  def setup
-    User.current = nil
-  end
-
   def test_cross_project_scope_without_project_should_return_all_issues
     ids = Issue.cross_project_scope(nil).pluck(:id).sort
     assert_equal Issue.pluck(:id).sort, ids
