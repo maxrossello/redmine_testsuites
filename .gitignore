@@ -13,3 +13,4 @@ public/
 tmp/
 .metadata/
 coverage/
+.pydevproject

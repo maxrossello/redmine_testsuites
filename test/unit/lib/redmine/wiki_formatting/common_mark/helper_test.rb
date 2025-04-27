@@ -1,11 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-<<<<<<<< HEAD:test/unit/lib/redmine/wiki_formatting/common_mark/helper_test.rb
 # Copyright (C) 2006-2023  Jean-Philippe Lang
-========
-# Copyright (C) 2006-  Jean-Philippe Lang
->>>>>>>> 5.1.7:app/models/wiki_redirect.rb
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
