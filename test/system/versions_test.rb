@@ -17,24 +17,24 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require_relative '../application_system_test_case'
+class EnabledModule < ApplicationRecord
+  belongs_to :project
+  acts_as_watchable
 
-class VersionsSystemTest < ApplicationSystemTestCase
-  def test_create_from_issue_form_with_file_custom_field
-    VersionCustomField.generate!(:field_format => 'attachment')
+  validates_presence_of :name
+  validates_uniqueness_of :name, :scope => :project_id, :case_sensitive => true
 
     log_user('jsmith', 'jsmith')
 
     version_name = 'Version with file custom field'
 
-    assert_difference 'Version.count' do
-      visit '/projects/ecookbook/issues/new'
-      fill_in 'Subject', :with => 'With a new version'
-
-      click_on 'New version'
-      within '#ajax-modal' do
-        fill_in 'Name', :with => version_name
-        click_on 'Create'
+  # after_create callback used to do things when a module is enabled
+  def module_enabled
+    case name
+    when 'wiki'
+      # Create a wiki with a default start page
+      if project && project.wiki.nil?
+        Wiki.create_default(project)
       end
       click_on 'Create'
     end
