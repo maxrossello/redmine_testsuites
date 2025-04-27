@@ -66,16 +66,20 @@ class SearchControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_select '#search-results' do
-      assert_select 'dt.issue a', :text => /Feature request #2/
+      assert_select 'dt.issue a', :text => /Bug #1/
       assert_select 'dt.issue a', :text => /Bug #5/
       assert_select 'dt.changeset a', :text => /Revision 1/
 
-      assert_select 'dt.issue a', :text => /Add ingredients categories/
-      assert_select 'dd', :text => /should be classified by categories/
+      assert_select 'dt.issue a', :text => /Cannot print recipes/
+      assert_select 'dd', :text => /Unable to print/
     end
 
     assert_select '#search-results-counts' do
-      assert_select 'a', :text => 'Changesets (5)'
+      assert_select 'a', :text => 'Changesets (6)'
+      #assert_select 'a', :text => 'Issues (5)'
+      assert_select 'a', :text => "#{I18n.t(:label_issue_plural)} (5)"
+      #assert_select 'a', :text => 'Projects (4)'
+      assert_select 'a', :text => "#{I18n.t(:label_project_plural)} (4)"
     end
   end
 
