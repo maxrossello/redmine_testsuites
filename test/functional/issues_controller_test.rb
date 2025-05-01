@@ -2010,12 +2010,34 @@ class IssuesControllerTest < Redmine::ControllerTest
 
   def test_index_with_int_custom_field_total
     field = IssueCustomField.generate!(:field_format => 'int', :is_for_all => true)
-    CustomValue.create!(:customized => Issue.find(1), :custom_field => field, :value => '2')
-    CustomValue.create!(:customized => Issue.find(2), :custom_field => field, :value => '7')
-    get(:index, :params => {:t => ["cf_#{field.id}"]})
+    CustomValue.create!(:customized => Issue.find(1), :custom_field => field, :value => '9800')
+    CustomValue.create!(:customized => Issue.find(2), :custom_field => field, :value => '10')
+
+    field_with_delimiter = IssueCustomField.generate!(:field_format => 'int', :thousands_delimiter => '1', :is_for_all => true)
+    CustomValue.create!(:customized => Issue.find(1), :custom_field => field_with_delimiter, :value => '9800')
+    CustomValue.create!(:customized => Issue.find(2), :custom_field => field_with_delimiter, :value => '10')
+
+    get(:index, :params => {:t => ["cf_#{field.id}", "cf_#{field_with_delimiter.id}"]})
     assert_response :success
     assert_select '.query-totals'
-    assert_select ".total-for-cf-#{field.id} span.value", :text => '9'
+    assert_select ".total-for-cf-#{field.id} span.value", :text => '9810'
+    assert_select ".total-for-cf-#{field_with_delimiter.id} span.value", :text => '9,810'
+  end
+
+  def test_index_with_float_custom_field_total
+    field = IssueCustomField.generate!(field_format: 'float', is_for_all: true)
+    CustomValue.create!(customized: Issue.find(1), custom_field: field, value: '1000000.01')
+    CustomValue.create!(customized: Issue.find(2), custom_field: field, value: '99.01')
+
+    field_with_delimiter = IssueCustomField.generate!(field_format: 'float', thousands_delimiter: '1', is_for_all: true)
+    CustomValue.create!(customized: Issue.find(1), custom_field: field_with_delimiter, value: '1000000.01')
+    CustomValue.create!(customized: Issue.find(2), custom_field: field_with_delimiter, value: '99.01')
+
+    get(:index, params: {t: ["cf_#{field.id}", "cf_#{field_with_delimiter.id}"]})
+    assert_response :success
+    assert_select '.query-totals'
+    assert_select ".total-for-cf-#{field.id} span.value", text: '1000099.02'
+    assert_select ".total-for-cf-#{field_with_delimiter.id} span.value", text: '1,000,099.02'
   end
 
   def test_index_with_spent_time_total_should_sum_visible_spent_time_only
@@ -3256,6 +3278,22 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select '#history' do
       assert_select 'div.tabs ul a', 1
       assert_select 'div.tabs a[id=?]', 'tab-changesets', :text => 'Associated revisions'
+    end
+  end
+
+  def test_show_render_changeset_comments_in_original_context
+    issue = Issue.find(9)
+    issue.changeset_ids = [110]
+    issue.save!
+
+    @request.session[:user_id] = 2
+    get :issue_tab, params: {id: issue.id, name: 'changesets', format: 'js'}, xhr: true
+
+    assert_select 'div#changeset-110' do
+      # assert_select 'div.tabs a[id=?]', 'tab-changesets', text: 'unicorns'
+      assert_select 'div.changeset-comments' do
+        assert_select 'a[href=?]', '/projects/ecookbook/wiki/Wiki', text: 'wiki'
+      end
     end
   end
 

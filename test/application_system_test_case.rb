@@ -44,6 +44,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     driver_option.add_preference 'download.prompt_for_download', false
     driver_option.add_preference 'plugins.plugins_disabled',     ["Chrome PDF Viewer"]
     driver_option.add_preference 'intl.accept_languages', 'en' # redmine_testsuites
+    driver_option.add_preference 'profile.password_manager_leak_detection', false #redmine_testsuites
   end
 
   setup do
@@ -68,14 +69,9 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # Should not depend on locale since Redmine displays login page
   # using default browser locale which depend on system locale for "real" browsers drivers
   def log_user(login, password)
-    reset_session! # redmine_testsuites
+    wait_for_ajax # redmine_testsuites
     visit '/my/page'
-    # redmine_testsuites start
-    if current_path != '/login'
-      reset_session!
-      visit '/my/page'
-    end
-    # redmine_testsuites end 
+    wait_for_ajax # redmine_testsuites
     assert_equal '/login', current_path
     within('#login-form form') do
       fill_in 'username', :with => login

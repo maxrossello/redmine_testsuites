@@ -150,7 +150,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       attach_file 'attachments[dummy][file]', Rails.root.join('test/fixtures/files/testfile.txt')
       fill_in 'attachments[1][description]', :with => 'Some description'
       click_on 'Create'
-      sleep 0.2 #redmine_testsuites
+      wait_for_ajax #redmine_testsuites
     end
     assert_equal 1, issue.attachments.count
     assert_equal 'Some description', issue.attachments.first.description
@@ -467,7 +467,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     page.find('#issue_project_id').select('OnlineStore')
     # wait for ajax response
-    loop until page.evaluate_script('jQuery.active').zero? #redmine_testsuites
+    wait_for_ajax # redmine_testsuites
     assert page.has_select?('issue_project_id', selected: 'OnlineStore')
 
     assert_selector 'input[type=submit]', count: 2
@@ -478,7 +478,6 @@ class IssuesSystemTest < ApplicationSystemTestCase
     page.find('#issue_status_id').select('Feedback')
     assert_no_difference 'Issue.count' do
       click_button('follow')
-      # wait for ajax response
       assert page.has_css?('#flash_notice')
       assert_current_path '/projects/onlinestore/issues', :ignore_query => true
     end
@@ -533,7 +532,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     page.find('#issue_project_id').select('OnlineStore')
     # Verify that the target version field has been rewritten by the OnlineStore project settings
     # and wait for the project change to complete.
-    loop until page.evaluate_script('jQuery.active').zero? #redmine_testsuites
+    wait_for_ajax # redmine_testsuites
     assert_select 'issue_fixed_version_id', options: ['(No change)', 'none', 'Alpha', 'Systemwide visible version']
 
     assert_selector 'input[type=submit]', count: 2

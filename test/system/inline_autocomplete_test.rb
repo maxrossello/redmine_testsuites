@@ -48,7 +48,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
       assert page.has_text? 'Bug #11: Closed issue on a closed version'
       assert page.has_text? 'Bug #8: Closed issue'
 
-      loop until page.evaluate_script('jQuery.active').zero? # redmine_testsuites
+      wait_for_ajax # redmine_testsuites
       first('li').click
     end
 
