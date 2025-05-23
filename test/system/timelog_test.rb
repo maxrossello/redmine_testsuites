@@ -49,6 +49,7 @@ class TimelogTest < ApplicationSystemTestCase
     fill_in 'Hours', :with => '8.5'
     select 'QA', :from => 'Activity'
     page.first(:button, 'Submit').click
+    wait_for_ajax # redmine_testsuites
 
     entries = TimeEntry.where(:id => [1, 2, 3]).to_a
     assert entries.all? {|entry| entry.hours == 8.5}

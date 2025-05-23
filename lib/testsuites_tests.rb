@@ -30,7 +30,8 @@ module TestsuitesTests
   end
 
   def self.all_tests
-    # system tests excluded
-    unit_tests + functional_tests + integration_tests + routing_tests + helper_tests
+    tests = unit_tests + functional_tests + integration_tests + routing_tests + helper_tests
+    tests += system_tests if ENV['CHROME_HEADLESS'].present?
+    tests
   end
 end

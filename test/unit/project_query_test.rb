@@ -97,12 +97,18 @@ class ProjectQueryTest < ActiveSupport::TestCase
   end
 
   def test_project_query_default_should_return_nil_if_default_query_destroyed
-    query = ProjectQuery.find(11)
+    # redmine_testsuites start
+    #query = ProjectQuery.find(11)
+    old = ProjectQuery.default
+    query = ProjectQuery.generate!(column_names: [:last_activity_date])
+    # redmine_testsuites stop
 
     Setting.default_project_query = query.id
     query.destroy
 
     assert_nil ProjectQuery.default
+    
+    Setting.default_project_query = old # redmine_testsuites
   end
 
   def test_project_statuses_values_should_equal_ancestors_return

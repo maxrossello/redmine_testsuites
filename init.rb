@@ -30,7 +30,7 @@ if ENV["RAILS_ENV"] == "test"
     description 'Allows to run the Redmine test suite along with plugin tests, considering the different behaviors 
                  introduced by supported plugins over the Redmine default behavior. 
                  Unsupported plugins are signaled in the logs.'
-    version '6.0.5'
+    version '6.0.5.1'
     url 'https://github.com/maxrossello/redmine_testsuites.git'
     author_url 'https://github.com/maxrossello'
     requires_redmine :version => '6.0.5'
@@ -47,7 +47,7 @@ if ENV["RAILS_ENV"] == "test"
     redmine_better_overview:   { tilde_greater_than: '6.0.1', mandatory: false },
     redmine_extended_watchers: { tilde_greater_than: '6.0.1', mandatory: false },
     redmine_pluggable_themes:  { tilde_greater_than: '6.0.1', mandatory: false },
-    redwine:                   { version:            '6.0.5', mandatory: false },
+    redwine:                   { version:            '6.0.5.1', mandatory: false },
   }
   
   Rails.configuration.after_initialize do

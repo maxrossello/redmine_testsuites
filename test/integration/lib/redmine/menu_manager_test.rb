@@ -141,6 +141,7 @@ class MenuManagerTest < Redmine::IntegrationTest
       assert_select 'a.calendar',     :count => 1 # calendar
       assert_select 'a.news',         :count => 0 # news
     end
+    File.write("tmp/debug_response.html", response.body)
     assert_select '#projects-index' do
       assert_select 'a.project',      :count => 4
     end

@@ -146,6 +146,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     issue = new_record(Issue) do
       visit '/projects/ecookbook/issues/new'
+      wait_for_ajax #redmine_testsuites
       fill_in 'Subject', :with => 'Issue with attachment'
       attach_file 'attachments[dummy][file]', Rails.root.join('test/fixtures/files/testfile.txt')
       fill_in 'attachments[1][description]', :with => 'Some description'
@@ -169,10 +170,12 @@ class IssuesSystemTest < ApplicationSystemTestCase
     log_user('someone', 'foo')
     issue = new_record(Issue) do
       visit '/projects/ecookbook/issues/new'
+      wait_for_ajax  # redmine_testsuites
       fill_in 'Subject', :with => 'Issue with attachment'
       attach_file 'attachments[dummy][file]', Rails.root.join('test/fixtures/files/testfile.txt')
       fill_in 'attachments[1][description]', :with => 'Some description'
       click_on 'Create'
+      wait_for_ajax  # redmine_testsuites
     end
     assert_equal 1, issue.attachments.count
     assert_equal 'Some description', issue.attachments.first.description
@@ -301,10 +304,6 @@ class IssuesSystemTest < ApplicationSystemTestCase
 
     log_user('jsmith', 'jsmith')
     visit '/issues/1'
-    if Redmine::Plugin.installed?(:sidebar_hide)
-      page.execute_script("setSideBarVisible()")
-      page.execute_script("setState('visible')")
-    end
     #assert page.first('#sidebar').has_content?('Watchers (1)')
     assert page.first('#sidebar').has_content?("#{I18n.t(:label_issue_watchers)} (1)")
     assert page.first('#sidebar').has_content?(user.name)
@@ -320,10 +319,6 @@ class IssuesSystemTest < ApplicationSystemTestCase
     user = User.find(2)
     log_user('jsmith', 'jsmith')
     visit '/issues/1'
-    if Redmine::Plugin.installed?(:sidebar_hide)
-      page.execute_script("setSideBarVisible()")
-      page.execute_script("setState('visible')")
-    end
     #assert page.first('#sidebar').has_content?('Watchers (0)')
     assert page.first('#sidebar').has_content?("#{I18n.t(:label_issue_watchers)} (0)")
 
@@ -358,12 +353,9 @@ class IssuesSystemTest < ApplicationSystemTestCase
     user = User.find(2)
     log_user('jsmith', 'jsmith')
     visit '/issues/1'
+    wait_for_ajax # redmine_testsuite
     assert page.has_css?('#content .contextual .issue-1-watcher.icon-fav-off')
     # add watcher 'jsmith' from sidebar
-    if Redmine::Plugin.installed?(:sidebar_hide)
-        page.execute_script("setSideBarVisible()")
-        page.execute_script("setState('visible')")
-    end
     page.find('#watchers .contextual a', :text => 'Add').click
     page.find('#users_for_watcher label', :text => 'John Smith').click
     page.find('#new-watcher-form p.buttons input[type=submit]').click
