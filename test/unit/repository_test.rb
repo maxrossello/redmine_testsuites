@@ -37,7 +37,8 @@ class RepositoryTest < ActiveSupport::TestCase
            :roles,
            :enumerations,
            :user_preferences,
-           :watchers
+           :watchers,
+           :versions # redmine_testsuites
 
   include Redmine::I18n
   include ActiveJob::TestHelper  # redmine_testsuites
@@ -259,7 +260,6 @@ class RepositoryTest < ActiveSupport::TestCase
   end
 
   def test_scan_changesets_for_issue_ids
-    set_language_if_valid 'en'  # redmine_testsuites
     Setting.default_language = 'en'
     Setting.commit_ref_keywords = 'refs , references, IssueID'
     Setting.commit_update_keywords = [

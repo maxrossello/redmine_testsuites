@@ -42,6 +42,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
       find('input[name=commit]').click
     end
 
+    assert_text /#{I18n.t :label_issue} #\d+ created./ # redmine_testsuites
+
     # find created issue
     issue = Issue.find_by_subject("new test issue")
     assert_kind_of Issue, issue
@@ -97,6 +99,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     fill_in field2.name, :with => 'CF2 value'
     assert_difference 'Issue.count' do
       page.first(:button, 'Create').click
+      assert_text /#{I18n.t :label_issue} #\d+ created./ # redmine_testsuites
     end
 
     issue = Issue.order('id desc').first
@@ -137,6 +140,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     end
     assert_difference 'Issue.count' do
       find('input[name=commit]').click
+      assert_text /#{I18n.t :label_issue} #\d+ created./ # redmine_testsuites
     end
 
     issue = Issue.order('id desc').first
@@ -153,6 +157,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       attach_file 'attachments[dummy][file]', Rails.root.join('test/fixtures/files/testfile.txt')
       fill_in 'attachments[1][description]', :with => 'Some description'
       click_on 'Create'
+      assert_text /#{I18n.t :label_issue} #\d+ created./ # redmine_testsuites
     end
     assert_equal 1, issue.attachments.count
     assert_equal 'Some description', issue.attachments.first.description
@@ -175,6 +180,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       attach_file 'attachments[dummy][file]', Rails.root.join('test/fixtures/files/testfile.txt')
       fill_in 'attachments[1][description]', :with => 'Some description'
       click_on 'Create'
+      assert_text /#{I18n.t :label_issue} #\d+ created./ # redmine_testsuites
     end
     assert_equal 1, issue.attachments.count
     assert_equal 'Some description', issue.attachments.first.description
@@ -193,6 +199,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
           click_on 'Create'
         end
         click_on 'Create'
+        assert_text /#{I18n.t :label_issue} #\d+ created./ # redmine_testsuites
       end
     end
 
@@ -212,6 +219,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     end
     assert_difference 'Issue.count' do
       click_button('Create')
+      assert_text /#{I18n.t :label_issue} #\d+ created./ # redmine_testsuites
     end
 
     issue = Issue.order('id desc').first
@@ -243,6 +251,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     fill_in 'Form update CF', :with => 'CF value'
     assert_no_difference 'Issue.count' do
       page.first(:button, 'Submit').click
+      assert_text 'Successful update.'  # redmine_testsuites
     end
     assert page.has_css?('#flash_notice')
     issue = Issue.find(1)
@@ -258,6 +267,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     page.find("#issue_status_id").select("Closed")
     assert_no_difference 'Issue.count' do
       page.first(:button, 'Submit').click
+      assert_text 'Successful update.'  # redmine_testsuites
     end
     assert page.has_css?('#flash_notice')
     assert_equal 5, issue.reload.status.id
@@ -567,6 +577,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       within('#query_form') do
         click_link 'Apply'
       end
+      sleep 0.2 #redmine_testsuites
       # Check that Totals are not present in the reloaded page
       assert !page.has_css?('p.query-totals')
       assert !page.has_css?('span.total-for-estimated-hours')

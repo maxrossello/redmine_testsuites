@@ -9,7 +9,7 @@ namespace :redmine do
 
   namespace :test do
     desc 'Runs all Redmine tests along with all the plugins tests, excluding system tests.'
-    task :all do
+    task(:all => "db:test:prepare") do |t|
       $: << "plugins/redmine_testsuites/test"
       Rails::TestUnit::Runner.rake_run TestsuitesTests::all_tests
     end
