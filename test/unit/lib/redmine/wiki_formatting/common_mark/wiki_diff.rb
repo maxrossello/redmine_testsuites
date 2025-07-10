@@ -17,23 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require_relative '../test_helper'
+class WikiDiff < Redmine::Helpers::Diff
+  attr_reader :content_to, :content_from
 
-class ReportsHlperTest < Redmine::HelperTest
-  include ReportsHelper
-  include Rails.application.routes.url_helpers
-
-  def test_aggregate_path_for_spacified_row
-    project = Project.find(1)
-    field = 'assigned_to_id'
-    row = User.find(2)
-    assert_equal '/projects/ecookbook/issues?assigned_to_id=2&set_filter=1&subproject_id=%21%2A', aggregate_path(project, field, row)
-  end
-
-  def test_aggregate_path_for_unset_row
-    project = Project.find(1)
-    field = 'assigned_to_id'
-    row = User.new
-    assert_equal '/projects/ecookbook/issues?assigned_to_id=%21%2A&set_filter=1&subproject_id=%21%2A', aggregate_path(project, field, row)
+  def initialize(content_to, content_from)
+    @content_to = content_to
+    @content_from = content_from
+    super(content_to.text, content_from.text)
   end
 end

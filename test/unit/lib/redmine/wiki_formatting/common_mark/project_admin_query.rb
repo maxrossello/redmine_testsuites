@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-  Jean-Philippe Lang
+# Copyright (C) Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,23 +17,47 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require_relative '../test_helper'
+class ProjectAdminQuery < ProjectQuery
+  self.layout = 'admin'
 
-class ReportsHlperTest < Redmine::HelperTest
-  include ReportsHelper
-  include Rails.application.routes.url_helpers
-
-  def test_aggregate_path_for_spacified_row
-    project = Project.find(1)
-    field = 'assigned_to_id'
-    row = User.find(2)
-    assert_equal '/projects/ecookbook/issues?assigned_to_id=2&set_filter=1&subproject_id=%21%2A', aggregate_path(project, field, row)
+  def self.default(project: nil, user: User.current)
+    nil
   end
 
-  def test_aggregate_path_for_unset_row
-    project = Project.find(1)
-    field = 'assigned_to_id'
-    row = User.new
-    assert_equal '/projects/ecookbook/issues?assigned_to_id=%21%2A&set_filter=1&subproject_id=%21%2A', aggregate_path(project, field, row)
+  def self.visible(*args)
+    user = args.shift || User.current
+    if user.admin?
+      where('1=1')
+    else
+      where('1=0')
+    end
+  end
+
+  def visible?(user=User.current)
+    user&.admin?
+  end
+
+  def editable_by?(user)
+    user&.admin?
+  end
+
+  def available_display_types
+    ['list']
+  end
+
+  def display_type
+    'list'
+  end
+
+  def project_statuses_values
+    values = super
+
+    values << [l(:project_status_archived), Project::STATUS_ARCHIVED.to_s]
+    values << [l(:project_status_scheduled_for_deletion), Project::STATUS_SCHEDULED_FOR_DELETION.to_s]
+    values
+  end
+
+  def base_scope
+    Project.where(statement)
   end
 end

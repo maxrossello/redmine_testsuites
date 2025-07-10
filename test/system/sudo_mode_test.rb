@@ -49,7 +49,6 @@ class SudoModeSystemTest < ApplicationSystemTestCase
         sleep 0.2 #redmine_testsuites
       end
 
-      assert_equal '/users', current_path
       assert page.has_content?("Confirm your password to continue")
       assert page.has_css?('form#sudo-form')
 
@@ -57,6 +56,8 @@ class SudoModeSystemTest < ApplicationSystemTestCase
         fill_in 'Password', :with => 'admin'
         click_button 'Submit'
       end
+
+      assert_text /User johnpaul created./
     end
   end
 

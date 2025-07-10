@@ -47,6 +47,11 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     driver_option.add_preference 'download.prompt_for_download', false
     driver_option.add_preference 'plugins.plugins_disabled',     ["Chrome PDF Viewer"]
     driver_option.add_preference 'intl.accept_languages', 'en' # redmine_testsuites
+    # Disable "Change your password" popup shown after login due to leak detection
+    driver_option.add_preference 'profile.password_manager_leak_detection', false
+    # Disable password saving prompts
+    driver_option.add_preference 'profile.password_manager_enabled', false
+    driver_option.add_preference 'credentials_enable_service', false
   end
 
   setup do
@@ -72,15 +77,13 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # using default browser locale which depend on system locale for "real" browsers drivers
   def log_user(login, password)
     visit '/my/page'
-    sleep 0.2 #redmine_testsuites
-    assert_equal '/login', current_path
+    assert_current_path '/login', :ignore_query => true
     within('#login-form form') do
       fill_in 'username', :with => login
       fill_in 'password', :with => password
       find('input[name=login]').click
     end
-    sleep 0.2 #redmine_testsuites
-    assert_equal '/my/page', current_path
+    assert_current_path '/my/page', :ignore_query => true
   end
 
   def wait_for_ajax
