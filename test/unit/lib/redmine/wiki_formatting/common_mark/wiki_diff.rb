@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2023  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,11 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require_relative '../test_helper'
+class WikiDiff < Redmine::Helpers::Diff
+  attr_reader :content_to, :content_from
 
-class ApplicationControllerTest < Redmine::ControllerTest
-  def test_back_url_should_remove_utf8_checkmark_from_referer
-    @request.set_header 'HTTP_REFERER', "/path?utf8=\u2713&foo=bar"
-    assert_equal "/path?foo=bar", @controller.back_url
+  def initialize(content_to, content_from)
+    @content_to = content_to
+    @content_from = content_from
+    super(content_to.text, content_from.text)
   end
 end
