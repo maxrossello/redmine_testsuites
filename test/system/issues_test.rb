@@ -34,8 +34,10 @@ class IssuesSystemTest < ApplicationSystemTestCase
       fill_in 'Searchable field', :with => 'Value for field 2'
       # click_button 'Create' would match both 'Create' and 'Create and continue' buttons
       find('input[name=commit]').click
-      sleep 0.2 #redmine_testsuites
     end
+
+    #assert_text /Issue #\d+ created./
+    assert_text /#{I18n.t :field_issue} #\d+ created./
 
     # find created issue
     issue = Issue.find_by_subject("new test issue")
@@ -92,7 +94,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
     fill_in field2.name, :with => 'CF2 value'
     assert_difference 'Issue.count' do
       page.first(:button, 'Create').click
-      sleep 0.2 #redmine_testsuites
+      #assert_text /Issue #\d+ created./
+      assert_text /#{I18n.t :field_issue} #\d+ created./
     end
 
     issue = Issue.order('id desc').first
@@ -133,7 +136,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
     end
     assert_difference 'Issue.count' do
       find('input[name=commit]').click
-      sleep 0.2 #redmine_testsuites
+      #assert_text /Issue #\d+ created./
+      assert_text /#{I18n.t :field_issue} #\d+ created./
     end
 
     issue = Issue.order('id desc').first
@@ -151,7 +155,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
       attach_file 'attachments[dummy][file]', Rails.root.join('test/fixtures/files/testfile.txt')
       fill_in 'attachments[1][description]', :with => 'Some description'
       click_on 'Create'
-      wait_for_ajax #redmine_testsuites
+      #assert_text /Issue #\d+ created./
+      assert_text /#{I18n.t :field_issue} #\d+ created./
     end
     assert_equal 1, issue.attachments.count
     assert_equal 'Some description', issue.attachments.first.description
@@ -175,7 +180,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
       attach_file 'attachments[dummy][file]', Rails.root.join('test/fixtures/files/testfile.txt')
       fill_in 'attachments[1][description]', :with => 'Some description'
       click_on 'Create'
-      wait_for_ajax  # redmine_testsuites
+      #assert_text /Issue #\d+ created./
+      assert_text /#{I18n.t :field_issue} #\d+ created./
     end
     assert_equal 1, issue.attachments.count
     assert_equal 'Some description', issue.attachments.first.description
@@ -194,7 +200,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
           click_on 'Create'
         end
         click_on 'Create'
-        sleep 0.2 #redmine_testsuites
+        #assert_text /Issue #\d+ created./
+        assert_text /#{I18n.t :field_issue} #\d+ created./
       end
     end
 
@@ -214,7 +221,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
     end
     assert_difference 'Issue.count' do
       click_button('Create')
-      sleep 0.2 #redmine_testsuites
+      #assert_text /Issue #\d+ created./
+      assert_text /#{I18n.t :field_issue} #\d+ created./
     end
 
     issue = Issue.order('id desc').first
@@ -246,6 +254,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     fill_in 'Form update CF', :with => 'CF value'
     assert_no_difference 'Issue.count' do
       page.first(:button, 'Submit').click
+      assert_text 'Successful update.'
     end
     assert page.has_css?('#flash_notice')
     issue = Issue.find(1)
@@ -261,6 +270,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     page.find("#issue_status_id").select("Closed")
     assert_no_difference 'Issue.count' do
       page.first(:button, 'Submit').click
+      assert_text 'Successful update.'
     end
     assert page.has_css?('#flash_notice')
     assert_equal 5, issue.reload.status.id
@@ -283,8 +293,8 @@ class IssuesSystemTest < ApplicationSystemTestCase
     assert page.has_css?('span#attachments_1')
 
     click_on 'Submit'
-    sleep 0.2 #redmine_testsuites
 
+    assert_text 'Successful update.'
     #assert_equal 3, Issue.find(2).attachments.count
     assert_equal attachments+1, Issue.find(2).attachments.count
   end

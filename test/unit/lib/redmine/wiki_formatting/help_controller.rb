@@ -16,13 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-require_relative '../test_helper'
-class Redmine::PluginAutoloadTest < ActiveSupport::TestCase
-  if ENV['REDMINE_PLUGINS_DIRECTORY']
-    def test_autoload
-      assert_equal true, Object.const_defined?(:Foo)
+
+class HelpController < ApplicationController
+  def show_wiki_syntax
+    type = params[:type].nil? ? "" : "#{params[:type]}_"
+
+    lang = current_language.to_s
+    template = "help/wiki_syntax/#{Setting.text_formatting}/#{lang}/wiki_syntax_#{type}#{Setting.text_formatting}"
+    unless lookup_context.exists?(template)
+      lang = "en"
     end
-  else
-    puts 'Tests related to plugin autoloading should be run separately using "rails test:autoload"'
+    render template: "help/wiki_syntax/#{Setting.text_formatting}/#{lang}/wiki_syntax_#{type}#{Setting.text_formatting}", layout: nil
+  end
+
+  def show_code_highlighting
+    @available_lexers = Rouge::Lexer.all.sort_by(&:tag)
+    render template: "help/wiki_syntax/code_highlighting_languages", layout: nil
   end
 end
