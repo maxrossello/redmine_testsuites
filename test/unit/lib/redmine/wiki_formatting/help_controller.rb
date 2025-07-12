@@ -17,22 +17,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require_relative '../../../../test_helper'
+class HelpController < ApplicationController
+  def show_wiki_syntax
+    type = params[:type].nil? ? "" : "#{params[:type]}_"
 
-class Redmine::WikiFormatting::HtmlSanitizerTest < ActiveSupport::TestCase
-  def setup
-    @sanitizer = Redmine::WikiFormatting::HtmlSanitizer
-  end
-
-  def test_should_allow_links_with_safe_url_schemes_and_append_external_class
-    %w(http https ftp ssh foo).each do |scheme|
-      input = %(<a href="#{scheme}://example.org/">foo</a>)
-      assert_equal %(<a href="#{scheme}://example.org/" class="external">foo</a>), @sanitizer.call(input)
+    lang = current_language.to_s
+    template = "help/wiki_syntax/#{Setting.text_formatting}/#{lang}/wiki_syntax_#{type}#{Setting.text_formatting}"
+    unless lookup_context.exists?(template)
+      lang = "en"
     end
+    render template: "help/wiki_syntax/#{Setting.text_formatting}/#{lang}/wiki_syntax_#{type}#{Setting.text_formatting}", layout: nil
   end
 
-  def test_should_reject_links_with_unsafe_url_schemes
-    input = %(<a href="javascript:alert('hello');">foo</a>)
-    assert_equal "<a>foo</a>", @sanitizer.call(input)
+  def show_code_highlighting
+    @available_lexers = Rouge::Lexer.all.sort_by(&:tag)
+    render template: "help/wiki_syntax/code_highlighting_languages", layout: nil
   end
 end
