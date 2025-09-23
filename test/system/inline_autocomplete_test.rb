@@ -222,6 +222,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
       assert page.has_text? 'Dave Lopper'
       loop until page.evaluate_script('jQuery.active').zero? # redmine_testsuites
       first('li').click
+      loop until page.evaluate_script('jQuery.active').zero? #redmine_testsuites
     end
 
     assert_equal '@dlopper ', find('#notes').value

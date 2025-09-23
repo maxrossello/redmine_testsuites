@@ -290,6 +290,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     assert page.has_css?('span#attachments_1')
 
     click_on 'Submit'
+    wait_for_ajax  # redmine_testsuites
 
     #assert_equal 1, Issue.find(2).attachments.count
     assert_equal attachments+1, Issue.find(2).attachments.count
@@ -506,8 +507,11 @@ class IssuesSystemTest < ApplicationSystemTestCase
     assert page.has_css?('tr#issue-1')
     assert page.has_css?('tr#issue-4')
     find('tr#issue-1 input[type=checkbox]').click
+    wait_for_ajax  # redmine_testsuites
     find('tr#issue-4 input[type=checkbox]').click
+    wait_for_ajax  # redmine_testsuites
     find('tr#issue-1 td.updated_on').right_click
+    wait_for_ajax  # redmine_testsuites
     within('#context-menu') do
       click_link 'Copy'
     end
@@ -646,6 +650,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
     visit '/issues/1'
     page.find('#relations .contextual a').click
     page.fill_in 'relation[issue_to_id]', :with => 'issue'
+    loop until page.evaluate_script('jQuery.active').zero? #redmine_testsuites
 
     within('ul.ui-autocomplete') do
       assert page.has_text? 'Bug #12: Closed issue on a locked version'

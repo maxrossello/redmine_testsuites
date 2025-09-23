@@ -66,6 +66,7 @@ class QuickJumpTest < ApplicationSystemTestCase
       # Fill the quick search input that should have focus
       page.first('*:focus').set('meg')
       click_on 'Megaproject'
+      loop until page.evaluate_script('jQuery.active').zero? #redmine_testsuites
     end
     assert_current_path '/projects/mega?jump=welcome'
   end

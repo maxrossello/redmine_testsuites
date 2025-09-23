@@ -46,10 +46,13 @@ class CopyToClipboardSystemTest < ApplicationSystemTestCase
 
     # Copy issue journal url to Clipboard
     first('#note-2 .icon-actions').click
+    wait_for_ajax   # redmine_testsuites
     first('#note-2 div.drdn-items a.icon-copy-link').click
+    wait_for_ajax   # redmine_testsuites
 
     # Paste the value copied to the clipboard into the textarea to get and test
     first('.icon-edit').click
+    wait_for_ajax   # redmine_testsuites
     find('textarea#issue_notes').send_keys([modifier_key, 'v'])
     assert find('textarea#issue_notes').value.end_with?('/issues/1#note-2')
   end

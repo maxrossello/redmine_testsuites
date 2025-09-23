@@ -48,7 +48,7 @@ class SudoModeSystemTest < ApplicationSystemTestCase
         fill_in 'Confirmation', :with => 'password'
         # click_button 'Create' would match both 'Create' and 'Create and continue' buttons
         find('input[name=commit]').click
-        loop until page.evaluate_script('jQuery.active').zero? #redmine_testsuites
+        wait_for_ajax #redmine_testsuites
       end
 
       assert_equal '/users', current_path
