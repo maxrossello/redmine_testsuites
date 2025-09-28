@@ -125,6 +125,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       check 'Some Watcher'
       click_button 'Add'
     end
+    wait_for_ajax # redmine_testsuites
     assert page.has_css?('form#issue-form')
     assert page.has_css?('p#watchers_form')
     using_wait_time(30) do

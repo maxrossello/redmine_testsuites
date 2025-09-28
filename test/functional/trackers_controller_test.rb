@@ -282,7 +282,7 @@ class TrackersControllerTest < Redmine::ControllerTest
     assert_no_difference 'Tracker.count' do
       delete :destroy, params: {id: tracker.id}
     end
-    assert_redirected_to action: 'index'
+    assert_response :success
     #assert_match /The following projects have issues with this tracker:/, flash[:error]
     assert_match /The following #{I18n.t(:test_projects)} have #{I18n.t(:test_issues)} with this #{I18n.t(:test_tracker)}:/, flash[:error]
     projects.each do |project|

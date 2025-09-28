@@ -440,6 +440,8 @@ class UsersControllerTest < Redmine::ControllerTest
   def test_new
     get :new
     assert_response :success
+    assert_includes @response.headers['Cache-Control'], 'no-store'
+
     assert_select 'input[name=?]', 'user[login]'
     assert_select 'label[for=?]>span.required', 'user_password', 1
   end
@@ -556,6 +558,8 @@ class UsersControllerTest < Redmine::ControllerTest
       post :create, :params => {:user => {:login => 'foo'}}
     end
     assert_response :success
+    assert_includes @response.headers['Cache-Control'], 'no-store'
+
     assert_select_error /Email cannot be blank/
   end
 
@@ -642,6 +646,8 @@ class UsersControllerTest < Redmine::ControllerTest
     end
 
     assert_response :success
+    assert_includes @response.headers['Cache-Control'], 'no-store'
+
     assert_select 'h2>a+img.gravatar'
     assert_select 'input[name=?][value=?]', 'user[login]', 'jsmith'
     assert_select 'label[for=?]>span.required', 'user_password', 0
@@ -697,6 +703,8 @@ class UsersControllerTest < Redmine::ControllerTest
       }
     end
     assert_response :success
+    assert_includes @response.headers['Cache-Control'], 'no-store'
+
     assert_select_error /First name cannot be blank/
   end
 
