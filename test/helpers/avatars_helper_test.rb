@@ -36,11 +36,17 @@ class AvatarsHelperTest < Redmine::HelperTest
   end
 
   def test_avatar_with_anonymous_user
-    assert_match %r{src="/assets/anonymous(-\w+)?.png"}, avatar(User.anonymous)
+    avatar_tag = avatar(User.anonymous)
+
+    assert_match %r{src="/assets/anonymous(-\w+)?.png"}, avatar_tag
+    assert_match 'class="anonymous-avatar avatar"', avatar_tag
   end
 
   def test_avatar_with_group
-    assert_match %r{src="/assets/group(-\w+)?.png"}, avatar(Group.first)
+    avatar_tag = avatar(Group.first)
+
+    assert_match %r{src="/assets/group(-\w+)?.png"}, avatar_tag
+    assert_match 'class="group-avatar avatar"', avatar_tag
   end
 
   def test_avatar_with_invalid_arg_should_return_nil
@@ -63,14 +69,26 @@ class AvatarsHelperTest < Redmine::HelperTest
   end
 
   def test_avatar_css_class
-    # The default class of the img tag should be gravatar
-    assert_include 'class="gravatar"', avatar('jsmith <jsmith@somenet.foo>')
-    assert_include 'class="gravatar picture"', avatar('jsmith <jsmith@somenet.foo>', :class => 'picture')
+    # The default classes of the img tag should be gravatar and avatar
+    assert_include 'class="gravatar avatar"', avatar('jsmith <jsmith@somenet.foo>')
+    assert_include 'class="gravatar avatar picture"', avatar('jsmith <jsmith@somenet.foo>', :class => 'picture')
   end
 
-  def test_avatar_disabled
+  def test_avatar_with_initials
+    with_settings :gravatar_default => 'initials' do
+      assert_include 'initials="RA"', avatar(User.find(1))
+    end
+  end
+
+  def test_avatar_should_reject_initials_if_default_is_not_initials
+    with_settings :gravatar_default => 'identicon' do
+      assert_not_include 'initials="RA"', avatar(User.find(1))
+    end
+  end
+
+  def test_avatar_disabled_should_display_user_initials
     with_settings :gravatar_enabled => '0' do
-      assert_equal '', avatar(User.find_by_mail('jsmith@somenet.foo'))
+      assert_equal "<span role=\"img\" class=\"avatar-color-2 s24 avatar\">JS</span>", avatar(User.find_by_mail('jsmith@somenet.foo'))
     end
   end
 

@@ -2485,7 +2485,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
     assert_select 'div#tab-content-history' do
       assert_select 'div[id=?]', "change-#{Issue.find(1).journals.last.id}" do
-        assert_select 'ul.details', :text => "Subtask ##{issue.id} added"
+        assert_select 'ul.journal-details', :text => "Subtask ##{issue.id} added"
       end
     end
   end
@@ -2664,18 +2664,47 @@ class IssuesControllerTest < Redmine::ControllerTest
   end
 
   def test_show_should_not_display_prev_next_links_for_issue_not_in_query_results
-    @request.session[:issue_query] =
-      {
-        :filters => {
-          'status_id' => {:values => [''], :operator => 'c'}
-        },
-        :project_id => 1,
-        :sort => [['id', 'asc']]
-      }
-    get(:show, :params => {:id => 1})
+    @request.session[:issue_query] = {
+      filters: {
+        'status_id' => {operator: 'o', values: ['']}
+      },
+      project_id: 1,
+      sort: [['id', 'asc']]
+    }
+    get(:show, params: {id: 8})
+
     assert_response :success
-    assert_select 'a', :text => /Previous/, :count => 0
-    assert_select 'a', :text => /Next/, :count => 0
+    assert_select 'a', text: /Previous/, count: 0
+    assert_select 'a', text: /Next/, count: 0
+  end
+
+  def test_show_should_display_prev_next_links_for_issue_not_in_query_when_flash_contains_previous_and_next_issue_ids
+    @request.session[:issue_query] = {
+      filters: {
+        'status_id' => {operator: 'o', values: ['']}
+      },
+      project_id: 1,
+      sort: [['id', 'asc']]
+    }
+    get(
+      :show,
+      params: { id: 8 }, # The issue#8 is closed
+      flash: {
+        previous_and_next_issue_ids: {
+          prev_issue_id: 7,
+          next_issue_id: 9,
+          issue_position: 7,
+          issue_count: 10
+        }
+      }
+    )
+
+    assert_response :success
+    assert_select 'div.next-prev-links' do
+      assert_select 'a[href="/issues/7"]', text: /Previous/
+      assert_select 'a[href="/issues/9"]', text: /Next/
+      assert_select 'span.position', text: "7 of 10"
+    end
   end
 
   def test_show_show_should_display_prev_next_links_with_query_sort_by_user_custom_field
@@ -2703,25 +2732,6 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'div.next-prev-links' do
       assert_select 'a[href="/issues/2"]', :text => /Previous/
       assert_select 'a[href="/issues/1"]', :text => /Next/
-    end
-  end
-
-  def test_show_should_display_prev_next_links_when_request_has_previous_and_next_issue_ids_params
-    get(
-      :show,
-      :params => {
-        :id => 1,
-        :prev_issue_id => 1,
-        :next_issue_id => 3,
-        :issue_position => 2,
-        :issue_count => 4
-      }
-    )
-    assert_response :success
-    assert_select 'div.next-prev-links' do
-      assert_select 'a[href="/issues/1"]', :text => /Previous/
-      assert_select 'a[href="/issues/3"]', :text => /Next/
-      assert_select 'span.position', :text => "2 of 4"
     end
   end
 
@@ -2806,7 +2816,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'h3', {text: /Watchers \(\d*\)/, count: 0}
   end
 
-  def test_show_should_display_watchers_with_gravatars
+  def test_show_should_display_watchers_with_avatars
     @request.session[:user_id] = 2
     issue = Issue.find(1)
     issue.add_watcher User.find(2)
@@ -2814,9 +2824,10 @@ class IssuesControllerTest < Redmine::ControllerTest
     with_settings :gravatar_enabled => '1' do
       get(:show, :params => {:id => 1})
     end
+
     assert_select 'div#watchers ul' do
       assert_select 'li.user-2' do
-        assert_select 'img.gravatar[title=?]', 'John Smith'
+        assert_select '.avatar[title=?]', 'John Smith'
         assert_select 'a[href="/users/2"]'
         assert_select 'a[class*=delete]'
       end
@@ -3295,7 +3306,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       assert_select 'a[title=?][href=?]', 'Edit', '/time_entries/3/edit'
       assert_select 'a[title=?][href=?]', 'Delete', '/time_entries/3'
 
-      assert_select 'ul[class=?]', 'details', :text => /1.00 h/
+      assert_select 'ul[class=?]', 'journal-details', :text => /1.00 h/
     end
   end
 
@@ -3319,6 +3330,42 @@ class IssuesControllerTest < Redmine::ControllerTest
 
     assert_response :success
     assert_select 'span.badge.badge-private', text: 'Private'
+  end
+
+  def test_show_should_display_reactions
+    current_user = User.generate!
+
+    User.add_to_project(current_user, projects(:projects_001),
+      Role.generate!(users_visibility: 'members_of_visible_projects', permissions: [:view_issues]))
+
+    @request.session[:user_id] = current_user.id
+
+    get :show, params: { id: 1 }
+
+    assert_response :success
+
+    assert_select 'span[data-reaction-button-id=reaction_issue_1]' do
+      # The current_user can only see members who belong to projects that the current_user has access to.
+      # Since the Redmine Admin user does not belong to any projects visible to the current_user,
+      # the Redmine Admin user's name is not displayed in the reaction user list. Instead, "1 other" is shown.
+      assert_select 'a.reaction-button[title=?]', 'Dave Lopper and John Smith' do
+        assert_select 'span.icon-label', '2'
+      end
+    end
+
+    assert_select 'span[data-reaction-button-id=reaction_journal_1]' do
+      assert_select 'a.reaction-button[title=?]', 'John Smith'
+    end
+    assert_select 'span[data-reaction-button-id=reaction_journal_2] a.reaction-button'
+  end
+
+  def test_should_not_display_reactions_when_reactions_feature_is_disabled
+    with_settings reactions_enabled: '0' do
+      get :show, params: { id: 1 }
+
+      assert_response :success
+      assert_select 'span[data-reaction-button-id]', false
+    end
   end
 
   def test_show_should_not_display_edit_attachment_icon_for_user_without_edit_issue_permission_on_tracker
@@ -5923,6 +5970,16 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'input[name=?]', 'time_entry[hours]', 0
   end
 
+  def test_get_edit_should_not_display_the_time_entry_form_on_closed_issue
+    with_settings :timelog_accept_closed_issues => '0' do
+      @request.session[:user_id] = 2
+      issue = Issue.find(1)
+      issue.update :status => IssueStatus.find(5)
+      get(:edit, :params => {:id => 1})
+      assert_select 'input[name=?]', 'time_entry[hours]', 0
+    end
+  end
+
   def test_get_edit_with_params
     @request.session[:user_id] = 2
     get(
@@ -5974,6 +6031,16 @@ class IssuesControllerTest < Redmine::ControllerTest
       assert_select 'option[value=Oracle][selected=selected]'
       assert_select 'option[value=PostgreSQL]:not([selected])'
     end
+  end
+
+  def test_get_edit_with_custom_field_progress_bar
+    cf = IssueCustomField.generate!(:tracker_ids => [1], :is_for_all => true, :field_format => 'progressbar')
+
+    @request.session[:user_id] = 1
+    get(:edit, :params => {:id => 1})
+    assert_response :success
+
+    assert_select "select[id=?]", "issue_custom_field_values_#{cf.id}", 1
   end
 
   def test_get_edit_with_me_assigned_to_id
@@ -6377,6 +6444,57 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_mail_body_match "Status changed from New to Assigned", mail
     # subject should contain the new status
     assert mail.subject.include?("(#{IssueStatus.find(2).name})")
+  end
+
+  def test_update_should_accept_time_entry_when_closing_issue
+    with_settings :timelog_accept_closed_issues => '0' do
+      issue = Issue.find(1)
+      assert_equal 1, issue.status_id
+      @request.session[:user_id] = 2
+      assert_difference('TimeEntry.count', 1) do
+        put(
+          :update,
+          :params => {
+            :id => 1,
+            :issue => {
+              :status_id => 5,
+            },
+            :time_entry => {
+              :hours => '2',
+              :comments => '',
+              :activity_id => TimeEntryActivity.first
+            }
+          }
+        )
+      end
+      assert_redirected_to :action => 'show', :id => '1'
+      issue.reload
+      assert issue.closed?
+    end
+  end
+
+  def test_update_should_not_accept_time_entry_on_closed_issue
+    with_settings :timelog_accept_closed_issues => '0' do
+      issue = Issue.find(1)
+      issue.update :status => IssueStatus.find(5)
+      @request.session[:user_id] = 2
+      assert_no_difference('TimeEntry.count') do
+        put(
+          :update,
+          :params => {
+            :id => 1,
+            :issue => {
+            },
+            :time_entry => {
+              :hours => '2',
+              :comments => '',
+              :activity_id => TimeEntryActivity.first
+            }
+          }
+        )
+      end
+      assert_response :success
+    end
   end
 
   def test_put_update_with_note_only
@@ -6941,7 +7059,11 @@ class IssuesControllerTest < Redmine::ControllerTest
         :issue_count => 3
       }
     )
-    assert_redirected_to '/issues/11?issue_count=3&issue_position=2&next_issue_id=12&prev_issue_id=8'
+    assert_redirected_to '/issues/11'
+    assert_equal(
+      { issue_count: '3', issue_position: '2', next_issue_id: '12', prev_issue_id: '8' },
+      flash[:previous_and_next_issue_ids]
+    )
   end
 
   def test_update_with_permission_on_tracker_should_be_allowed
@@ -8576,7 +8698,7 @@ class IssuesControllerTest < Redmine::ControllerTest
 
     assert_select 'div#tab-content-history' do
       assert_select 'div[id=?]', "change-#{parent.journals.last.id}" do
-        assert_select 'ul.details', :text => "Subtask deleted (##{child.id})"
+        assert_select 'ul.journal-details', :text => "Subtask deleted (##{child.id})"
       end
     end
   end
@@ -8665,31 +8787,27 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'a[href=?][onclick=?]', "/issues/1", "", :text => 'Cancel'
   end
 
-  def test_show_should_display_author_gravatar_only_when_not_assigned
+  def test_show_should_display_author_avatar_only_when_not_assigned
     issue = Issue.find(1)
     assert_nil issue.assigned_to_id
     @request.session[:user_id] = 1
 
-    with_settings :gravatar_enabled => '1' do
-      get :show, :params => {:id => issue.id}
-      assert_select 'div.gravatar-with-child' do
-        assert_select 'img.gravatar', 1
-      end
+    get :show, :params => {:id => issue.id}
+    assert_select 'div.avatar-with-child' do
+      assert_select '.avatar', 1
     end
   end
 
-  def test_show_should_display_author_and_assignee_gravatars_when_assigned
+  def test_show_should_display_author_and_assignee_avatars_when_assigned
     issue = Issue.find(1)
     issue.assigned_to_id = 2
     issue.save!
     @request.session[:user_id] = 1
 
-    with_settings :gravatar_enabled => '1' do
-      get :show, :params => {:id => issue.id}
-      assert_select 'div.gravatar-with-child' do
-        assert_select 'img.gravatar', 2
-        assert_select 'img.gravatar-child', 1
-      end
+    get :show, :params => {:id => issue.id}
+    assert_select 'div.avatar-with-child' do
+      assert_select '.avatar', 2
+      assert_select '.avatar-child', 1
     end
   end
 
@@ -8859,6 +8977,17 @@ class IssuesControllerTest < Redmine::ControllerTest
         assert_select 'option:nth-of-type(2)', text: '5 %'
         assert_select 'option:nth-of-type(21)', text: '100 %'
       end
+    end
+  end
+
+  def test_related_issues_columns_setting
+    with_settings :related_issues_default_columns => ['status', 'total_estimated_hours'], :display_related_issues_table_headers => 1 do
+      Issue.find(1).update!(parent_id: 2)
+      get :show, params: { id: 2 }
+      assert_response :success
+      assert_select 'thead.related-issues th', text: 'Subject'
+      assert_select 'thead.related-issues th', text: 'Status'
+      assert_select 'thead.related-issues th', text: 'Total estimated time'
     end
   end
 end

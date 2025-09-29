@@ -19,7 +19,7 @@
 
 require_relative '../../../../../test_helper'
 
-if Object.const_defined?(:CommonMarker)
+if Object.const_defined?(:Commonmarker)
   require 'redmine/wiki_formatting/common_mark/sanitization_filter'
 
   class Redmine::WikiFormatting::CommonMark::SanitizationFilterTest < ActiveSupport::TestCase
@@ -73,6 +73,32 @@ if Object.const_defined?(:CommonMarker)
 
       input = %(<code class="foo">foo</code>)
       assert_equal %(<code>foo</code>), filter(input)
+    end
+
+    def test_should_allow_valid_alert_div_and_p_classes
+      html = <<~HTML
+        <div class="markdown-alert markdown-alert-tip">
+          <p class="markdown-alert-title">Tip</p>
+          <p>Useful tip.</p>
+        </div>
+      HTML
+
+      sanitized = filter(html)
+
+      assert_include 'class="markdown-alert markdown-alert-tip"', sanitized
+      assert_include 'class="markdown-alert-title"', sanitized
+    end
+
+    def test_should_remove_invalid_div_class
+      html = '<div class="bad-class">Text</div>'
+      sanitized = filter(html)
+      assert_not_includes 'bad-class', sanitized
+    end
+
+    def test_should_remove_invalid_p_class
+      html = '<p class="bad-class">Text</p>'
+      sanitized = filter(html)
+      assert_not_include 'bad-class', sanitized
     end
 
     def test_should_allow_links_with_safe_url_schemes

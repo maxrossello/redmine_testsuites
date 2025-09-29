@@ -1658,7 +1658,7 @@ class ApplicationHelperTest < Redmine::HelperTest
     end
   end
 
-  if Object.const_defined?(:CommonMarker)
+  if Object.const_defined?(:Commonmarker)
     def test_toc_with_markdown_formatting_should_be_parsed
       with_settings :text_formatting => 'common_mark' do
         assert_select_in textilizable("{{toc}}\n\n# Heading"), 'ul.toc li', :text => 'Heading'
@@ -1958,11 +1958,12 @@ class ApplicationHelperTest < Redmine::HelperTest
   end
 
   def test_thumbnail_tag
-    a = Attachment.find(3)
-    assert_select_in(
-      thumbnail_tag(a),
-      'a[href=?] img[title=?][alt=?][src=?][loading="lazy"]',
-      "/attachments/3", "logo.gif", "logo.gif", "/attachments/thumbnail/3/200")
+    attachment = Attachment.find(3)
+    assert_select_in thumbnail_tag(attachment), 'div.thumbnail[title=?]', 'logo.gif' do
+      assert_select 'a[href=?]', '/attachments/3' do
+        assert_select 'img[alt=?][src=?][loading="lazy"]', "logo.gif", "/attachments/thumbnail/3/200"
+      end
+    end
   end
 
   def test_link_to_project
@@ -2049,20 +2050,6 @@ class ApplicationHelperTest < Redmine::HelperTest
       # Group should have group icon
       assert_not_include avatar(group, :size => 16), tags
       assert_include content_tag('span', principal_icon(group), :class => "name icon icon-#{group.class.name.downcase}"), tags
-    end
-  end
-
-  def test_principals_check_box_tag_without_avatar
-    principals = [User.find(1), Group.find(10)]
-    Setting.gravatar_enabled = '1'
-    avatar_tags = principals.collect{|p| avatar(p, :size => 16)}
-
-    with_settings :gravatar_enabled => '0' do
-      tags = principals_check_box_tags(name, principals)
-      principals.each_with_index do |principal, i|
-        assert_not_include avatar_tags[i], tags
-        assert_include content_tag('span', principal_icon(principal), :class => "name icon icon-#{principal.class.name.downcase}"), tags
-      end
     end
   end
 
@@ -2373,6 +2360,43 @@ class ApplicationHelperTest < Redmine::HelperTest
     end
   end
 
+  def test_format_activity_description_should_strip_quoted_text
+    text = <<~TEXT
+      John Smith wrote in #note-1:
+      > The quick brown fox
+      > jumps over the lazy dog.
+
+      Brick quiz whangs jumpy veldt fox.
+
+      > The five
+
+      > boxing wizards
+
+      > jump quickly.
+
+      The quick onyx goblin jumps over the lazy dwarf.
+    TEXT
+
+    expected =
+      'John Smith wrote in #note-1:<br>' \
+      '&gt; The quick brown fox<br>' \
+      '&gt; ...<br>' \
+      'Brick quiz whangs jumpy veldt fox.<br>' \
+      '&gt; The five<br>' \
+      '&gt; ...<br>' \
+      'The quick onyx goblin jumps over the lazy dwarf.<br>'
+
+    assert_equal expected, format_activity_description(text)
+  end
+
+  def test_render_flash_messages_should_ignore_non_string_values
+    flash[:array_value] = ['1', '2']
+    flash[:hash_value] = { foo: 'bar' }
+
+    result = render_flash_messages
+    assert_equal '', result
+  end
+
   private
 
   def wiki_links_with_special_characters
@@ -2402,5 +2426,24 @@ class ApplicationHelperTest < Redmine::HelperTest
                   "/projects/ecookbook/wiki/%5Bfoo%5DIncluding_%5Bsquare_brackets%5D_in_wiki_title",
                   :class => "wiki-page new"),
     }
+  end
+
+  def test_list_autofill_data_attributes
+    with_settings :text_formatting => 'textile' do
+      expected = {
+        controller: "list-autofill",
+        action: "keydown->list-autofill#handleEnter",
+        list_autofill_target: "input",
+        list_autofill_text_formatting_param: "textile"
+      }
+
+      assert_equal expected, list_autofill_data_attributes
+    end
+  end
+
+  def test_list_autofill_data_attributes_with_blank_text_formatting
+    with_settings :text_formatting => '' do
+      assert_equal({}, list_autofill_data_attributes)
+    end
   end
 end

@@ -20,77 +20,77 @@
 require_relative '../../../../../test_helper'
 
 class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
-  if Object.const_defined?(:CommonMarker)
+  if Object.const_defined?(:Commonmarker)
 
     def setup
       @formatter = Redmine::WikiFormatting::CommonMark::Formatter
     end
 
-    def format(text)
+    def to_html(text)
       @formatter.new(text).to_html
     end
 
     def test_should_render_hard_breaks
       html ="<p>foo<br>\nbar</p>"
-      assert_equal html, format("foo\\\nbar")
-      assert_equal html, format("foo  \nbar")
+      assert_equal html, to_html("foo\\\nbar")
+      assert_equal html, to_html("foo  \nbar")
     end
 
     def test_should_render_soft_breaks
-      assert_equal "<p>foo<br>\nbar</p>", format("foo\nbar")
+      assert_equal "<p>foo<br>\nbar</p>", to_html("foo\nbar")
     end
 
     def test_syntax_error_in_image_reference_should_not_raise_exception
-      assert format("!>[](foo.png)")
+      assert to_html("!>[](foo.png)")
     end
 
     def test_empty_image_should_not_raise_exception
-      assert format("![]()")
+      assert to_html("![]()")
     end
 
     def test_inline_style
-      assert_equal "<p><strong>foo</strong></p>", format("**foo**")
+      assert_equal "<p><strong>foo</strong></p>", to_html("**foo**")
     end
 
     def test_not_set_intra_emphasis
-      assert_equal "<p>foo_bar_baz</p>", format("foo_bar_baz")
+      assert_equal "<p>foo_bar_baz</p>", to_html("foo_bar_baz")
     end
 
     def test_wiki_links_should_be_preserved
       text = 'This is a wiki link: [[Foo]]'
-      assert_include '[[Foo]]', format(text)
+      assert_include '[[Foo]]', to_html(text)
     end
 
     def test_redmine_links_with_double_quotes_should_be_preserved
       text = 'This is a redmine link: version:"1.0"'
-      assert_include 'version:"1.0"', format(text)
+      assert_include 'version:"1.0"', to_html(text)
     end
 
     def test_links_by_id_should_be_preserved
       text = "[project#3]"
-      assert_equal "<p>#{text}</p>", format(text)
+      assert_equal "<p>#{text}</p>", to_html(text)
     end
 
     def test_links_to_users_should_be_preserved
       text = "[@login]"
-      assert_equal "<p>#{text}</p>", format(text)
+      assert_equal "<p>#{text}</p>", to_html(text)
       text = "[user:login]"
-      assert_equal "<p>#{text}</p>", format(text)
+      assert_equal "<p>#{text}</p>", to_html(text)
       text = "user:user@example.org"
-      assert_equal "<p>#{text}</p>", format(text)
+      assert_equal "<p>#{text}</p>", to_html(text)
       text = "[user:user@example.org]"
-      assert_equal "<p>#{text}</p>", format(text)
+      assert_equal "<p>#{text}</p>", to_html(text)
       text = "@user@example.org"
-      assert_equal "<p>#{text}</p>", format(text)
+      assert_equal "<p>#{text}</p>", to_html(text)
       text = "[@user@example.org]"
-      assert_equal "<p>#{text}</p>", format(text)
+      assert_equal "<p>#{text}</p>", to_html(text)
     end
 
     def test_files_with_at_should_not_end_up_as_mailto_links
       text = "printscreen@2x.png"
-      assert_equal "<p>#{text}</p>", format(text)
+      assert_equal "<p>#{text}</p>", to_html(text)
       text = "[printscreen@2x.png]"
-      assert_equal "<p>#{text}</p>", format(text)
+      assert_equal "<p>#{text}</p>", to_html(text)
     end
 
     def test_should_support_syntax_highlight
@@ -100,7 +100,7 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
         end
         ~~~
       STR
-      assert_select_in format(text), 'pre code.ruby.syntaxhl' do
+      assert_select_in to_html(text), 'pre code.ruby.syntaxhl' do
         assert_select 'span.k', :text => 'def'
         assert_select "[data-language='ruby']"
       end
@@ -114,7 +114,7 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
         ~~~
       STR
 
-      assert_select_in format(text), 'pre' do
+      assert_select_in to_html(text), 'pre' do
         assert_select 'code[class=?]', "c++ syntaxhl"
         assert_select 'span.kt', :text => 'int'
         assert_select "[data-language=?]", "c++"
@@ -123,12 +123,12 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
 
     def test_external_links_should_have_external_css_class
       text = 'This is a [link](http://example.net/)'
-      assert_equal '<p>This is a <a href="http://example.net/" class="external">link</a></p>', format(text)
+      assert_equal '<p>This is a <a href="http://example.net/" class="external">link</a></p>', to_html(text)
     end
 
     def test_locals_links_should_not_have_external_css_class
       text = 'This is a [link](/issues)'
-      assert_equal '<p>This is a <a href="/issues">link</a></p>', format(text)
+      assert_equal '<p>This is a <a href="/issues">link</a></p>', to_html(text)
     end
 
     def test_markdown_should_not_require_surrounded_empty_line
@@ -137,7 +137,7 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
   * One
   * Two
       STR
-      assert_equal "<p>This is a list:</p>\n<ul>\n<li>One</li>\n<li>Two</li>\n</ul>", format(text)
+      assert_equal "<p>This is a list:</p>\n<ul>\n<li>One</li>\n<li>Two</li>\n</ul>", to_html(text)
     end
 
     def test_footnotes
@@ -156,46 +156,46 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
         </ol>
       EXPECTED
 
-      assert_equal expected.gsub(%r{[\r\n\t]}, ''), format(text).gsub(%r{[\r\n\t]}, '').rstrip
+      assert_equal expected.gsub(%r{[\r\n\t]}, ''), to_html(text).gsub(%r{[\r\n\t]}, '').rstrip
     end
 
     STR_WITH_PRE = [
       # 0
       <<~STR.chomp,
         # Title
-  
+
         Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas sed libero.
       STR
       # 1
       <<~STR.chomp,
         ## Heading 2
-  
+
         ~~~ruby
           def foo
           end
         ~~~
-  
+
         Morbi facilisis accumsan orci non pharetra.
-  
+
         ~~~ ruby
         def foo
         end
         ~~~
-  
+
         ```
         Pre Content:
-  
+
         ## Inside pre
-  
+
         <tag> inside pre block
-  
+
         Morbi facilisis accumsan orci non pharetra.
         ```
       STR
       # 2
       <<~STR.chomp,
         ### Heading 3
-  
+
         Nulla nunc nisi, egestas in ornare vel, posuere ac libero.
       STR
     ]
@@ -226,18 +226,18 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
       text = STR_WITH_PRE.join("\n\n")
       replacement = "New text"
 
-      assert_equal [STR_WITH_PRE[0..1], "New text"].flatten.join("\n\n"),
+      assert_equal [STR_WITH_PRE[0..1], "New text"].join("\n\n"),
         @formatter.new(text).update_section(3, replacement)
     end
 
     def test_should_emphasize_text
       text = 'This _text_ should be emphasized'
-      assert_equal '<p>This <em>text</em> should be emphasized</p>', format(text)
+      assert_equal '<p>This <em>text</em> should be emphasized</p>', to_html(text)
     end
 
     def test_should_strike_through_text
       text = 'This ~~text~~ should be striked through'
-      assert_equal '<p>This <del>text</del> should be striked through</p>', format(text)
+      assert_equal '<p>This <del>text</del> should be striked through</p>', to_html(text)
     end
 
     def test_should_autolink_urls_and_emails
@@ -249,13 +249,13 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
         ["www.example.org", '<p><a href="http://www.example.org" class="external">www.example.org</a></p>'],
         ["user@example.org", '<p><a href="mailto:user@example.org" class="email">user@example.org</a></p>']
       ].each do |text, html|
-        assert_equal html, format(text)
+        assert_equal html, to_html(text)
       end
     end
 
     def test_should_support_html_tables
       text = '<table style="background: red"><tr><td>Cell</td></tr></table>'
-      assert_equal '<table><tr><td>Cell</td></tr></table>', format(text)
+      assert_equal '<table><tr><td>Cell</td></tr></table>', to_html(text)
     end
 
     def test_should_remove_unsafe_uris
@@ -263,7 +263,7 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
         ['<img src="data:foobar">', '<img>'],
         ['<a href="javascript:bla">click me</a>', '<p><a>click me</a></p>'],
       ].each do |text, html|
-        assert_equal html, format(text)
+        assert_equal html, to_html(text)
       end
     end
 
@@ -274,7 +274,7 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
           %[sit<br/>amet <style>.foo { color: #fff; }</style> <script>alert("hello world");</script>]
         ]
       ].each do |expected, input|
-        assert_equal expected, format(input)
+        assert_equal expected, to_html(input)
       end
     end
 
@@ -287,7 +287,7 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
 
       expected = <<~EXPECTED
         <p>Task list:</p>
-        <ul class="task-list">
+        <ul class="contains-task-list">
         <li class="task-list-item">
         <input type="checkbox" class="task-list-item-checkbox" disabled> Task 1
         </li>
@@ -296,7 +296,50 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
         </ul>
       EXPECTED
 
-      assert_equal expected.gsub(%r{[\r\n\t]}, ''), format(text).gsub(%r{[\r\n\t]}, '').rstrip
+      assert_equal expected.gsub(%r{[\r\n\t]}, ''), to_html(text).gsub(%r{[\r\n\t]}, '').rstrip
+    end
+
+    def test_should_render_alert_blocks
+      text = <<~MD
+        > [!note]
+        > This is a note.
+
+        > [!tip]
+        > This is a tip.
+
+        > [!warning]
+        > This is a warning.
+
+        > [!caution]
+        > This is a caution.
+
+        > [!important]
+        > This is a important.
+      MD
+
+      html = to_html(text)
+      %w[note tip warning caution important].each do |alert|
+        icon = Redmine::WikiFormatting::CommonMark::ALERT_TYPE_TO_ICON_NAME[alert]
+        # rubocop:disable Layout/LineLength
+        expected = %r{<div class="markdown-alert markdown-alert-#{alert}">\n<p class="markdown-alert-title"><svg class="s18 icon-svg" aria-hidden="true"><use href="/assets/icons-\w+.svg\#icon--#{icon}"></use></svg><span class="icon-label">#{alert.capitalize}</span></p>\n<p>This is a #{alert}.</p>\n</div>}
+        # rubocop:enable Layout/LineLength
+        assert_match expected, html
+      end
+    end
+
+    def test_should_not_render_unknown_alert_type
+      text = <<~MD
+        > [!unknown]
+        > This should not become an alert.
+      MD
+
+      html = to_html(text)
+
+      assert_include "<blockquote>", html
+      assert_include "[!unknown]", html
+      assert_include "This should not become an alert.", html
+
+      assert_not_include 'markdown-alert', html
     end
 
     private

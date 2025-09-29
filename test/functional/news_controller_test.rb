@@ -75,7 +75,7 @@ class NewsControllerTest < Redmine::ControllerTest
     get(:show, :params => {:id => 1})
     assert_response :success
     assert_select 'p.breadcrumb a[href=?]', '/projects/ecookbook/news', :text => 'News'
-    assert_select 'h2', :text => 'eCookbook first release !'
+    assert_select 'h2', :text => 'JS eCookbook first release !'
   end
 
   def test_show_should_show_attachments
@@ -104,6 +104,23 @@ class NewsControllerTest < Redmine::ControllerTest
   def test_show_not_found
     get(:show, :params => {:id => 999})
     assert_response :not_found
+  end
+
+  def test_show_should_display_reactions
+    @request.session[:user_id] = 1
+
+    get :show, params: { id: 1 }
+    assert_response :success
+    assert_select 'span[data-reaction-button-id=reaction_news_1] a.reaction-button.reacted'
+    assert_select 'span[data-reaction-button-id=reaction_comment_1] a.reaction-button'
+
+    # Should not display reactions when reactions feature is disabled.
+    with_settings reactions_enabled: '0' do
+      get :show, params: { id: 1 }
+
+      assert_response :success
+      assert_select 'span[data-reaction-button-id]', false
+    end
   end
 
   def test_get_new_with_project_id
