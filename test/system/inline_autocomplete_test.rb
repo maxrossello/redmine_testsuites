@@ -123,6 +123,7 @@ class InlineAutocompleteSystemTest < ApplicationSystemTestCase
     visit 'projects/ecookbook/news'
 
     click_link 'Add news'
+    wait_for_ajax # redmine_testsuites
 
     # Prevent random fails because the element is not yet enabled
     find('.wiki-edit').click
