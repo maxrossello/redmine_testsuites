@@ -232,6 +232,23 @@ class Redmine::WikiFormatting::MacrosTest < Redmine::HelperTest
     assert_include 'Page not found', textilizable(text)
   end
 
+  def test_include_macro_accepts_project_from_multiple_sources
+    project = Project.find(1)
+
+    # Resolve using the @project
+    @project = project
+    assert_include 'This is a link to a ticket', textilizable('{{include(Another page)}}')
+    @project = nil
+
+    # Resolve using object: project
+    assert_include 'This is a link to a ticket', textilizable('{{include(Another page)}}', {object: project})
+
+    # Resolve using issue.project
+    issue = Issue.first
+    issue.update(description: '{{include(Another page)}}')
+    assert_include 'This is a link to a ticket', textilizable(issue, :description)
+  end
+
   def test_macro_collapse
     text = "{{collapse\n*Collapsed* block of text\n}}"
     with_locale 'en' do
@@ -517,6 +534,40 @@ class Redmine::WikiFormatting::MacrosTest < Redmine::HelperTest
     end
   end
 
+  def test_recent_pages_macro_accepts_project_from_multiple_sources
+    project = Project.find(1)
+    freeze_time do
+      WikiContent.update_all(updated_on: Time.current)
+      project.wiki.pages.each_with_index do |page, i|
+        page.content.update_attribute(:updated_on, (i + 1).days.ago)
+      end
+
+      with_settings :text_formatting => 'textile' do
+        results = {}
+
+        # Resolve using the @project
+        @project = project
+        results[:project_instance_variable] = textilizable('{{recent_pages}}')
+        @project = nil
+
+        # Resolve using object: project
+        results[:object_project] = textilizable('{{recent_pages}}', {object: project})
+
+        # Resolve using issue.project
+        issue = Issue.first
+        issue.update(description: '{{recent_pages}}')
+        results[:issue_argument] = textilizable(issue, :description)
+
+        # Assertions
+        results.each do |key, result|
+          assert_select_in result, 'ul>li', {:count => 7}, "[#{key}] unexpected number of list items"
+          assert_select_in result, 'ul>li:first-of-type', {:text => 'Another page'}, "[#{key}] first list item text mismatch"
+          assert_select_in result, 'ul>li:last-of-type', {:text => 'Page with sections'}, "[#{key}] last list item text mismatch"
+        end
+      end
+    end
+  end
+
   def test_recent_pages_macro_with_limit_option
     @project = Project.find(1)
     freeze_time do
@@ -560,6 +611,22 @@ class Redmine::WikiFormatting::MacrosTest < Redmine::HelperTest
 
       with_settings :text_formatting => 'textile' do
         result = textilizable('{{recent_pages(time=true, days=3)}}')
+        assert_select_in result, 'ul>li', :count => 3
+        assert_select_in result, 'ul>li:first-of-type', :text => 'Another page (1 day)'
+        assert_select_in result, 'ul>li:last-of-type', :text => 'Child 1 1 (3 days)'
+      end
+    end
+  end
+
+  def test_recent_pages_macro_with_project_option
+    @project = Project.find(1)
+    freeze_time do
+      WikiContent.update_all(updated_on: Time.current)
+      @project.wiki.pages.each_with_index do |page, i|
+        page.content.update_attribute(:updated_on, (i + 1).days.ago)
+      end
+      with_settings :text_formatting => 'textile' do
+        result = textilizable('{{recent_pages(time=true, days=3, project=' + @project.identifier + ')}}')
         assert_select_in result, 'ul>li', :count => 3
         assert_select_in result, 'ul>li:first-of-type', :text => 'Another page (1 day)'
         assert_select_in result, 'ul>li:last-of-type', :text => 'Child 1 1 (3 days)'
