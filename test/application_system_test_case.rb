@@ -40,6 +40,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
   # Allow running tests using a remote Selenium hub
   driven_by :selenium, using: :chrome, screen_size: [1024, 900], options: options do |driver_option|
+    driver_option.add_argument('--headless') if ENV['CHROME_HEADLESS'].present?  # redmine_testsuites
     GOOGLE_CHROME_OPTS_ARGS.each do |arg|
       driver_option.add_argument arg
     end
