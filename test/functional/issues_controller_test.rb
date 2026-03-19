@@ -2014,6 +2014,29 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_index_with_group_by_and_nil_group_count_should_not_render_empty_badge
+    @request.session[:user_id] = 1 # Admin
+    Issue.generate!
+
+    # Mock IssueQuery#result_count_by_group to return nil
+    # to simulate cases where group count is not available
+    IssueQuery.any_instance.stubs(:result_count_by_group).returns(nil)
+
+    get(
+      :index,
+      :params => {
+        :set_filter => 1,
+        :group_by => 'tracker'
+      }
+    )
+    assert_response :success
+
+    assert_select 'tr.group' do
+      assert_select 'span.name'
+      assert_select 'span.badge-count.count', 0
+    end
+  end
+
   def test_index_with_int_custom_field_total
     field = IssueCustomField.generate!(:field_format => 'int', :is_for_all => true)
     CustomValue.create!(:customized => Issue.find(1), :custom_field => field, :value => '9800')
@@ -2488,6 +2511,8 @@ class IssuesControllerTest < Redmine::ControllerTest
       assert_select 'div#relations' do
         assert_select 'a', :text => /#2$/
         assert_select 'a', :text => /#4$/, :count => 0
+        assert_select 'form#new-relation-form input#relation_issue_to_id'
+        assert_select 'form#new-relation-form em.info', :text => l(:text_comma_separated)
       end
     end
   end
@@ -4187,6 +4212,25 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'select[name=?]', 'issue[fixed_version_id]' do
       assert_select 'option[value=?][selected=selected]', version.id.to_s
     end
+  end
+
+  def test_update_form_for_new_issue_should_show_category_default_assignee_when_changing_category
+    @request.session[:user_id] = 2
+    post(
+      :new,
+      :params => {
+        :project_id => 1,
+        :issue => {
+          :category_id => 1
+        },
+        :form_update_triggered_by => 'issue_category_id'
+      },
+      :xhr => true
+    )
+    assert_response :success
+    # Browsers prefer option[label] over inner text, so the blank label must be removed.
+    assert_includes @response.body, ".removeAttr('label')"
+    assert_includes @response.body, "John Smith"
   end
 
   def test_post_create
