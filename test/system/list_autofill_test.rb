@@ -135,14 +135,9 @@ class ListAutofillSystemTest < ApplicationSystemTestCase
         find('#issue_description').send_keys('- [ ] First item')
         find('#issue_description').send_keys(:enter)
 
-#        assert_equal(
-#          "- [ ] First item\n" \
-#          "- [ ] ",
-#          find('#issue_description').value
-#        )
         assert_equal(
           "- [ ] First item\n" \
-          "- ",
+          "- [ ] ",
           find('#issue_description').value
         )
 
@@ -150,14 +145,9 @@ class ListAutofillSystemTest < ApplicationSystemTestCase
         find('#issue_description').send_keys('1. [ ] First item')
         find('#issue_description').send_keys(:enter)
 
-#        assert_equal(
-#          "1. [ ] First item\n" \
-#          "2. [ ] ",
-#          find('#issue_description').value
-#        )
         assert_equal(
           "1. [ ] First item\n" \
-          "2. ",
+          "2. [ ] ",
           find('#issue_description').value
         )
       end
@@ -172,14 +162,9 @@ class ListAutofillSystemTest < ApplicationSystemTestCase
         find('#issue_description').send_keys('- [x] First item')
         find('#issue_description').send_keys(:enter)
 
-#        assert_equal(
-#          "- [x] First item\n" \
-#          "- [ ] ",
-#          find('#issue_description').value
-#        )
         assert_equal(
           "- [x] First item\n" \
-          "- ",
+          "- [ ] ",
           find('#issue_description').value
         )
 
@@ -187,14 +172,9 @@ class ListAutofillSystemTest < ApplicationSystemTestCase
         find('#issue_description').send_keys('1. [x] First item')
         find('#issue_description').send_keys(:enter)
 
-#        assert_equal(
-#          "1. [x] First item\n" \
-#          "2. [ ] ",
-#          find('#issue_description').value
-#        )
         assert_equal(
           "1. [x] First item\n" \
-          "2. ",
+          "2. [ ] ",
           find('#issue_description').value
         )
       end

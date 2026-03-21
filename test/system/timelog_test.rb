@@ -89,11 +89,11 @@ class TimelogTest < ApplicationSystemTestCase
     visit '/settings?tab=timelog'
     # Remove a column
     select 'Comment', :from => 'Selected Columns'
-    page.first('input[type=button].move-left').click
+    page.first('button.move-left').click
     # Add a column
     #select 'Tracker', :from => 'Available Columns'
     select I18n.t(:field_tracker), :from => I18n.t(:description_available_columns)
-    page.first('input[type=button].move-right').click
+    page.first('button.move-right').click
     click_on 'Save'
     assert_text 'Successful update.'
 
