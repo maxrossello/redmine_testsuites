@@ -32,4 +32,5 @@ extra/
 lib/
 package.json
 yarn.lock
+.envrc
 
