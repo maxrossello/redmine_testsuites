@@ -2186,7 +2186,7 @@ class IssueTest < ActiveSupport::TestCase
     issue = Issue.find(9)
     Watcher.create!(:user => user, :watchable => issue)
     assert issue.watched_by?(user)
-    if Redmine::Plugin.installed? :redmine_extended_watchers
+    if Redmine::Plugin.installed? :redmine_extended_watchers and Setting.plugin_redmine_extended_watchers["policy"] == "extended"
       # the plugins lets the issue visible to watchers
       assert issue.watcher_recipients.include?(user.mail)
     else
