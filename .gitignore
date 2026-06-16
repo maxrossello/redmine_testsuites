@@ -32,6 +32,7 @@ doc/
 extra/
 package.json
 yarn.lock
+.envrc
 lib/generators/
 lib/plugins/
 lib/redmine.rb
@@ -46,5 +47,4 @@ lib/tasks/migrate_from_trac.rake
 lib/tasks/redmine.rake
 lib/tasks/reminder.rake
 lib/tasks/yardoc.rake
-
 

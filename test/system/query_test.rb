@@ -29,6 +29,6 @@ class QuerySystemTest < ApplicationSystemTestCase
     select 'My <select>', from: 'Add filter'
 
     # assert_selector "div#tr_cf_#{cf.id} label", text: 'My <select>'
-    assert_selector "#tr_cf_#{cf.id} label", text: 'My <select>'
+    assert_selector "#tr_cf_#{cf.id} label", text: 'My <select>'    
   end
 end
