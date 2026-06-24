@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,11 +17,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class ProjectAdminQuery < ProjectQuery
-  self.layout = 'admin'
+class CustomFieldValue
+  attr_accessor :custom_field, :customized, :value_was
+  attr_reader   :value
 
-  def self.default(project: nil, user: User.current)
-    nil
+  def initialize(attributes={})
+    attributes.each do |name, v|
+      send :"#{name}=", v
+    end
   end
 
   def self.visible(*args)
@@ -33,31 +36,9 @@ class ProjectAdminQuery < ProjectQuery
     end
   end
 
-  def visible?(user=User.current)
-    user&.admin?
-  end
-
-  def editable_by?(user)
-    user&.admin?
-  end
-
-  def available_display_types
-    ['list']
-  end
-
-  def display_type
-    'list'
-  end
-
-  def project_statuses_values
-    values = super
-
-    values << [l(:project_status_archived), Project::STATUS_ARCHIVED.to_s]
-    values << [l(:project_status_scheduled_for_deletion), Project::STATUS_SCHEDULED_FOR_DELETION.to_s]
-    values
-  end
-
-  def base_scope
-    Project.where(statement)
+  def validate_value
+    custom_field.validate_custom_value(self).each do |message|
+      customized.errors.add(custom_field.name, message)
+    end
   end
 end

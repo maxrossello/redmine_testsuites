@@ -16,20 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-class ApplicationRecord < ActiveRecord::Base
-  self.abstract_class = true
 
-class WikisController < ApplicationController
-  menu_item :wiki
-  before_action :find_project, :authorize
+class HelpController < ApplicationController
+  def show_wiki_syntax
+    type = params[:type].nil? ? "" : "#{params[:type]}_"
 
-  # Delete a project's wiki
-  def destroy
-    if request.post? && params[:confirm] && @project.wiki
-      if @project.wiki.destroy
-        Wiki.create_default(@project) unless @wiki
-      end
-      redirect_to project_path(@project)
+    lang = current_language.to_s.downcase
+    template = "help/wiki_syntax/#{Setting.text_formatting}/#{lang}/wiki_syntax_#{type}#{Setting.text_formatting}"
+    unless lookup_context.exists?(template)
+      lang = "en"
     end
+    render template: "help/wiki_syntax/#{Setting.text_formatting}/#{lang}/wiki_syntax_#{type}#{Setting.text_formatting}", layout: nil
+  end
+
+  def show_code_highlighting
+    @available_lexers = Rouge::Lexer.all.sort_by(&:tag)
+    render template: "help/wiki_syntax/code_highlighting_languages", layout: nil
   end
 end

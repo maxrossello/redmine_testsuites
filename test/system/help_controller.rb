@@ -3,6 +3,9 @@
 # Redmine - project management software
 # Copyright (C) 2006-  Jean-Philippe Lang
 #
+# FileSystem adapter
+# File written by Paul Rivier, at Demotera.
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -21,16 +24,30 @@ class HelpController < ApplicationController
   def show_wiki_syntax
     type = params[:type].nil? ? "" : "#{params[:type]}_"
 
-    lang = current_language.to_s
-    template = "help/wiki_syntax/#{Setting.text_formatting}/#{lang}/wiki_syntax_#{type}#{Setting.text_formatting}"
-    unless lookup_context.exists?(template)
-      lang = "en"
+class Repository::Filesystem < Repository
+  validates_presence_of :url
+
+  def self.human_attribute_name(attribute_key_name, *)
+    attr_name = attribute_key_name.to_s
+    if attr_name == "url"
+      attr_name = "root_directory"
     end
-    render template: "help/wiki_syntax/#{Setting.text_formatting}/#{lang}/wiki_syntax_#{type}#{Setting.text_formatting}", layout: nil
+    super(attr_name, *)
   end
 
-  def show_code_highlighting
-    @available_lexers = Rouge::Lexer.all.sort_by(&:tag)
-    render template: "help/wiki_syntax/code_highlighting_languages", layout: nil
+  def self.scm_adapter_class
+    Redmine::Scm::Adapters::FilesystemAdapter
+  end
+
+  def self.scm_name
+    'Filesystem'
+  end
+
+  def supports_history?
+    false
+  end
+
+  def fetch_changesets
+    nil
   end
 end

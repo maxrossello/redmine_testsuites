@@ -16,20 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-class ApplicationRecord < ActiveRecord::Base
-  self.abstract_class = true
 
-class WikisController < ApplicationController
-  menu_item :wiki
-  before_action :find_project, :authorize
+class WikiDiff < Redmine::Helpers::Diff
+  attr_reader :content_to, :content_from
 
-  # Delete a project's wiki
-  def destroy
-    if request.post? && params[:confirm] && @project.wiki
-      if @project.wiki.destroy
-        Wiki.create_default(@project) unless @wiki
-      end
-      redirect_to project_path(@project)
-    end
+  def initialize(content_to, content_from)
+    @content_to = content_to
+    @content_from = content_from
+    super(content_to.text, content_from.text)
   end
 end

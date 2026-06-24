@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-#
 # Redmine - project management software
 # Copyright (C) 2006-  Jean-Philippe Lang
 #
@@ -17,20 +16,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-class Oauth2ApplicationsController < Doorkeeper::ApplicationsController
+
+class EnabledModule < ApplicationRecord
+  belongs_to :project
+  acts_as_watchable
+
+  validates_presence_of :name
+  validates_uniqueness_of :name, :scope => :project_id, :case_sensitive => true
+
+  after_create :module_enabled
+
   private
 
-  def application_params
-    params[:doorkeeper_application] ||= {}
-    params[:doorkeeper_application][:scopes] ||= []
-
-    scopes = Redmine::AccessControl.public_permissions.map{|p| p.name.to_s}
-
-    if params[:doorkeeper_application][:scopes].is_a?(Array)
-      scopes |= params[:doorkeeper_application][:scopes]
-    else
-      scopes |= params[:doorkeeper_application][:scopes].split(/\s+/)
+  # after_create callback used to do things when a module is enabled
+  def module_enabled
+    case name
+    when 'wiki'
+      # Create a wiki with a default start page
+      if project && project.wiki.nil?
+        Wiki.create_default(project)
+      end
     end
     params[:doorkeeper_application][:scopes] = scopes.join(' ')
     super

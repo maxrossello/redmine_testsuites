@@ -19,17 +19,15 @@
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true
 
-class WikisController < ApplicationController
-  menu_item :wiki
-  before_action :find_project, :authorize
-
-  # Delete a project's wiki
-  def destroy
-    if request.post? && params[:confirm] && @project.wiki
-      if @project.wiki.destroy
-        Wiki.create_default(@project) unless @wiki
-      end
-      redirect_to project_path(@project)
-    end
+  # Translate attribute names for validation errors display
+  def self.human_attribute_name(attr, options = {})
+    prepared_attr = attr.to_s.sub(/_id$/, '').sub(/^.+\./, '')
+    class_prefix = name.underscore.tr('/', '_')
+    redmine_default = [
+      :"field_#{class_prefix}_#{prepared_attr}",
+      :"field_#{prepared_attr}"
+    ]
+    options[:default] = redmine_default + Array(options[:default])
+    super
   end
 end

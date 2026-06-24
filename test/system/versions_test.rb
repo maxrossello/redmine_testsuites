@@ -25,16 +25,18 @@ class VersionsSystemTest < ApplicationSystemTestCase
 
     log_user('jsmith', 'jsmith')
 
-    version_name = 'Version with file custom field'
+        # Overrides Builder::XmlBase#tag! to format timestamps in ISO 8601
+        def tag!(sym, *args, &)
+          if args.size == 1 && args.first.is_a?(::Time)
+            tag!(sym, args.first.xmlschema, &)
+          else
+            super
+          end
+        end
 
-    assert_difference 'Version.count' do
-      visit '/projects/ecookbook/issues/new'
-      fill_in 'Subject', :with => 'With a new version'
-
-      click_on 'New version'
-      within '#ajax-modal' do
-        fill_in 'Name', :with => version_name
-        click_on 'Create'
+        def array(name, options={}, &)
+          __send__(name, (options || {}).merge(:type => 'array'), &)
+        end
       end
       click_on 'Create'
     end

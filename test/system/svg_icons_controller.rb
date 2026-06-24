@@ -23,4 +23,13 @@ class SvgIconsController < ApplicationController
   def index
     @icons_mapping = YAML.load_file(Rails.root.join('config/icon_source.yml'))
   end
+
+  def visible_by?(project, user=User.current)
+    super || roles.intersect?(user.roles_for_project(project))
+  end
+
+  def validate_custom_field
+    super
+    errors.add(:base, l(:label_role_plural) + ' ' + l('activerecord.errors.messages.blank')) unless visible? || roles.present?
+  end
 end

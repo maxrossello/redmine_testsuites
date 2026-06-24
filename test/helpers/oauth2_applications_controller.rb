@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+#
 # Redmine - project management software
 # Copyright (C) 2006-  Jean-Philippe Lang
 #
@@ -16,20 +17,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-class ApplicationRecord < ActiveRecord::Base
-  self.abstract_class = true
+#
+class Oauth2ApplicationsController < Doorkeeper::ApplicationsController
+  private
 
-class WikisController < ApplicationController
-  menu_item :wiki
-  before_action :find_project, :authorize
+  def application_params
+    params[:doorkeeper_application] ||= {}
+    params[:doorkeeper_application][:scopes] ||= []
 
-  # Delete a project's wiki
-  def destroy
-    if request.post? && params[:confirm] && @project.wiki
-      if @project.wiki.destroy
-        Wiki.create_default(@project) unless @wiki
-      end
-      redirect_to project_path(@project)
+    scopes = Redmine::AccessControl.public_permissions.map{|p| p.name.to_s}
+
+    if params[:doorkeeper_application][:scopes].is_a?(Array)
+      scopes |= params[:doorkeeper_application][:scopes]
+    else
+      scopes |= params[:doorkeeper_application][:scopes].split(/\s+/)
     end
+    params[:doorkeeper_application][:scopes] = scopes.join(' ')
+    super
   end
 end
