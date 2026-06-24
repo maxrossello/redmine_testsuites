@@ -17,20 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-module Redmine
-  # @private
-  module CoreExt
-    # @private
-    module String
-      # Custom string inflections
-      # @private
-      module Inflections
-        def with_leading_slash
-          starts_with?('/') ? self : "/#{ self }"
-        end
-      end
-    end
-  else
-    puts 'Tests related to plugin autoloading should be run separately using "rails test:autoload"'
+class WikiDiff < Redmine::Helpers::Diff
+  attr_reader :content_to, :content_from
+
+  def initialize(content_to, content_from)
+    @content_to = content_to
+    @content_from = content_from
+    super(content_to.text, content_from.text)
   end
 end

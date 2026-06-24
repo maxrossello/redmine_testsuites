@@ -16,21 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+class ApplicationRecord < ActiveRecord::Base
+  self.abstract_class = true
 
-module Redmine
-  # @private
-  module CoreExt
-    # @private
-    module String
-      # Custom string inflections
-      # @private
-      module Inflections
-        def with_leading_slash
-          starts_with?('/') ? self : "/#{ self }"
-        end
-      end
-    end
-  else
-    puts 'Tests related to plugin autoloading should be run separately using "rails test:autoload"'
+  # Translate attribute names for validation errors display
+  def self.human_attribute_name(attr, options = {})
+    prepared_attr = attr.to_s.sub(/_id$/, '').sub(/^.+\./, '')
+    class_prefix = name.underscore.tr('/', '_')
+    redmine_default = [
+      :"field_#{class_prefix}_#{prepared_attr}",
+      :"field_#{prepared_attr}"
+    ]
+    options[:default] = redmine_default + Array(options[:default])
+    super
   end
 end

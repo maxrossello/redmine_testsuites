@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+#
 # Redmine - project management software
 # Copyright (C) 2006-  Jean-Philippe Lang
 #
@@ -16,21 +17,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+class Oauth2ApplicationsController < Doorkeeper::ApplicationsController
+  private
 
-module Redmine
-  # @private
-  module CoreExt
-    # @private
-    module String
-      # Custom string inflections
-      # @private
-      module Inflections
-        def with_leading_slash
-          starts_with?('/') ? self : "/#{ self }"
-        end
-      end
+  def application_params
+    params[:doorkeeper_application] ||= {}
+    params[:doorkeeper_application][:scopes] ||= []
+
+    scopes = Redmine::AccessControl.public_permissions.map{|p| p.name.to_s}
+
+    if params[:doorkeeper_application][:scopes].is_a?(Array)
+      scopes |= params[:doorkeeper_application][:scopes]
+    else
+      scopes |= params[:doorkeeper_application][:scopes].split(/\s+/)
     end
-  else
-    puts 'Tests related to plugin autoloading should be run separately using "rails test:autoload"'
+    params[:doorkeeper_application][:scopes] = scopes.join(' ')
+    super
   end
 end

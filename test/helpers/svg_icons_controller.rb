@@ -17,20 +17,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-module Redmine
-  # @private
-  module CoreExt
-    # @private
-    module String
-      # Custom string inflections
-      # @private
-      module Inflections
-        def with_leading_slash
-          starts_with?('/') ? self : "/#{ self }"
-        end
-      end
-    end
-  else
-    puts 'Tests related to plugin autoloading should be run separately using "rails test:autoload"'
+class SvgIconsController < ApplicationController
+  self.main_menu = false
+
+  def index
+    @icons_mapping = YAML.load_file(Rails.root.join('config/icon_source.yml'))
   end
 end

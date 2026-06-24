@@ -488,7 +488,7 @@ class MailerTest < ActiveSupport::TestCase
     Watcher.create!(:watchable => issue, :user => user)
     Role.non_member.remove_permission!(:view_issues)
     assert Mailer.deliver_issue_add(issue)
-    if Redmine::Plugin.installed? :redmine_extended_watchers
+    if Redmine::Plugin.installed? :redmine_extended_watchers and Setting.plugin_redmine_extended_watchers["policy"] == "extended"
       # the plugin provides full watching features, including notifications, also to watchers with no membership
       assert_include user.mail, recipients
     else

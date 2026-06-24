@@ -2899,7 +2899,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
     assert_select 'div#watchers ul' do
       assert_select 'li.user-4' do
-        if Redmine::Plugin.installed? :redmine_extended_watchers
+        if Redmine::Plugin.installed? :redmine_extended_watchers and Setting.plugin_redmine_extended_watchers["policy"] == "extended"
           assert_select 'span.icon-warning[title=?]', l(:notice_invalid_watcher), text: l(:notice_invalid_watcher), :count => 0
         else
           assert_select 'span.icon-warning[title=?]', l(:notice_invalid_watcher), text: l(:notice_invalid_watcher)

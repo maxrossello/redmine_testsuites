@@ -86,12 +86,12 @@ class OauthProviderSystemTest < ApplicationSystemTestCase
 
       click_button 'Authorize'
 
-      assert grant = app.access_grants.last
-      assert_equal 'view_issues view_project', grant.scopes.to_s
-
-      # check for output defined above in the request handler
+      # wait for redirect to complete before checking the database
       find 'p', visible: true, text: /Authorization succeeded/
       assert token.present?
+
+      assert grant = app.access_grants.last
+      assert_equal 'view_issues view_project', grant.scopes.to_s
 
       visit '/my/account'
       click_link 'Authorized applications'
@@ -111,6 +111,15 @@ class OauthProviderSystemTest < ApplicationSystemTestCase
       # time entries access is not part of the granted scopes
       assert_raise(RestClient::Forbidden) do
         RestClient.get "http://localhost:#{test_port}/projects/onlinestore/time_entries.json", headers
+      end
+    end
+
+    def test_oauth_authorize_with_rest_api_disabled_should_render_403
+      with_settings rest_api_enabled: 0 do
+        log_user 'admin', 'admin'
+        visit '/oauth/authorize'
+
+        assert_text "You are not authorized to access this page."
       end
     end
   end

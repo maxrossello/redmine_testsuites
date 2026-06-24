@@ -17,20 +17,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-module Redmine
-  # @private
-  module CoreExt
-    # @private
-    module String
-      # Custom string inflections
-      # @private
-      module Inflections
-        def with_leading_slash
-          starts_with?('/') ? self : "/#{ self }"
-        end
-      end
+class HelpController < ApplicationController
+  def show_wiki_syntax
+    type = params[:type].nil? ? "" : "#{params[:type]}_"
+
+    lang = current_language.to_s.downcase
+    template = "help/wiki_syntax/#{Setting.text_formatting}/#{lang}/wiki_syntax_#{type}#{Setting.text_formatting}"
+    unless lookup_context.exists?(template)
+      lang = "en"
     end
-  else
-    puts 'Tests related to plugin autoloading should be run separately using "rails test:autoload"'
+    render template: "help/wiki_syntax/#{Setting.text_formatting}/#{lang}/wiki_syntax_#{type}#{Setting.text_formatting}", layout: nil
+  end
+
+  def show_code_highlighting
+    @available_lexers = Rouge::Lexer.all.sort_by(&:tag)
+    render template: "help/wiki_syntax/code_highlighting_languages", layout: nil
   end
 end

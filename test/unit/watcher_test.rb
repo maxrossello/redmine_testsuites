@@ -233,7 +233,7 @@ class WatcherTest < ActiveSupport::TestCase
 
     Member.delete_all
 
-    if Redmine::Plugin.installed? :redmine_extended_watchers
+    if Redmine::Plugin.installed? :redmine_extended_watchers and Setting.plugin_redmine_extended_watchers["policy"] == "extended"
       # watching does allow issue visibility, therefore issue watcher is not pruned
       assert_difference 'Watcher.count', -3 do
         Watcher.prune(:user => User.find(9))
@@ -256,7 +256,7 @@ class WatcherTest < ActiveSupport::TestCase
     Watcher.new(:watchable => Issue.find(4), :user => User.find(9)).save(:validate => false) # project 2
     Watcher.new(:watchable => Issue.find(6), :user => User.find(9)).save(:validate => false) # project 5
 
-    if Redmine::Plugin.installed? :redmine_extended_watchers
+    if Redmine::Plugin.installed? :redmine_extended_watchers and Setting.plugin_redmine_extended_watchers["policy"] == "extended"
       # watching does allow issue visibility, therefore issue watcher is not pruned
       assert Watcher.prune(:project => Project.find(5)) == 0
       assert Issue.find(4).watched_by?(user)
@@ -272,7 +272,7 @@ class WatcherTest < ActiveSupport::TestCase
     user = User.find(9)
     Watcher.new(:watchable => Issue.find(4), :user => User.find(9)).save(:validate => false)
 
-    if Redmine::Plugin.installed? :redmine_extended_watchers
+    if Redmine::Plugin.installed? :redmine_extended_watchers and Setting.plugin_redmine_extended_watchers["policy"] == "extended"
       # watching does allow issue visibility, therefore issue watcher is not pruned
       assert Watcher.prune == 0
       assert Issue.find(4).watched_by?(user)
