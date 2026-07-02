@@ -16,18 +16,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-class ApplicationRecord < ActiveRecord::Base
-  self.abstract_class = true
 
-  # Translate attribute names for validation errors display
-  def self.human_attribute_name(attr, options = {})
-    prepared_attr = attr.to_s.sub(/_id$/, '').sub(/^.+\./, '')
-    class_prefix = name.underscore.tr('/', '_')
-    redmine_default = [
-      :"field_#{class_prefix}_#{prepared_attr}",
-      :"field_#{prepared_attr}"
-    ]
-    options[:default] = redmine_default + Array(options[:default])
-    super
+require_relative '../../../../test_helper'
+
+class Redmine::WikiFormatting::CopypreScrubberTest < ActiveSupport::TestCase
+  def filter(html)
+    fragment = Redmine::WikiFormatting::HtmlParser.parse(html)
+    scrubber = Redmine::WikiFormatting::CopypreScrubber.new
+    fragment.scrub!(scrubber)
+    fragment.to_s
+  end
+
+  test 'should add copy button to all pre blocks' do
+    input = <<~HTML
+      <pre>Block 1</pre>
+      <pre>Block 2</pre>
+    HTML
+
+    output = filter(input)
+
+    # Check that each pre block is wrapped and has a copy button
+    assert_equal 2, output.scan('<div class="pre-wrapper" data-controller="clipboard">').size
+    assert_equal 2, output.scan('class="copy-pre-content-link icon-only"').size
   end
 end

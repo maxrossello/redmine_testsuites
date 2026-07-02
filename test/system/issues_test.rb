@@ -98,7 +98,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       assert_text /#{I18n.t :field_issue} #\d+ created./
     end
 
-    issue = Issue.order('id desc').first
+    issue = Issue.order(id: :desc).first
     assert_equal 'New test issue', issue.subject
     assert_equal 'New test issue description', issue.description
     assert_equal 'Low', issue.priority.name
@@ -141,7 +141,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       assert_text /#{I18n.t :field_issue} #\d+ created./
     end
 
-    issue = Issue.order('id desc').first
+    issue = Issue.order(id: :desc).first
     assert_equal ['Dave Lopper', 'Some Watcher'], issue.watcher_users.map(&:name).sort
   end
 
@@ -206,7 +206,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       end
     end
 
-    issue = Issue.order('id desc').first
+    issue = Issue.order(id: :desc).first
     assert_not_nil issue.fixed_version
     assert_equal '4.0', issue.fixed_version.name
   end
@@ -226,7 +226,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       assert_text /#{I18n.t :field_issue} #\d+ created./
     end
 
-    issue = Issue.order('id desc').first
+    issue = Issue.order(id: :desc).first
     assert_equal 'new issue description', issue.description
   end
 
@@ -517,7 +517,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       assert_current_path '/issues', :ignore_query => true
     end
 
-    copies = Issue.order('id DESC').limit(2)
+    copies = Issue.order(id: :desc).limit(2)
     assert_equal 4, copies[0].priority.id
     assert_equal 4, copies[1].priority.id
 
@@ -552,7 +552,7 @@ class IssuesSystemTest < ApplicationSystemTestCase
       assert_current_path '/projects/onlinestore/issues', :ignore_query => true
     end
 
-    copies = Issue.order('id DESC').limit(2)
+    copies = Issue.order(id: :desc).limit(2)
     assert_equal 2, copies[0].project.id
     assert_equal 6, copies[0].priority.id
     assert_equal 2, copies[1].project.id

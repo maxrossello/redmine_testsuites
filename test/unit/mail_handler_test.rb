@@ -169,6 +169,18 @@ class MailHandlerTest < ActiveSupport::TestCase
     assert_equal true, issue.reload.is_private
   end
 
+  def test_add_issue_should_use_tracker_private_by_default_setting
+    Member.find_by(:project_id => 2, :user_id => 2).roles.each do |role|
+      role.add_permission! :set_own_issues_private
+    end
+    Project.find(2).trackers.first.update! :private_by_default => true
+
+    issue = submit_email('ticket_on_given_project.eml')
+    assert issue.is_a?(Issue)
+    assert !issue.new_record?
+    assert_equal true, issue.reload.is_private
+  end
+
   def test_add_issue_with_group_assignment
     with_settings :issue_group_assignment => '1' do
       issue = submit_email('ticket_on_given_project.eml', :allow_override => ['assigned_to']) do |email|
@@ -289,6 +301,14 @@ class MailHandlerTest < ActiveSupport::TestCase
       issue = submit_email('ticket_with_cc.eml', :issue => {:project => 'ecookbook'})
       assert issue.is_a?(Issue)
       assert_equal Date.today, issue.start_date
+    end
+  end
+
+  def test_add_issue_should_set_default_due_date
+    with_settings :default_issue_due_date_offset => '5' do
+      issue = submit_email('ticket_with_cc.eml', :issue => {:project => 'ecookbook'})
+      assert issue.is_a?(Issue)
+      assert_equal Date.today + 5, issue.due_date
     end
   end
 
@@ -481,7 +501,7 @@ class MailHandlerTest < ActiveSupport::TestCase
         :default_group => "#{group1.name},#{group2.name}"
       )
     end
-    user = User.order('id DESC').first
+    user = User.order(id: :desc).first
     assert_equal [group1, group2].sort, user.groups.sort
   end
 
@@ -513,7 +533,7 @@ class MailHandlerTest < ActiveSupport::TestCase
         :no_notification => '1'
       )
     end
-    user = User.order('id DESC').first
+    user = User.order(id: :desc).first
     assert_equal 'none', user.mail_notification
   end
 
@@ -995,7 +1015,7 @@ class MailHandlerTest < ActiveSupport::TestCase
         end
       end
     end
-    journal = Journal.order('id DESC').first
+    journal = Journal.order(id: :desc).first
     assert_equal Issue.find(2), journal.journalized
     assert_equal 1, journal.details.size
 
@@ -1424,7 +1444,7 @@ class MailHandlerTest < ActiveSupport::TestCase
           :unknown_user => 'create'
         )
     end
-    user = User.order('id DESC').first
+    user = User.order(id: :desc).first
     assert_equal "foo@example.org", user.mail
     assert_equal 'Ää', user.firstname
     assert_equal 'Öö', user.lastname
@@ -1439,7 +1459,7 @@ class MailHandlerTest < ActiveSupport::TestCase
           :unknown_user => 'create'
         )
     end
-    user = User.order('id DESC').first
+    user = User.order(id: :desc).first
     assert_equal "jdoe@example.net", user.mail
     assert_equal 'John', user.firstname
     assert_equal 'Doe', user.lastname

@@ -25,6 +25,7 @@
 /db/test.mysql/
 /db/test.pg/
 /files/*
+/lib/redmine/scm/adapters/mercurial/__pycache__/*
 /lib/redmine/scm/adapters/mercurial/redminehelper.pyc
 /lib/redmine/scm/adapters/mercurial/redminehelper.pyo
 /log/*.log*

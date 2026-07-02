@@ -121,14 +121,16 @@ class TrackersControllerTest < Redmine::ControllerTest
         :tracker => {
           :name => 'New tracker',
           :default_status_id => 1,
+          :private_by_default => '1',
           :project_ids => ['1', '', ''],
           :custom_field_ids => ['1', '6', '']
         }
       }
     end
     assert_redirected_to :action => 'index'
-    tracker = Tracker.order('id DESC').first
+    tracker = Tracker.order(id: :desc).first
     assert_equal 'New tracker', tracker.name
+    assert tracker.private_by_default?
     assert_equal [1], tracker.project_ids.sort
     assert_equal Tracker::CORE_FIELDS, tracker.core_fields
     assert_equal [1, 6], tracker.custom_field_ids.sort
@@ -146,7 +148,7 @@ class TrackersControllerTest < Redmine::ControllerTest
       }
     end
     assert_redirected_to :action => 'index'
-    tracker = Tracker.order('id DESC').first
+    tracker = Tracker.order(id: :desc).first
     assert_equal 'New tracker', tracker.name
     assert_equal %w(assigned_to_id fixed_version_id), tracker.core_fields
   end

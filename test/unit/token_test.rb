@@ -137,4 +137,42 @@ class TokenTest < ActiveSupport::TestCase
     token = Token.create!(:user_id => 999, :action => 'api', :created_on => 2.days.ago)
     assert_nil Token.find_token('api', token.value, 1)
   end
+
+  def test_find_active_user_should_bump_updated_on_when_not_recently_updated
+    token = Token.create!(:user_id => 1, :action => 'api', :updated_on => 2.minutes.ago)
+    updated = token.updated_on
+    Token.find_active_user('api', token.value)
+    assert token.reload.updated_on > updated
+  end
+
+  def test_find_active_user_should_not_bump_updated_on_within_one_minute
+    token = Token.create!(:user_id => 1, :action => 'api', :updated_on => 1.second.ago)
+    updated = token.reload.updated_on
+    Token.find_active_user('api', token.value)
+    assert_equal updated.to_i, token.reload.updated_on.to_i
+  end
+
+  def test_find_active_user_should_bump_updated_on_for_feeds_token
+    token = Token.create!(:user_id => 1, :action => 'feeds', :updated_on => 2.minutes.ago)
+    updated = token.updated_on
+    Token.find_active_user('feeds', token.value)
+    assert token.reload.updated_on > updated
+  end
+
+  def test_used_should_return_false_when_updated_on_is_nil
+    token = Token.new(:created_on => Time.now)
+    token.updated_on = nil
+    assert_not token.used?
+  end
+
+  def test_used_should_return_false_when_updated_on_is_equal_to_created_on
+    now = Time.now
+    token = Token.new(:created_on => now, :updated_on => now)
+    assert_not token.used?
+  end
+
+  def test_used_should_return_true_when_updated_on_is_greater_than_created_on
+    token = Token.new(:created_on => 2.days.ago, :updated_on => 1.day.ago)
+    assert token.used?
+  end
 end

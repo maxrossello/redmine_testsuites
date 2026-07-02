@@ -285,6 +285,31 @@ class QueryTest < ActiveSupport::TestCase
     assert_equal 2, issues.first.id
   end
 
+  def test_operator_is_on_hour
+    Issue.where(:id => 2).update_all("estimated_hours = 171.2")
+    query = IssueQuery.new(:name => '_')
+    query.add_filter('estimated_hours', '=', ['171:12'])
+    issues = find_issues_with_query(query)
+    assert_equal 1, issues.size
+    assert_equal 2, issues.first.id
+  end
+
+  def test_hour_filter_should_not_accept_non_hour_values
+    query = IssueQuery.new(:name => '_')
+    query.add_filter('estimated_hours', '=', ['invalid'])
+
+    assert query.has_filter?('estimated_hours')
+    assert !query.valid?
+  end
+
+  def test_hour_filter_should_not_accept_partially_invalid_hour_values
+    query = IssueQuery.new(:name => '_')
+    query.add_filter('estimated_hours', '><', ['1:00', ''])
+
+    assert query.has_filter?('estimated_hours')
+    assert !query.valid?
+  end
+
   def test_operator_is_on_issue_id_should_accept_comma_separated_values
     query = IssueQuery.new(:name => '_')
     query.add_filter("issue_id", '=', ['1,3'])
@@ -459,6 +484,13 @@ class QueryTest < ActiveSupport::TestCase
   def test_operator_greater_than_a_float
     query = IssueQuery.new(:project => Project.find(1), :name => '_')
     query.add_filter('estimated_hours', '>=', ['40.5'])
+    assert query.statement.include?("#{Issue.table_name}.estimated_hours >= 40.5")
+    find_issues_with_query(query)
+  end
+
+  def test_operator_greater_than_a_hour
+    query = IssueQuery.new(:project => Project.find(1), :name => '_')
+    query.add_filter('estimated_hours', '>=', ['40:30'])
     assert query.statement.include?("#{Issue.table_name}.estimated_hours >= 40.5")
     find_issues_with_query(query)
   end
@@ -750,6 +782,15 @@ class QueryTest < ActiveSupport::TestCase
     query.add_filter('subject', '!~', ['cdeF'])
     result = find_issues_with_query(query)
     assert_not_include issue, result
+  end
+
+  def test_operator_does_not_contain_on_text_custom_field
+    query = IssueQuery.new(:name => '_')
+    query.filters = {"cf_2" => {:operator => '!~', :values => ['125']}}
+    result = find_issues_with_query(query)
+    # "cf_2" (Searchable field) custom field's available trackers are only 1:Bug and 3:Support request.
+    # 8(Issue.visible.where(tracker: [1,3])) - 2(contain "125") = 6(not contain "125")
+    assert_equal 6, result.size
   end
 
   def test_operator_contains_any_of
@@ -2120,7 +2161,7 @@ class QueryTest < ActiveSupport::TestCase
 
   def test_custom_field_columns_should_be_inline
     q = IssueQuery.new
-    columns = q.available_columns.select {|column| column.is_a? QueryCustomFieldColumn}
+    columns = q.available_columns.grep(QueryCustomFieldColumn)
     assert columns.any?
     assert_nil columns.detect {|column| !column.inline?}
   end
@@ -2457,7 +2498,7 @@ class QueryTest < ActiveSupport::TestCase
     cf_pos1 = ProjectCustomField.generate!(:position => 1, :is_for_all => true, :field_format => 'float')
     cf_pos2 = ProjectCustomField.generate!(:position => 2, :is_for_all => true, :field_format => 'int')
     q = ProjectQuery.new
-    custom_field_columns = q.available_totalable_columns.select{|column| column.is_a?(QueryCustomFieldColumn)}
+    custom_field_columns = q.available_totalable_columns.grep(QueryCustomFieldColumn)
     assert_equal [cf_pos1, cf_pos2, cf_pos3, cf_pos4], custom_field_columns.collect(&:custom_field)
 
     IssueCustomField.delete_all
@@ -2466,7 +2507,7 @@ class QueryTest < ActiveSupport::TestCase
     cf_pos1 = IssueCustomField.generate!(:position => 1, :is_for_all => true, :field_format => 'float')
     cf_pos2 = IssueCustomField.generate!(:position => 2, :is_for_all => true, :field_format => 'int')
     q = IssueQuery.new
-    custom_field_columns = q.available_totalable_columns.select{|column| column.is_a?(QueryCustomFieldColumn)}
+    custom_field_columns = q.available_totalable_columns.grep(QueryCustomFieldColumn)
     assert_equal [cf_pos1, cf_pos2, cf_pos3, cf_pos4], custom_field_columns.collect(&:custom_field)
 
     ProjectCustomField.delete_all
@@ -2477,7 +2518,7 @@ class QueryTest < ActiveSupport::TestCase
     cf_pos1 = TimeEntryCustomField.generate!(:position => 1, :is_for_all => true, :field_format => 'float')
     cf_pos2 = TimeEntryCustomField.generate!(:position => 2, :is_for_all => true, :field_format => 'int')
     q = TimeEntryQuery.new
-    custom_field_columns = q.available_totalable_columns.select{|column| column.is_a?(QueryCustomFieldColumn)}
+    custom_field_columns = q.available_totalable_columns.grep(QueryCustomFieldColumn)
     assert_equal [cf_pos1, cf_pos2, cf_pos3, cf_pos4], custom_field_columns.collect(&:custom_field)
   end
 
@@ -3267,10 +3308,19 @@ class QueryTest < ActiveSupport::TestCase
     query.filters = {'spent_time' => {:operator => '>=', :values => ['10']}}
     assert_equal [1], query.issues.pluck(:id)
 
+    query.filters = {'spent_time' => {:operator => '>=', :values => ['10:00']}}
+    assert_equal [1], query.issues.pluck(:id)
+
     query.filters = {'spent_time' => {:operator => '<=', :values => ['10']}}
     assert_equal [13, 12, 11, 8, 7, 5, 3, 2], query.issues.pluck(:id)
 
+    query.filters = {'spent_time' => {:operator => '<=', :values => ['10:00']}}
+    assert_equal [13, 12, 11, 8, 7, 5, 3, 2], query.issues.pluck(:id)
+
     query.filters = {'spent_time' => {:operator => '><', :values => ['1', '2']}}
+    assert_equal [3], query.issues.pluck(:id)
+
+    query.filters = {'spent_time' => {:operator => '><', :values => ['1:00', '2:00']}}
     assert_equal [3], query.issues.pluck(:id)
   end
 

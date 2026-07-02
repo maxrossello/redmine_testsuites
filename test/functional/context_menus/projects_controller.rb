@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-#
 # Redmine - project management software
 # Copyright (C) 2006-  Jean-Philippe Lang
 #
@@ -17,22 +16,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-class Oauth2ApplicationsController < Doorkeeper::ApplicationsController
-  private
 
-  def application_params
-    params[:doorkeeper_application] ||= {}
-    params[:doorkeeper_application][:scopes] ||= []
+require_relative '../../test_helper'
 
-    scopes = Redmine::AccessControl.public_permissions.map{|p| p.name.to_s}
+module ContextMenus
+  class ProjectsControllerTest < Redmine::ControllerTest
+    def test_index_admin_user
+      @request.session[:user_id] = 1
 
-    if params[:doorkeeper_application][:scopes].is_a?(Array)
-      scopes |= params[:doorkeeper_application][:scopes]
-    else
-      scopes |= params[:doorkeeper_application][:scopes].split(/\s+/)
+      get(
+        :index,
+        :params => {
+          :ids => [1, 2]
+        }
+      )
+
+      assert_response :success
     end
-    params[:doorkeeper_application][:scopes] = scopes.join(' ')
-    super
+
+    def test_index_not_admin_user
+      @request.session[:user_id] = 2
+
+      get(
+        :index,
+        :params => {
+          :ids => [1, 2]
+        }
+      )
+
+      assert_response :forbidden
+    end
   end
 end

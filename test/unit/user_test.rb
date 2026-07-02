@@ -317,7 +317,7 @@ class UserTest < ActiveSupport::TestCase
     assert_difference 'JournalDetail.count' do
       issue.save!
     end
-    journal_detail = JournalDetail.order('id DESC').first
+    journal_detail = JournalDetail.order(id: :desc).first
     assert_equal '2', journal_detail.old_value
 
     User.find(2).destroy
@@ -333,7 +333,7 @@ class UserTest < ActiveSupport::TestCase
     assert_difference 'JournalDetail.count' do
       issue.save!
     end
-    journal_detail = JournalDetail.order('id DESC').first
+    journal_detail = JournalDetail.order(id: :desc).first
     assert_equal '2', journal_detail.value
 
     User.find(2).destroy
@@ -689,6 +689,19 @@ class UserTest < ActiveSupport::TestCase
       assert_equal ['users.firstname', 'users.lastname', 'users.id'],
                    User.fields_for_order_statement
     end
+  end
+
+  def test_lastname_before_firstname_should_return_true_with_lastname_firstname_format
+    assert User.lastname_before_firstname?(:lastname_firstname)
+  end
+
+  def test_lastname_before_firstname_should_return_false_with_firstname_lastname_format
+    assert_not User.lastname_before_firstname?(:firstname_lastname)
+  end
+
+  def test_lastname_before_firstname_should_return_false_with_format_without_both_name_parts
+    assert_not User.lastname_before_firstname?(:username)
+    assert_not User.lastname_before_firstname?(:lastname)
   end
 
   test ".try_to_login with good credentials should return the user" do
@@ -1076,15 +1089,15 @@ class UserTest < ActiveSupport::TestCase
 
   def test_valid_notification_options
     # without memberships
-    assert_equal 5, User.find(7).valid_notification_options.size
+    assert_equal 6, User.find(7).valid_notification_options.size
     # with memberships
-    assert_equal 6, User.find(2).valid_notification_options.size
+    assert_equal 7, User.find(2).valid_notification_options.size
   end
 
   def test_valid_notification_options_class_method
-    assert_equal 5, User.valid_notification_options.size
-    assert_equal 5, User.valid_notification_options(User.find(7)).size
-    assert_equal 6, User.valid_notification_options(User.find(2)).size
+    assert_equal 6, User.valid_notification_options.size
+    assert_equal 6, User.valid_notification_options(User.find(7)).size
+    assert_equal 7, User.valid_notification_options(User.find(2)).size
   end
 
   def test_notified_project_ids_setter_should_coerce_to_unique_integer_array

@@ -296,6 +296,15 @@ class AccountControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_get_register_should_show_lastname_before_firstname_when_user_format_requires_it
+    with_settings :self_registration => '3', :user_format => 'lastname_firstname' do
+      get :register
+      assert_response :success
+
+      assert_operator @response.body.index('id="user_lastname"'), :<, @response.body.index('id="user_firstname"')
+    end
+  end
+
   def test_get_register_should_detect_user_language
     with_settings :self_registration => '3' do
       @request.env['HTTP_ACCEPT_LANGUAGE'] = 'fr,fr-fr;q=0.8,en-us;q=0.5,en;q=0.3'
@@ -346,7 +355,7 @@ class AccountControllerTest < Redmine::ControllerTest
         )
         assert_redirected_to '/my/account'
       end
-      user = User.order('id DESC').first
+      user = User.order(id: :desc).first
       assert_equal 'register', user.login
       assert_equal 'John', user.firstname
       assert_equal 'Doe', user.lastname
@@ -442,7 +451,7 @@ class AccountControllerTest < Redmine::ControllerTest
         assert_redirected_to '/login'
       end
     end
-    token = Token.order('id DESC').first
+    token = Token.order(id: :desc).first
     assert_equal User.find(2), token.user
     assert_equal 'recovery', token.action
 
@@ -570,7 +579,9 @@ class AccountControllerTest < Redmine::ControllerTest
     user.reload
     assert user.check_password?('newpass123')
     assert_nil Token.find_by_id(token.id), "Token was not deleted"
-    assert_not_nil ActionMailer::Base.deliveries.last
+    mail = ActionMailer::Base.deliveries.last
+    assert_not_nil mail
+    assert_mail_body_match '0.0.0.0', mail
     assert_select_email do
       assert_select 'a[href^=?]', 'http://localhost:3000/my/password', :text => 'Change password'
     end
