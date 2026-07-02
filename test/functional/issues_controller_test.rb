@@ -2288,6 +2288,24 @@ class IssuesControllerTest < Redmine::ControllerTest
         assert_select 'textarea[name=?]', 'issue[notes]'
       end
     end
+    # Add links for subtasks and related issues
+    assert_select 'div#issue_tree div.contextual a.icon.icon-add', :text => /Add/
+    assert_select 'div#relations div.contextual a.icon.icon-link-add', :text => /Add/
+  end
+
+  def test_show_should_display_attachment_icons_by_mime_type
+    @request.session[:user_id] = 2
+    get(:show, :params => {:id => 3})
+
+    assert_response :success
+    assert_select 'div.attachments' do
+      assert_select 'a.icon-attachment[href=?]', '/attachments/1' do
+        assert_select "svg.icon-svg use:match('href', ?)", /assets\/icons-\w+.svg#icon--text-plain/
+      end
+      assert_select 'a.icon-attachment[href=?]', '/attachments/6' do
+        assert_select "svg.icon-svg use:match('href', ?)", /assets\/icons-\w+.svg#icon--application-zip/
+      end
+    end
   end
 
   def test_show_should_display_update_form
@@ -2630,7 +2648,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'div.next-prev-links' do
       assert_select 'a[href="/issues/2"]', :text => /Previous/
       assert_select 'a[href="/issues/5"]', :text => /Next/
-      assert_select 'span.position', :text => "3 of #{count}"
+      assert_select 'li.page.position', :text => "3 of #{count}"
     end
   end
 
@@ -2707,7 +2725,12 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
     assert_response :success
     assert_select 'div.next-prev-links' do
-      assert_select 'a', :text => /Previous/, :count => 0
+      # "Previous" button for the first issue does not have the "page" class and a link
+      assert_select 'span.pagination ul.pages li.previous', 1
+      assert_select 'span.pagination ul.pages li.previous.page', 0
+      assert_select 'li.previous span', :text => /Previous/
+      assert_select 'li.previous a', :count => 0
+      assert_select 'span.pagination ul.pages li.next.page', 1
       assert_select 'a[href="/issues/2"]', :text => /Next/
     end
   end
@@ -2752,7 +2775,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_select 'div.next-prev-links' do
       assert_select 'a[href="/issues/7"]', text: /Previous/
       assert_select 'a[href="/issues/9"]', text: /Next/
-      assert_select 'span.position', text: "7 of 10"
+      assert_select 'li.page.position', text: "7 of 10"
     end
   end
 
@@ -3809,18 +3832,41 @@ class IssuesControllerTest < Redmine::ControllerTest
   end
 
   def test_get_new_with_date_custom_field
-    field = IssueCustomField.create!(:name => 'Date', :field_format => 'date',
-                                     :tracker_ids => [1], :is_for_all => true)
-    @request.session[:user_id] = 2
-    get(
-      :new,
-      :params => {
-        :project_id => 1,
-        :tracker_id => 1
-      }
-    )
-    assert_response :success
-    assert_select 'input[name=?]', "issue[custom_field_values][#{field.id}]"
+    travel_to Time.zone.parse('2026-05-24T23:00:00Z') do
+      # 2026-05-24 23:00 UTC is 2026-05-25 08:00 in Tokyo
+      User.find(2).pref.update!(:time_zone => 'Tokyo')
+      fixed_date_field =
+        IssueCustomField.create!(
+          :name => 'Fixed date default value',
+          :field_format => 'date',
+          :default_value_mode => 'fixed_date',
+          :default_value => '2026-03-21',
+          :tracker_ids => [1],
+          :is_for_all => true
+        )
+      date_offset_field =
+        IssueCustomField.create!(
+          :name => 'Date offset default value',
+          :field_format => 'date',
+          :default_value_mode => 'date_offset',
+          :default_value => '5',
+          :tracker_ids => [1],
+          :is_for_all => true
+        )
+      @request.session[:user_id] = 2
+      get(
+        :new,
+        :params => {
+          :project_id => 1,
+          :tracker_id => 1
+        }
+      )
+      assert_response :success
+      assert_select 'input[name=?][value=?]', "issue[custom_field_values][#{fixed_date_field.id}]", '2026-03-21'
+      assert_select 'input[name=?][value=?]',
+                    "issue[custom_field_values][#{date_offset_field.id}]",
+                    '2026-05-30' # 5 days after in user's time zone
+    end
   end
 
   def test_get_new_with_text_custom_field
@@ -3867,6 +3913,21 @@ class IssuesControllerTest < Redmine::ControllerTest
       assert_response :success
       assert_select 'input[name=?][value=?]', 'issue[start_date]',
                     Date.today.to_s
+    end
+  end
+
+  def test_get_new_with_default_due_date_offset
+    with_settings :default_issue_due_date_offset => '7' do
+      @request.session[:user_id] = 2
+      get(
+        :new,
+        :params => {
+          :project_id => 1,
+          :tracker_id => 1
+        }
+      )
+      assert_response :success
+      assert_select 'input[name=?][value=?]', 'issue[due_date]', (Date.today + 7.days).to_s
     end
   end
 
@@ -4237,6 +4298,60 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_new_should_check_private_if_tracker_is_private_by_default
+    Tracker.find(1).update! :private_by_default => true
+    @request.session[:user_id] = 2
+    get(:new, :params => {:project_id => 1})
+    assert_response :success
+
+    assert_select 'input[name=?][checked=checked]', 'issue[is_private]'
+  end
+
+  def test_update_form_for_new_issue_should_apply_private_by_default_when_submitted_private_is_unchecked
+    Tracker.find(2).update! :private_by_default => true
+    @request.session[:user_id] = 2
+    # Simulates switching from an unchecked tracker to a tracker that is private by default.
+    post(
+      :new,
+      :params => {
+        :project_id => 1,
+        :issue => {
+          :tracker_id => 2,
+          :is_private => '0'
+        },
+        :form_update_triggered_by => 'issue_tracker_id'
+      }
+    )
+    assert_response :success
+
+    assert_select 'select[name=?]', 'issue[tracker_id]' do
+      assert_select 'option[value=?][selected=selected]', '2'
+    end
+    assert_select 'input[name=?][checked=checked]', 'issue[is_private]'
+  end
+
+  def test_update_form_for_new_issue_should_keep_submitted_private_when_checked
+    @request.session[:user_id] = 2
+    # Simulates keeping the user's checked private value when switching trackers.
+    post(
+      :new,
+      :params => {
+        :project_id => 1,
+        :issue => {
+          :tracker_id => 2,
+          :is_private => '1'
+        },
+        :form_update_triggered_by => 'issue_tracker_id'
+      }
+    )
+    assert_response :success
+
+    assert_select 'select[name=?]', 'issue[tracker_id]' do
+      assert_select 'option[value=?][selected=selected]', '2'
+    end
+    assert_select 'input[name=?][checked=checked]', 'issue[is_private]'
+  end
+
   def test_update_form_for_new_issue_should_ignore_version_when_changing_project
     version = Version.generate!(:project_id => 1)
     Project.find(1).update_attribute :default_version_id, version.id
@@ -4346,6 +4461,56 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_equal group, issue.assigned_to
   end
 
+  def test_new_should_render_groups_before_users_in_assignee_select_when_configured
+    group = Group.find(11)
+    project = Project.find(1)
+    project.members << Member.new(:principal => group, :roles => [Role.givable.first])
+
+    with_settings :issue_group_assignment => '1', :assignee_dropdown_display_format => 'groups_then_users' do
+      @request.session[:user_id] = 2
+      get :new, :params => {:project_id => project.id}
+      assert_response :success
+    end
+
+    assert_select 'select[name=?]', 'issue[assigned_to_id]' do
+      assert_select %(optgroup:nth-of-type(1)[label="#{l(:label_group_plural)}"]) do
+        assert_select 'option[value=?]', group.id.to_s
+      end
+      assert_select %(optgroup:nth-of-type(2)[label="#{l(:label_user_plural)}"])
+    end
+  end
+
+  def test_new_should_render_users_by_group_in_assignee_select_when_configured
+    project = Project.find(1)
+    group_a = Group.find(10)
+    group_b = Group.find(11)
+    project.members << Member.new(:principal => group_a, :roles => [Role.givable.first])
+    project.members << Member.new(:principal => group_b, :roles => [Role.givable.first])
+
+    with_settings :issue_group_assignment => '1', :assignee_dropdown_display_format => 'users_by_group' do
+      @request.session[:user_id] = 2
+      get :new, :params => {:project_id => project.id}
+      assert_response :success
+    end
+
+    assert_select 'select[name=?]', 'issue[assigned_to_id]' do
+      assert_select %(optgroup:nth-of-type(1)[label="#{l(:label_group_plural)}"]) do
+        assert_select 'option[value="10"]', text: 'A Team'
+        assert_select 'option[value="11"]', text: 'B Team'
+      end
+      assert_select 'optgroup:nth-of-type(2)[label="A Team"]' do
+        assert_select 'option[value="8"]', text: 'User Misc'
+      end
+      assert_select 'optgroup:nth-of-type(3)[label="B Team"]' do
+        assert_select 'option[value="8"]', text: 'User Misc'
+      end
+      assert_select %(optgroup:nth-of-type(4)[label="#{l(:label_user_plural)}"]) do
+        assert_select 'option[value="2"]', text: 'John Smith'
+        assert_select 'option[value="8"]', 0
+      end
+    end
+  end
+
   def test_post_create_without_start_date_and_default_start_date_is_not_creation_date
     with_settings :default_issue_start_date_to_creation_date  => 0 do
       @request.session[:user_id] = 2
@@ -4422,7 +4587,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_redirected_to :controller => 'issues',
                          :action => 'new', :project_id => 'ecookbook',
                          :issue => {:tracker_id => 3}
@@ -4473,7 +4638,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       )
     end
     assert_response :found
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal ['MySQL', 'Oracle'], issue.custom_field_value(1).sort
   end
 
@@ -4499,7 +4664,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       )
     end
     assert_response :found
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal [''], issue.custom_field_value(1).sort
   end
 
@@ -4527,7 +4692,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       )
     end
     assert_response :found
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal ['2', '3'], issue.custom_field_value(field).sort
   end
 
@@ -4660,7 +4825,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       )
       assert_response :found
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal Date.parse('2012-07-14'), issue.start_date
     assert_nil issue.due_date
     assert_equal 'value1', issue.custom_field_value(cf1)
@@ -4745,7 +4910,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       )
       assert_response :found
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal Issue.find(2), issue.parent
   end
 
@@ -4765,7 +4930,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       )
       assert_response :found
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal Issue.find(2), issue.parent
   end
 
@@ -4826,7 +4991,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert issue.is_private?
   end
 
@@ -4848,8 +5013,68 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert issue.is_private?
+  end
+
+  def test_post_create_should_respect_private_by_default_per_tracker_setting
+    @request.session[:user_id] = 2
+    tracker = Tracker.find(1)
+    tracker.update! :private_by_default => true
+
+    assert_difference 'Issue.count' do
+      post(
+        :create,
+        :params => {
+          :project_id => 1,
+          :issue => {
+            :tracker_id => tracker.id,
+            :subject => 'This is a private issue by default'
+          }
+        }
+      )
+    end
+    issue = Issue.order(id: :desc).first
+    assert issue.is_private?
+
+    assert_difference 'Issue.count' do
+      post(
+        :create,
+        :params => {
+          :project_id => 1,
+          :issue => {
+            :tracker_id => tracker.id,
+            :subject => 'This is a public issue',
+            :is_private => '0'
+          }
+        }
+      )
+    end
+    issue = Issue.order(id: :desc).first
+    assert_not issue.is_private?
+  end
+
+  def test_post_create_should_not_apply_private_by_default_without_permission
+    role = Role.find(1)
+    role.remove_permission! :set_issues_private
+    role.remove_permission! :set_own_issues_private
+    Tracker.find(1).update! :private_by_default => true
+    @request.session[:user_id] = 2
+
+    assert_difference 'Issue.count' do
+      post(
+        :create,
+        :params => {
+          :project_id => 1,
+          :issue => {
+            :tracker_id => 1,
+            :subject => 'This is a public issue'
+          }
+        }
+      )
+    end
+    issue = Issue.order(id: :desc).first
+    assert_not issue.is_private?
   end
 
   def test_create_without_project_id
@@ -4867,7 +5092,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       )
       assert_response :found
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal 3, issue.project_id
     assert_equal 2, issue.tracker_id
   end
@@ -5065,8 +5290,8 @@ class IssuesControllerTest < Redmine::ControllerTest
       end
     end
 
-    issue = Issue.order('id DESC').first
-    attachment = Attachment.order('id DESC').first
+    issue = Issue.order(id: :desc).first
+    attachment = Attachment.order(id: :desc).first
 
     assert_equal issue, attachment.container
     assert_equal 2, attachment.author_id
@@ -5138,7 +5363,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       end
     end
 
-    attachment = Attachment.order('id DESC').first
+    attachment = Attachment.order(id: :desc).first
     assert_equal 'testfile.txt', attachment.filename
     assert File.exist?(attachment.diskfile)
     assert_nil attachment.container
@@ -5207,7 +5432,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       end
     end
 
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal 1, issue.attachments.count
 
     attachment.reload
@@ -5246,7 +5471,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    issue = Issue.order('id').last
+    issue = Issue.order(:id).last
     assert_not_nil issue.default_status
     assert_equal issue.default_status, issue.status
   end
@@ -5266,7 +5491,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    issue = Issue.order('id').last
+    issue = Issue.order(:id).last
     assert_not_nil issue.default_status
     assert_equal issue.default_status, issue.status
   end
@@ -5547,7 +5772,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_redirected_to "/issues/#{issue.id}"
 
     assert_equal 2, issue.project_id
@@ -5575,7 +5800,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal 1, issue.status_id
   end
 
@@ -5627,7 +5852,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         )
       end
     end
-    copy = Issue.order('id DESC').first
+    copy = Issue.order(id: :desc).first
     assert_equal count, copy.attachments.count
     assert_equal issue.attachments.map(&:filename).sort, copy.attachments.map(&:filename).sort
   end
@@ -5654,7 +5879,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         )
       end
     end
-    copy = Issue.order('id DESC').first
+    copy = Issue.order(id: :desc).first
     assert_equal 0, copy.attachments.count
   end
 
@@ -5688,7 +5913,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         )
       end
     end
-    copy = Issue.order('id DESC').first
+    copy = Issue.order(id: :desc).first
     assert_equal count + 1, copy.attachments.count
   end
 
@@ -5712,7 +5937,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         )
       end
     end
-    copy = Issue.order('id DESC').first
+    copy = Issue.order(id: :desc).first
     assert_equal 1, copy.relations.size
   end
 
@@ -5836,7 +6061,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    copy = Issue.where(:parent_id => nil).order('id DESC').first
+    copy = Issue.where(:parent_id => nil).order(id: :desc).first
     assert_equal count, copy.descendants.count
     assert_equal issue.descendants.map(&:subject).sort, copy.descendants.map(&:subject).sort
   end
@@ -5889,7 +6114,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    copy = Issue.where(:parent_id => nil).order('id DESC').first
+    copy = Issue.where(:parent_id => nil).order(id: :desc).first
     assert_equal 0, copy.descendants.count
   end
 
@@ -5938,7 +6163,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal 1, issue.project_id
   end
 
@@ -5960,7 +6185,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal [3, 10], issue.watcher_user_ids.sort
   end
 
@@ -5982,7 +6207,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal [], issue.watcher_user_ids
   end
 
@@ -6539,7 +6764,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_redirected_to :action => 'show', :id => '1'
     issue.reload
     assert_equal 2, issue.status_id
-    j = Journal.order('id DESC').first
+    j = Journal.order(id: :desc).first
     assert_equal 'Assigned to dlopper', j.notes
     assert_equal 2, j.details.size
 
@@ -6619,7 +6844,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       end
     end
     assert_redirected_to :action => 'show', :id => '1'
-    j = Journal.order('id DESC').first
+    j = Journal.order(id: :desc).first
     assert_equal notes, j.notes
     assert_equal 0, j.details.size
     assert_equal User.anonymous, j.user
@@ -6646,7 +6871,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       assert_redirected_to :action => 'show', :id => '1'
     end
 
-    j = Journal.order('id DESC').first
+    j = Journal.order(id: :desc).first
     assert_equal notes, j.notes
     assert_equal true, j.private_notes
   end
@@ -6670,12 +6895,12 @@ class IssuesControllerTest < Redmine::ControllerTest
       assert_redirected_to :action => 'show', :id => '1'
     end
 
-    j = Journal.order('id DESC').first
+    j = Journal.order(id: :desc).first
     assert_equal notes, j.notes
     assert_equal true, j.private_notes
     assert_equal 0, j.details.count
 
-    j = Journal.order('id DESC').offset(1).first
+    j = Journal.order(id: :desc).offset(1).first
     assert_nil j.notes
     assert_equal false, j.private_notes
     assert_equal 1, j.details.count
@@ -6704,7 +6929,7 @@ class IssuesControllerTest < Redmine::ControllerTest
 
     issue = Issue.find(1)
 
-    j = Journal.order('id DESC').first
+    j = Journal.order(id: :desc).first
     assert_equal '2.5 hours added', j.notes
     assert_equal 0, j.details.size
 
@@ -6793,7 +7018,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_equal 'testfile.txt', j.details.first.value
     assert_equal User.anonymous, j.user
 
-    attachment = Attachment.order('id DESC').first
+    attachment = Attachment.order(id: :desc).first
     assert_equal Issue.find(1), attachment.container
     assert_equal User.anonymous, attachment.author
     assert_equal 'testfile.txt', attachment.filename
@@ -6832,7 +7057,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       end
     end
 
-    attachment = Attachment.order('id DESC').first
+    attachment = Attachment.order(id: :desc).first
     assert_equal 'testfile.txt', attachment.filename
     assert File.exist?(attachment.diskfile)
     assert_nil attachment.container
@@ -6900,7 +7125,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     attachment.reload
     assert_equal Issue.find(1), attachment.container
 
-    journal = Journal.order('id DESC').first
+    journal = Journal.order(id: :desc).first
     assert_equal 1, journal.details.size
     assert_equal 'testfile.txt', journal.details.first.value
   end
@@ -7090,7 +7315,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         :update,
         params: {
           id: private_issue.id,
-          issue: { assigned_to_id: nil },
+          issue: { assigned_to_id: '' },
           time_entry: {
             comments: "add spent time", activity_id: TimeEntryActivity.first.id, hours: 1
           }
@@ -8174,7 +8399,7 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
     assert_redirected_to '/projects/ecookbook/issues'
 
-    copies = Issue.order('id DESC').limit(issue_ids.size)
+    copies = Issue.order(id: :desc).limit(issue_ids.size)
     copies.each do |copy|
       assert_equal 2, copy.project_id
     end
@@ -8257,7 +8482,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    copies = Issue.order('id DESC').limit(issues.size)
+    copies = Issue.order(id: :desc).limit(issues.size)
     issues.each do |orig|
       copy = copies.detect {|c| c.subject == orig.subject}
       assert_not_nil copy
@@ -8300,7 +8525,7 @@ class IssuesControllerTest < Redmine::ControllerTest
       end
     end
 
-    copied_issues = Issue.where(:project_id => 2).limit(2).order('id desc').to_a
+    copied_issues = Issue.where(:project_id => 2).limit(2).order(id: :desc).to_a
     assert_equal 2, copied_issues.size
     copied_issues.each do |issue|
       assert_equal 2, issue.project_id, "Project is incorrect"
@@ -8330,7 +8555,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal 1, issue.journals.size
     journal = issue.journals.first
     assert_equal 'Copying one issue', journal.notes
@@ -8473,7 +8698,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    copy = Issue.where(:parent_id => nil).order("id DESC").first
+    copy = Issue.where(:parent_id => nil).order(id: :desc).first
     assert_equal count, copy.descendants.count
   end
 
@@ -8518,7 +8743,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         }
       )
     end
-    copy = Issue.where(:parent_id => nil).order("id DESC").first
+    copy = Issue.where(:parent_id => nil).order(id: :desc).first
     assert_equal count, copy.descendants.count
   end
 
@@ -8535,7 +8760,7 @@ class IssuesControllerTest < Redmine::ControllerTest
         :follow => '1'
       }
     )
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_redirected_to :controller => 'issues', :action => 'show', :id => issue
   end
 

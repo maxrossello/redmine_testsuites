@@ -92,7 +92,7 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
       )
     end
     assert_response :found
-    repository = Repository.order('id DESC').first
+    repository = Repository.order(id: :desc).first
     assert_kind_of Repository::Subversion, repository
     assert_equal 'file:///test', repository.url
   end
@@ -470,6 +470,19 @@ class RepositoriesControllerTest < Redmine::RepositoryControllerTest
     end
     assert_equal [1], Changeset.find(103).issue_ids
     assert_include 'related-issue-2', response.body
+  end
+
+  def test_stats
+    get(
+      :stats,
+      :params => {
+        :id => 1,
+        :repository_id => ''
+      }
+    )
+    assert_response :success
+    assert_equal 2, response.parsed_body.css('[data-controller="repositories--stats"]').size
+    assert_equal 2, response.parsed_body.css('[data-repositories--stats-url-value]').size
   end
 
   def test_graph_commits_per_month

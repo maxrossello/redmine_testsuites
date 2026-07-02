@@ -211,9 +211,35 @@ class IconsHelperTest < Redmine::HelperTest
     assert_match expected, activity_event_type_icon('time-entry')
   end
 
+  def test_file_type_icon_should_return_specific_icon_for_known_mime_types
+    expected = %r{<svg class="s18 icon-svg" aria-hidden="true"><use href="/assets/icons-\w+.svg#icon--text-plain"></use></svg>}
+    assert_match expected, file_type_icon('text/plain')
+  end
+
+  def test_file_type_icon_should_return_generic_file_icon_for_unknown_mime_types
+    expected = %r{<svg class="s18 icon-svg" aria-hidden="true"><use href="/assets/icons-\w+.svg#icon--file"></use></svg>}
+    assert_match expected, file_type_icon('unknown-type/unknown-subtype')
+  end
+
   def test_icon_for_mime_type_should_return_specific_icon_for_known_mime_types
-    assert_equal 'text-plain', icon_for_mime_type('text-plain')
-    assert_equal 'application-pdf', icon_for_mime_type('application-pdf')
+    assert_equal 'application-pdf', icon_for_mime_type('application/pdf')
+    assert_equal 'text-plain', icon_for_mime_type('text/markdown')
+    assert_equal 'text-plain', icon_for_mime_type('text/plain')
+    assert_equal 'file-type-docx',
+                 icon_for_mime_type('application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    assert_equal 'file-type-xls',
+                 icon_for_mime_type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    assert_equal 'file-type-ppt',
+                 icon_for_mime_type('application/vnd.openxmlformats-officedocument.presentationml.presentation')
+  end
+
+  def test_icon_for_mime_type_should_return_icon_for_top_level_types
+    assert_equal 'file-music', icon_for_mime_type('audio/aac')
+    assert_equal 'file-music', icon_for_mime_type('audio/mpeg')
+    assert_equal 'photo', icon_for_mime_type('image/jpeg')
+    assert_equal 'photo', icon_for_mime_type('image/png')
+    assert_equal 'movie', icon_for_mime_type('video/raw')
+    assert_equal 'movie', icon_for_mime_type('video/mp4')
   end
 
   def test_icon_for_mime_type_should_return_generic_file_icon_for_unknown_mime_types

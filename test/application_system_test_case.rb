@@ -84,8 +84,13 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     assert_current_path '/my/page', :ignore_query => true
   end
 
+  def sign_out_user
+    find('#account .dropdown-trigger').click
+    click_link 'Sign out'
+  end
+
   def wait_for_ajax
-    Timeout.timeout(5*Capybara.default_max_wait_time) do
+    Timeout.timeout(Capybara.default_max_wait_time) do
       loop until page.evaluate_script('typeof jQuery') != "undefined" # redmine_testsuites
       loop until page.evaluate_script("jQuery.active").zero?
     end

@@ -19,10 +19,11 @@
 
 require_relative '../../../../../test_helper'
 
-class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
+class Redmine::WikiFormatting::CommonMark::FormatterTest < Redmine::HelperTest
   if Object.const_defined?(:Commonmarker)
 
     def setup
+      super
       @formatter = Redmine::WikiFormatting::CommonMark::Formatter
     end
 
@@ -255,7 +256,7 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
 
     def test_should_support_html_tables
       text = '<table style="background: red"><tr><td>Cell</td></tr></table>'
-      assert_equal '<table><tr><td>Cell</td></tr></table>', to_html(text)
+      assert_equal '<table><tbody><tr><td>Cell</td></tr></tbody></table>', to_html(text)
     end
 
     def test_should_remove_unsafe_uris
@@ -289,10 +290,10 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
         <p>Task list:</p>
         <ul class="contains-task-list">
         <li class="task-list-item">
-        <input type="checkbox" class="task-list-item-checkbox" disabled> Task 1
+        <input type="checkbox" class="task-list-item-checkbox" disabled=""> Task 1
         </li>
         <li class="task-list-item">
-        <input type="checkbox" class="task-list-item-checkbox" checked disabled> Task 2</li>
+        <input type="checkbox" class="task-list-item-checkbox" checked="" disabled=""> Task 2</li>
         </ul>
       EXPECTED
 
@@ -340,6 +341,13 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
       assert_include "This should not become an alert.", html
 
       assert_not_include 'markdown-alert', html
+    end
+
+    def test_should_enable_cjk_friendly_emphasis_extension
+      assert_equal(
+        "<p><strong>この文は重要です。</strong>而且，<strong>这句话也非常重要。</strong>이 문장은 중요하지 않습니다.</p>",
+        to_html("**この文は重要です。**而且，**这句话也非常重要。**이 문장은 중요하지 않습니다.")
+      )
     end
 
     private

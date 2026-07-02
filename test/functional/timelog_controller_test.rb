@@ -256,7 +256,7 @@ class TimelogControllerTest < Redmine::ControllerTest
       assert_redirected_to '/projects/ecookbook/time_entries'
     end
 
-    t = TimeEntry.order('id DESC').first
+    t = TimeEntry.order(id: :desc).first
     assert_not_nil t
     assert_equal 'Some work on TimelogControllerTest', t.comments
     assert_equal 1, t.project_id
@@ -283,7 +283,7 @@ class TimelogControllerTest < Redmine::ControllerTest
       assert_redirected_to '/projects/ecookbook/time_entries'
     end
 
-    t = TimeEntry.order('id DESC').first
+    t = TimeEntry.order(id: :desc).first
     assert_not_nil t
     assert_equal 'Some work on TimelogControllerTest', t.comments
     assert_equal 1, t.project_id
@@ -433,7 +433,7 @@ class TimelogControllerTest < Redmine::ControllerTest
         },
         :continue => '1'
       }
-      assert_redirected_to '/time_entries/new?time_entry%5Bactivity_id%5D=11&time_entry%5Bissue_id%5D=&time_entry%5Bproject_id%5D=1&time_entry%5Bspent_on%5D=2008-03-14'
+      assert_redirected_to '/time_entries/new?time_entry%5Bactivity_id%5D=11&time_entry%5Bissue_id%5D&time_entry%5Bproject_id%5D=1&time_entry%5Bspent_on%5D=2008-03-14'
     end
   end
 
@@ -467,7 +467,7 @@ class TimelogControllerTest < Redmine::ControllerTest
         },
         :continue => '1'
       }
-      assert_redirected_to '/projects/ecookbook/time_entries/new?time_entry%5Bactivity_id%5D=11&time_entry%5Bissue_id%5D=&time_entry%5Bproject_id%5D=1&time_entry%5Bspent_on%5D=2008-03-14'
+      assert_redirected_to '/projects/ecookbook/time_entries/new?time_entry%5Bactivity_id%5D=11&time_entry%5Bissue_id%5D&time_entry%5Bproject_id%5D=1&time_entry%5Bspent_on%5D=2008-03-14'
     end
   end
 
@@ -484,7 +484,7 @@ class TimelogControllerTest < Redmine::ControllerTest
         },
         :continue => '1'
       }
-      assert_redirected_to '/issues/1/time_entries/new?time_entry%5Bactivity_id%5D=11&time_entry%5Bissue_id%5D=1&time_entry%5Bproject_id%5D=&time_entry%5Bspent_on%5D=2008-03-14'
+      assert_redirected_to '/issues/1/time_entries/new?time_entry%5Bactivity_id%5D=11&time_entry%5Bissue_id%5D=1&time_entry%5Bproject_id%5D&time_entry%5Bspent_on%5D=2008-03-14'
     end
   end
 
@@ -541,7 +541,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     end
 
     assert_redirected_to '/projects/ecookbook/time_entries'
-    time_entry = TimeEntry.order('id DESC').first
+    time_entry = TimeEntry.order(id: :desc).first
     assert_equal 1, time_entry.project_id
   end
 

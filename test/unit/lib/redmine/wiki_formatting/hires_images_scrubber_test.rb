@@ -17,12 +17,24 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class WikiDiff < Redmine::Helpers::Diff
-  attr_reader :content_to, :content_from
+require_relative '../../../../test_helper'
 
-  def initialize(content_to, content_from)
-    @content_to = content_to
-    @content_from = content_from
-    super(content_to.text, content_from.text)
+class Redmine::WikiFormatting::HiresImagesScrubberTest < ActiveSupport::TestCase
+  def filter(html)
+    fragment = Redmine::WikiFormatting::HtmlParser.parse(html)
+    scrubber = Redmine::WikiFormatting::HiresImagesScrubber.new
+    fragment.scrub!(scrubber)
+    fragment.to_s
+  end
+
+  def test_should_add_srcset_for_hires_images
+    html = '<img src="/attachments/download/1/image@2x.png">'
+    expected = '<img src="/attachments/download/1/image@2x.png" srcset="/attachments/download/1/image@2x.png 2x">'
+    assert_equal expected, filter(html)
+  end
+
+  def test_should_not_add_srcset_for_non_hires_images
+    html = '<img src="/attachments/download/1/image.png">'
+    assert_equal html, filter(html)
   end
 end
