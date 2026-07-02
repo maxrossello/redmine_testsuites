@@ -438,13 +438,16 @@ class Redmine::WikiFormatting::MacrosTest < Redmine::HelperTest
 
       {{hello_world(bar)}}
     RAW
-    expected = <<~EXPECTED
-      <p>Hello world! Object: NilClass, Arguments: foo and no block of text.</p>
-
-      <pre>
+    pre = <<~PRE
+      <pre data-clipboard-target="pre">
       {{hello_world(pre)}}
       !{{hello_world(pre)}}
       </pre>
+    PRE
+    expected = <<~EXPECTED
+      <p>Hello world! Object: NilClass, Arguments: foo and no block of text.</p>
+
+      #{pre_wrapper(pre)}
 
       <p>Hello world! Object: NilClass, Arguments: bar and no block of text.</p>
     EXPECTED
@@ -456,7 +459,7 @@ class Redmine::WikiFormatting::MacrosTest < Redmine::HelperTest
   def test_macros_should_be_escaped_in_pre_tags
     with_settings :text_formatting => 'textile' do
       text = '<pre>{{hello_world(<tag>)}}</pre>'
-      assert_equal '<pre>{{hello_world(&lt;tag&gt;)}}</pre>', textilizable(text)
+      assert_equal pre_wrapper('<pre data-clipboard-target="pre">{{hello_world(&lt;tag&gt;)}}</pre>'), textilizable(text)
     end
   end
 

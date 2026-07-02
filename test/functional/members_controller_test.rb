@@ -25,6 +25,37 @@ class MembersControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
   end
 
+  def test_index_with_csv_format_should_export_csv
+    project = Project.find(5)
+    get(
+      :index,
+      params: {
+        project_id: project.id,
+        format: 'csv'
+      }
+    )
+    assert_response :success
+    assert_equal 'text/csv; header=present', response.media_type
+
+    lines = response.body.chomp.split("\n")
+    # Number of lines
+    assert_equal project.memberships.sum{|m| m.roles.count } + 1, lines.size
+    # Header
+    assert_equal "User or Group,Type,Role,Project", lines.first
+    # Details
+    to_test = [
+      'John Smith,User,Manager,Private child of eCookbook',
+      'A Team,Group,Manager,Private child of eCookbook',
+      'A Team,Group,Developer,Private child of eCookbook',
+      'User Misc,User,Manager,Private child of eCookbook',
+      'User Misc,User,Developer,Private child of eCookbook',
+      'Redmine Admin,User,Manager,Private child of eCookbook'
+    ]
+    to_test.each do |expected|
+      assert_includes lines, expected
+    end
+  end
+
   def test_new
     get(:new, :params => {:project_id => 1})
     assert_response :success

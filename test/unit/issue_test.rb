@@ -31,6 +31,24 @@ class IssueTest < ActiveSupport::TestCase
     User.current = nil
   end
 
+  def test_find_with_preloads
+    issues = Issue.find_with_preloads([1, 2])
+    assert_equal 2, issues.size
+    issues.each do |issue|
+      assert issue.association(:project).loaded?
+      assert issue.association(:status).loaded?
+      assert issue.association(:tracker).loaded?
+      assert issue.association(:priority).loaded?
+      assert issue.association(:author).loaded?
+      assert issue.association(:assigned_to).loaded?
+      assert issue.association(:relations_to).loaded?
+      assert issue.association(:custom_values).loaded?
+      issue.custom_values.each do |cv|
+        assert cv.association(:custom_field).loaded?
+      end
+    end
+  end
+
   def test_initialize
     issue = Issue.new
 
@@ -178,7 +196,7 @@ class IssueTest < ActiveSupport::TestCase
       assert Issue.new(:project_id => 2, :tracker_id => 1, :author_id => 1,
                        :subject => 'Group assignment',
                        :assigned_to_id => 11).save
-      issue = Issue.order('id DESC').first
+      issue = Issue.order(id: :desc).first
       assert_kind_of Group, issue.assigned_to
       assert_equal Group.find(11), issue.assigned_to
     end
@@ -748,7 +766,7 @@ class IssueTest < ActiveSupport::TestCase
       issue.save!
       assert_nil issue.due_date
     end
-    journal = Journal.order('id DESC').first
+    journal = Journal.order(id: :desc).first
     details = journal.details.select {|d| d.prop_key == 'due_date'}
     assert_equal 1, details.count
   end
@@ -758,7 +776,7 @@ class IssueTest < ActiveSupport::TestCase
     issue.custom_field_values = {'2' => 'Foo'}
     issue.save!
 
-    issue = Issue.order('id desc').first
+    issue = Issue.order(id: :desc).first
     assert_equal 'Foo', issue.custom_field_value(2)
 
     issue.custom_field_values = {'2' => 'Bar'}
@@ -2847,7 +2865,7 @@ class IssueTest < ActiveSupport::TestCase
       end
     end
 
-    detail = JournalDetail.order('id DESC').first
+    detail = JournalDetail.order(id: :desc).first
     assert_equal i, detail.journal.journalized
     assert_equal 'attr', detail.property
     assert_equal 'description', detail.prop_key

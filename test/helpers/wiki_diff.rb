@@ -22,6 +22,8 @@ class WikiDiff < Redmine::Helpers::Diff
 
   skip_before_action :check_if_login_required, only: [:robots]
 
+  skip_before_action :check_if_login_required, only: [:robots]
+
   def index
     @news = News.latest User.current
   end

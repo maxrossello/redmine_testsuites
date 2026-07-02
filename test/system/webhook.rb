@@ -1,0 +1,178 @@
+# frozen_string_literal: true
+
+# Redmine - project management software
+# Copyright (C) 2006-  Jean-Philippe Lang
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+class Webhook < ApplicationRecord
+  Executor = Struct.new(:url, :payload, :secret) do
+    # @return [Net::HTTP::Response] if the POST request was successful
+    # @raise [Exception] one of a lot of possible exceptions if the webhook was
+    #   not successfully send, e.g. if we could not find valid IPs or could not
+    #   connect to any of them or if an unexpected (i.e. non-successful)
+    #   response status was set; it may contain the server response.
+    def call
+      headers = { accept: '*/*', 'content-type': 'application/json', 'user-agent': 'Redmine' }
+      if secret.present?
+        headers['X-Redmine-Signature-256'] = compute_signature
+      end
+      Rails.logger.debug { "Webhook: POST #{url}" }
+
+      url = URI.parse(self.url)
+      valid_ips.each do |ip|
+        begin
+          Rails.logger.debug { "Trying #{ip}" }
+          http = ::Net::HTTP.start(
+            url.host,
+            url.port,
+            open_timeout: 60,
+            read_timeout: 60,
+            write_timeout: 60,
+            use_ssl: (url.scheme == 'https'),
+            ipaddr: ip
+          )
+        rescue
+          # We could not create a HTTP(S) connection to the IP.
+          begin
+            http&.finish
+          rescue
+            nil
+          end
+
+          # Since we have not sent any actual request data, we continue with the
+          # next IP (if any).
+          next
+        end
+
+        request = ::Net::HTTP::Post.new(url, headers)
+        request.basic_auth url.user, url.password if url.user
+        request.body = payload
+
+        # Return the response or raise if there was any transport error,
+        # timeout, or non-successful HTTP response code
+        return http.request(request).tap(&:value)
+      ensure
+        begin
+          http&.finish
+        rescue
+          nil
+        end
+      end
+
+      raise SocketError, "Could not connect to any IP"
+    end
+
+    # Returns a list of IP addresses for the hostname of the URI, or an empty
+    # array if no IPs were found or any of them were invalid
+    def valid_ips
+      WebhookEndpointValidator.ips_for_uri(url)
+    end
+
+    # Computes the HMAC signature for the given payload and secret.
+    # https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
+    def compute_signature
+      'sha256=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha256'), secret, payload)
+    end
+  end
+
+  belongs_to :user
+  has_and_belongs_to_many :projects # rubocop:disable Rails/HasAndBelongsToMany
+
+  validates :url, presence: true, webhook_endpoint: true, length: { maximum: 2000 }
+  validates :secret, length: { maximum: 255 }, allow_blank: true
+  validate :check_events_array
+
+  serialize :events, coder: YAML, type: Array
+
+  scope :active, -> { where(active: true) }
+
+  before_validation ->(hook){ hook.projects = hook.projects.to_a & hook.setable_projects }
+
+  def self.enabled?
+    Setting.webhooks_enabled?
+  end
+
+  # Triggers the given event for the given object, scheduling qualifying hooks
+  # to be called.
+  def self.trigger(event, object)
+    return unless enabled?
+
+    hooks_for(event, object).each do |hook|
+      payload = hook.payload(event, object)
+      WebhookJob.perform_later(hook.id, payload.to_json)
+    end
+  end
+
+  # Finds hooks for the given event and object.
+  # Returns an array of hooks that are active, have the given event in their list
+  # of events, and whose user can see the object.
+  #
+  # Object must have a project_id and respond to visible?(user)
+  def self.hooks_for(event, object)
+    Webhook.active
+      .joins("INNER JOIN projects_webhooks on projects_webhooks.webhook_id = webhooks.id")
+      .eager_load(:user)
+      .where(users: { status: User::STATUS_ACTIVE }, projects_webhooks: { project_id: object.project_id })
+      .to_a.select do |hook|
+      hook.events.include?(event) && object.visible?(hook.user) && hook.user.allowed_to?(:use_webhooks, object.project)
+    end
+  end
+
+  def setable_projects
+    user = self.user || User.current
+    Project.visible(user).to_a.select{|p| user.allowed_to?(:use_webhooks, p)}
+  end
+
+  def setable_events
+    WebhookPayload.events
+  end
+
+  def setable_event_names
+    setable_events.map{|type, actions| actions.map{|action| "#{type}.#{action}"}}.flatten
+  end
+
+  # computes the payload. this happens when the hook is triggered, and the
+  # payload is stored as part of the hook job definition.
+  # event must be of the form 'type.action' (like 'issue.created')
+  def payload(event, object)
+    WebhookPayload.new(event, object, user).to_h
+  end
+
+  # POSTs the given payload to the hook URL, returns true if successful, false otherwise.
+  #
+  # logs any unsuccessful hook calls, but does not raise
+  def call(payload_json)
+    Executor.new(url, payload_json, secret).call
+    true
+  rescue => e
+    Rails.logger.warn { "Webhook Error: #{e.message} (#{e.class})\n#{e.backtrace.join "\n"}" }
+    false
+  end
+
+  private
+
+  def check_events_array
+    unless events.is_a?(Array)
+      errors.add(:events, :invalid)
+      return
+    end
+
+    events.reject!(&:blank?)
+    if (events - setable_event_names).any?
+      errors.add(:events, :invalid)
+    end
+  end
+end

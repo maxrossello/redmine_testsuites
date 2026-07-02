@@ -17,9 +17,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class CustomFieldValue
-  attr_accessor :custom_field, :customized, :value_was
-  attr_reader   :value
+class JournalDetail < ApplicationRecord
+  belongs_to :journal
 
   def initialize(attributes={})
     attributes.each do |name, v|

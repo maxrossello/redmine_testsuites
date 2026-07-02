@@ -49,6 +49,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
       assert_select 'text'
       assert_select 'author'
       assert_select 'comments'
+      assert_select 'project[id=1][name="eCookbook"]'
       assert_select 'created_on'
       assert_select 'updated_on'
     end
@@ -194,7 +195,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
       end
     end
 
-    page = WikiPage.order('id DESC').first
+    page = WikiPage.order(id: :desc).first
     assert_equal 'New_page_from_API', page.title
     assert_equal 'New content from API', page.content.text
     assert_equal 1, page.content.version
@@ -215,9 +216,11 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
               :text => 'New content from API with Attachments',
               :comments => 'API create with Attachments',
               :uploads => [
-                :token => attachment.token,
-                :filename => 'testfile.txt',
-                :content_type => "text/plain"
+                {
+                  :token => attachment.token,
+                  :filename => 'testfile.txt',
+                  :content_type => 'text/plain'
+                }
               ]
             }
           },
@@ -227,7 +230,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
       end
     end
 
-    page = WikiPage.order('id DESC').first
+    page = WikiPage.order(id: :desc).first
     assert_equal 'New_page_from_API', page.title
     assert_include attachment, page.attachments
     assert_equal attachment.filename, page.attachments.first.filename
@@ -251,7 +254,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
       end
     end
 
-    page = WikiPage.order('id DESC').first
+    page = WikiPage.order(id: :desc).first
     assert_equal 'New_subpage_from_API', page.title
     assert_equal WikiPage.find(1), page.parent
   end

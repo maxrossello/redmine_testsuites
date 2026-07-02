@@ -228,7 +228,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
     end
 
     # Status transitions between statuses
-    (1..num_statuses).each do |status_id_from| # rubocop:disable RuboCopStyle/CombinableLoops
+    (1..num_statuses).each do |status_id_from| # rubocop:disable Style/CombinableLoops
       transitions_data[status_id_from.to_s] = {}
       (1..num_statuses).each do |status_id_to|
         # skip self-transitions
@@ -505,7 +505,7 @@ class WorkflowsControllerTest < Redmine::ControllerTest
   def status_transitions(conditions)
     WorkflowTransition.
       where(conditions).
-      order('tracker_id, role_id, old_status_id, new_status_id').
+      order(:tracker_id, :role_id, :old_status_id, :new_status_id).
       collect {|w| [w.old_status, w.new_status_id]}
   end
 end

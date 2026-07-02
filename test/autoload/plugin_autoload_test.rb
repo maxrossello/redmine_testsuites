@@ -16,19 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-module Redmine
-  # @private
-  module CoreExt
-    # @private
-    module String
-      # Custom string inflections
-      # @private
-      module Inflections
-        def with_leading_slash
-          starts_with?('/') ? self : "/#{ self }"
-        end
-      end
+require_relative '../test_helper'
+class Redmine::PluginAutoloadTest < ActiveSupport::TestCase
+  if ENV['REDMINE_PLUGINS_DIRECTORY']
+    def test_autoload
+      assert_equal true, Object.const_defined?(:Foo)
     end
   else
     puts 'Tests related to plugin autoloading should be run separately using "rails test:autoload"'

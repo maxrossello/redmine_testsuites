@@ -20,8 +20,11 @@
 require_relative '../test_helper'
 
 class GroupsControllerTest < Redmine::ControllerTest
+  include Redmine::I18n
+
   def setup
     @request.session[:user_id] = 1
+    set_language_if_valid User.find(1).language
   end
 
   def test_index
@@ -112,7 +115,7 @@ class GroupsControllerTest < Redmine::ControllerTest
       )
     end
     assert_redirected_to '/groups'
-    group = Group.order('id DESC').first
+    group = Group.order(id: :desc).first
     assert_equal 'New group', group.name
     assert_equal [], group.users
   end
@@ -130,7 +133,7 @@ class GroupsControllerTest < Redmine::ControllerTest
       )
     end
     assert_redirected_to '/groups/new'
-    group = Group.order('id DESC').first
+    group = Group.order(id: :desc).first
     assert_equal 'New group', group.name
   end
 
@@ -162,6 +165,8 @@ class GroupsControllerTest < Redmine::ControllerTest
     assert_select 'div#tab-content-memberships' do
       assert_select 'a', :text => 'Private child of eCookbook'
     end
+    assert_select 'div#tab-content-users a.icon-link-break', :text => 'Remove'
+    assert_select 'div#tab-content-memberships a.icon-link-break', :text => 'Remove'
   end
 
   def test_update
@@ -229,6 +234,10 @@ class GroupsControllerTest < Redmine::ControllerTest
         }
       )
     end
+    assert_equal 'Successful update.', flash[:notice]
+
+    # assert add users redirects to group members page
+    assert_redirected_to '/groups/10/edit?tab=users'
   end
 
   def test_xhr_add_users
@@ -247,31 +256,138 @@ class GroupsControllerTest < Redmine::ControllerTest
     assert_match /John Smith/, response.body
   end
 
-  def test_remove_user
+  def test_remove_users
     assert_difference 'Group.find(10).users.count', -1 do
       delete(
-        :remove_user,
+        :remove_users,
+        :params => {
+          :id => 10,
+          :user_id => '8',
+          :confirm => I18n.t(:general_text_Yes)
+        }
+      )
+    end
+    # remove users should redirect to group members page when no back url is provided
+    assert_redirected_to '/groups/10/edit?tab=users'
+  end
+
+  def test_remove_users_without_confirmation
+    assert_no_difference 'Group.find(10).users.count' do
+      delete(
+        :remove_users,
         :params => {
           :id => 10,
           :user_id => '8'
         }
       )
     end
+    assert_response :success
+    assert_select 'input[name=confirm]'
   end
 
-  def test_xhr_remove_user
-    assert_difference 'Group.find(10).users.count', -1 do
+  def test_remove_users_plural
+    group = Group.find(10)
+    group.users << User.find(2)
+    assert_difference 'group.users.count', -2 do
       delete(
-        :remove_user,
+        :remove_users,
         :params => {
           :id => 10,
-          :user_id => '8'
-        },
-        :xhr => true
+          :user_ids => ['2', '8'],
+          :confirm => I18n.t(:general_text_Yes)
+        }
       )
-      assert_response :success
-      assert_equal 'text/javascript', response.media_type
     end
+  end
+
+  def test_remove_users_should_only_include_group_members
+    assert !Group.find(10).users.include?(User.find(3))
+
+    get(
+      :remove_users,
+      :params => {
+        :id => 10,
+        :user_ids => ['3', '8']
+      }
+    )
+    assert_response :success
+    assert_select 'input[name=confirm]'
+    # Should show user 8 but not user 3
+    assert_select 'p strong', :text => 'User Misc'
+    assert_select 'p strong', :text => 'Dave Lopper', :count => 0
+  end
+
+  def test_remove_users_should_preserve_back_url_through_confirmation
+    delete(
+      :remove_users,
+      :params => {
+        :id => 10,
+        :user_id => '8',
+        :back_url => '/users'
+      }
+    )
+    assert_response :success
+    assert_select 'form[action=?]', '/groups/10/users?user_ids%5B%5D=8' do
+      assert_select 'input[name=back_url][value=?]', '/users'
+    end
+
+    # 2. Submit confirmation with back_url
+    assert_difference 'Group.find(10).users.count', -1 do
+      delete(
+        :remove_users,
+        :params => {
+          :id => 10,
+          :user_ids => ['8'],
+          :confirm => I18n.t(:general_text_Yes),
+          :back_url => '/users'
+        }
+      )
+    end
+    assert_redirected_to '/users'
+  end
+
+  def test_remove_users_without_confirmation_with_unsafe_back_url_should_ignore_back_url
+    assert_no_difference 'Group.find(10).users.count' do
+      delete(
+        :remove_users,
+        :params => {
+          :id => 10,
+          :user_id => '8',
+          :back_url => 'http://example.com/issues'
+        }
+      )
+    end
+    assert_response :success
+    assert_select 'form[action=?]', '/groups/10/users?user_ids%5B%5D=8' do
+      assert_select 'input[name=back_url]', 0
+    end
+  end
+
+  def test_remove_users_with_unsafe_back_url_should_redirect_to_default_url
+    assert_difference 'Group.find(10).users.count', -1 do
+      delete(
+        :remove_users,
+        :params => {
+          :id => 10,
+          :user_id => '8',
+          :confirm => I18n.t(:general_text_Yes),
+          :back_url => 'http://example.com/issues'
+        }
+      )
+    end
+    # Should redirect to the default group page, not the external URL
+    assert_redirected_to '/groups/10/edit?tab=users'
+  end
+
+  def test_remove_user_should_be_deprecated
+    Rails.application.deprecators[:redmine].expects(:warn).with(regexp_matches(/GroupsController#remove_user is deprecated/))
+    delete(
+      :remove_user,
+      :params => {
+        :id => 10,
+        :user_id => '8'
+      }
+    )
   end
 
   def test_autocomplete_for_user
@@ -286,5 +402,19 @@ class GroupsControllerTest < Redmine::ControllerTest
     )
     assert_response :success
     assert_include 'John Smith', response.body
+  end
+
+  def test_add_users_from_context_menu_should_redirect_to_back_url
+    assert_difference 'Group.find(10).users.count', 1 do
+      post(
+        :add_users,
+        :params => {
+          :id => 10,
+          :user_ids => ['2'],
+          :back_url => '/users'
+        }
+      )
+      assert_redirected_to '/users'
+    end
   end
 end

@@ -37,8 +37,6 @@ require 'net/ldap'
 require 'mocha/minitest'
 require 'fileutils'
 
-Redmine::SudoMode.disable!
-
 $redmine_tmp_attachments_directory = "#{Rails.root}/tmp/test/attachments"
 FileUtils.mkdir_p $redmine_tmp_attachments_directory
 
@@ -60,6 +58,28 @@ class ActiveSupport::TestCase
 
   self.use_transactional_tests = true
   self.use_instantiated_fixtures  = false
+
+  setup do
+    Redmine::SudoMode.stubs(:enabled?).returns(false)
+  end
+
+  setup do
+    # Tests mutate the process-global locale; reset it so test order does not
+    # affect translated assertions in later tests run by the same worker.
+    ::I18n.locale = ::I18n.default_locale
+  end
+
+  parallelize_setup do |worker|
+    # Use a separate attachment directory for each worker.
+    $redmine_tmp_attachments_directory =
+      File.join($redmine_tmp_attachments_directory, worker.to_s)
+    FileUtils.mkdir_p $redmine_tmp_attachments_directory
+
+    # Use a separate thumbnail directory for each worker.
+    Attachment.thumbnails_storage_path =
+      File.join(Attachment.thumbnails_storage_path, worker.to_s)
+    FileUtils.mkdir_p Attachment.thumbnails_storage_path
+  end
 
   # Clear Settings cache after each test to prevent test interference
   teardown do
@@ -95,15 +115,13 @@ class ActiveSupport::TestCase
   end
 
   def with_settings(options, &)
-    saved_settings = options.keys.inject({}) do |h, k|
-      h[k] =
-        case Setting[k]
-        when Symbol, false, true, nil
-          Setting[k]
-        else
-          Setting[k].dup
-        end
-      h
+    saved_settings = options.keys.index_with do |k|
+      case Setting[k]
+      when Symbol, false, true, nil
+        Setting[k]
+      else
+        Setting[k].dup
+      end
     end
     options.each {|k, v| Setting[k] = v}
     yield
@@ -342,11 +360,20 @@ module Redmine
   class HelperTest < ActionView::TestCase
     include Redmine::I18n
     include Propshaft::Helper
+    include IconsHelper
 
     def setup
       super
       User.current = nil
       ::I18n.locale = 'en'
+    end
+
+    def pre_wrapper(text)
+      icon = sprite_icon('copy-pre-content', size: 18)
+      '<div class="pre-wrapper" data-controller="clipboard"><a class="copy-pre-content-link icon-only" title="Copy" data-action="clipboard#copyPre">' +
+      icon + '</a>' +
+      text +
+      '</div>'
     end
   end
 

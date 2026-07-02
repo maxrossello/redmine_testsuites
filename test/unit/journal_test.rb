@@ -94,7 +94,7 @@ class JournalTest < ActiveSupport::TestCase
         assert_equal 'Notes', journal.notes
         assert_equal 0, journal.details.size
 
-        journal_with_changes = Journal.order('id DESC').offset(1).first
+        journal_with_changes = Journal.order(id: :desc).offset(1).first
         assert_equal false, journal_with_changes.private_notes
         assert_nil journal_with_changes.notes
         assert_equal 1, journal_with_changes.details.size
@@ -113,7 +113,7 @@ class JournalTest < ActiveSupport::TestCase
     end
   end
 
-  def test_create_should_add_wacher
+  def test_create_should_add_watcher
     user = User.first
     user.pref.auto_watch_on=['issue_contributed_to']
     user.save
@@ -122,6 +122,24 @@ class JournalTest < ActiveSupport::TestCase
     assert_difference 'Watcher.count', 1 do
       assert_equal true, journal.save
     end
+  end
+
+  def test_create_should_add_assignee_as_watcher
+    user = User.find(2)
+    user.pref.auto_watch_on = ['issue_assigned_to_me']
+    user.pref.save!
+
+    issue = Issue.find(1)
+    # Ensure user is not already a watcher
+    issue.set_watcher(user, false)
+
+    journal = issue.init_journal(User.find(1))
+    issue.assigned_to = user
+
+    assert_difference 'Watcher.count', 1 do
+      assert journal.save
+    end
+    assert issue.watched_by?(user)
   end
 
   def test_create_should_not_add_watcher
@@ -273,5 +291,23 @@ class JournalTest < ActiveSupport::TestCase
     # User "dlopper" has "Developer" role on project "eCookbook"
     # Role "Developer" does not have the "View private notes" permission
     assert_equal [1, 2], journal.notified_mentions.map(&:id).sort
+  end
+
+  def test_create_should_not_add_watcher_if_user_cannot_view_issue
+    user = User.generate!
+    project = Project.generate!(:is_public => false)
+    issue = Issue.generate!(:project => project)
+
+    assert !user.allowed_to?(:view_issues, project)
+
+    user.pref.auto_watch_on = ['issue_contributed_to']
+    user.save
+
+    journal = Journal.new(:journalized => issue, :notes => 'notes', :user => user)
+
+    assert_no_difference 'Watcher.count' do
+      assert journal.save
+    end
+    assert !journal.journalized.watched_by?(user)
   end
 end

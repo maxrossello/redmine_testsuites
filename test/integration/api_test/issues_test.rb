@@ -545,7 +545,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
         :params => payload,
         :headers => {"CONTENT_TYPE" => 'application/xml'}.merge(credentials('jsmith')))
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal 1, issue.project_id
     assert_equal 2, issue.tracker_id
     assert_equal 3, issue.status_id
@@ -570,7 +570,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
         :headers => credentials('jsmith'))
       assert_response :created
     end
-    issue = Issue.order('id desc').first
+    issue = Issue.order(id: :desc).first
     assert_equal 2, issue.watchers.size
     assert_equal [1, 3], issue.watcher_user_ids.sort
   end
@@ -605,7 +605,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
         :headers => {"CONTENT_TYPE" => 'application/json'}.merge(credentials('jsmith')))
     end
 
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal 1, issue.project_id
     assert_equal 2, issue.tracker_id
     assert_equal 3, issue.status_id
@@ -648,7 +648,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
         :headers => {"CONTENT_TYPE" => 'application/json'}.merge(credentials('jsmith')))
     end
     assert_response :created
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal ["V1", "V3"], issue.custom_field_value(field).sort
   end
 
@@ -678,6 +678,59 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
         :headers => credentials('jsmith')
       )
     end
+    assert_equal "", issue.custom_field_value(field)
+  end
+
+  test "POST /issues.json with omitted date custom field should set date offset default" do
+    User.current = User.find_by_login('jsmith')
+    field =
+      IssueCustomField.generate!(
+        :field_format => 'date',
+        :default_value_mode => 'date_offset',
+        :default_value => '5',
+        :trackers => Tracker.all,
+        :is_for_all => true
+      )
+    issue = new_record(Issue) do
+      post(
+        '/issues.json',
+        :params => {
+          :issue => {
+            :project_id => 1,
+            :tracker_id => 1,
+            :subject => 'API date default',
+            :custom_field_values => {}
+          }
+        },
+        :headers => credentials('jsmith'))
+    end
+
+    assert_equal (User.current.today + 5).to_s, issue.custom_field_value(field)
+  end
+
+  test "POST /issues.json with date custom field set to blank should not set date offset default" do
+    field =
+      IssueCustomField.generate!(
+        :field_format => 'date',
+        :default_value_mode => 'date_offset',
+        :default_value => '5',
+        :trackers => Tracker.all,
+        :is_for_all => true
+      )
+    issue = new_record(Issue) do
+      post(
+        '/issues.json',
+        :params => {
+          :issue => {
+            :project_id => 1,
+            :tracker_id => 1,
+            :subject => 'API blank date default',
+            :custom_field_values => {field.id.to_s => ''}
+          }
+        },
+        :headers => credentials('jsmith'))
+    end
+
     assert_equal "", issue.custom_field_value(field)
   end
 
@@ -726,6 +779,18 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
       },
       :headers => credentials('jsmith'))
     assert_response :unprocessable_content
+  end
+
+  test "POST /issues.json should use the tracker private_by_default setting" do
+    Tracker.find(1).update! :private_by_default => true
+
+    issue = new_record(Issue) do
+      post(
+        '/issues.json',
+        :params => {:issue => {:project_id => 1, :tracker_id => 1, :subject => 'API'}},
+        :headers => credentials('jsmith'))
+    end
+    assert issue.is_private?
   end
 
   test "PUT /issues/:id.xml" do
@@ -926,7 +991,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
       assert_response :no_content
       assert_equal '', response.body
     end
-    watcher = Watcher.order('id desc').first
+    watcher = Watcher.order(id: :desc).first
     assert_equal Issue.find(1), watcher.watchable
     assert_equal User.find(3), watcher.user
   end
@@ -960,7 +1025,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
         :headers => credentials('jsmith'))
       assert_response :created
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal 1, issue.attachments.count
     assert_equal attachment, issue.attachments.first
 
@@ -1014,7 +1079,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
         :headers => {"CONTENT_TYPE" => 'application/xml'}.merge(credentials('jsmith')))
       assert_response :created
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal 2, issue.attachments.count
   end
 
@@ -1041,7 +1106,7 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
         :headers => {"CONTENT_TYPE" => 'application/json'}.merge(credentials('jsmith')))
       assert_response :created
     end
-    issue = Issue.order('id DESC').first
+    issue = Issue.order(id: :desc).first
     assert_equal 2, issue.attachments.count
   end
 
