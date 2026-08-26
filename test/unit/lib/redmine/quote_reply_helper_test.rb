@@ -17,12 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class Comment < ApplicationRecord
-  include Redmine::SafeAttributes
-  include Redmine::Reaction::Reactable
-
-  belongs_to :commented, :polymorphic => true, :counter_cache => true
-  belongs_to :author, :class_name => 'User'
+require_relative '../../../test_helper'
 
 class QuoteReplyHelperTest < ActionView::TestCase
   include ERB::Util
@@ -37,26 +32,9 @@ class QuoteReplyHelperTest < ActionView::TestCase
         'a[data-quote-reply-url-param=?][data-quote-reply-text-formatting-param=?]:not([title])',
         url, Setting.text_formatting
 
-  delegate :visible?, to: :commented
-
-  def comments=(arg)
-    self.content = arg
-  end
-
-  def comments
-    content
-  end
-
-  def project
-    commented.respond_to?(:project) ? commented.project : nil
-  end
-
-  private
-
-  def send_notification
-    event = "#{commented.class.name.underscore}_comment_added"
-    if Setting.notified_events.include?(event)
-      Mailer.public_send(:"deliver_#{event}", self)
+      # When icon_only is true
+      html = quote_reply_button(url: url, icon_only: true)
+      assert_select_in html, 'a.icon-only.icon-quote[title=?]', 'Quote'
     end
   end
 end
