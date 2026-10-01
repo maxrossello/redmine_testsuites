@@ -25,8 +25,41 @@ class ProjectsQueriesHelperTest < Redmine::HelperTest
   def test_csv_value
     c_status = QueryColumn.new(:status)
     c_parent_id = QueryColumn.new(:parent_id)
-
     assert_equal "active", csv_value(c_status, Project.find(1), 1)
     assert_equal "eCookbook", csv_value(c_parent_id, Project.find(4), 1)
+  end
+
+  def self.default_activity_id(user=nil, project=nil)
+    available_activities = self.available_activities(project).load
+    return nil if available_activities.empty?
+    return available_activities.first.id if available_activities.one?
+
+    find_matching_activity = ->(ids) do
+      ids.each do |id|
+        activity = available_activities.detect { |a| a.id == id || a.parent_id == id }
+        return activity.id if activity
+      end
+      nil
+    end
+
+    if project && user
+      if (user_membership = user.membership(project))
+        activity_ids = user_membership.roles.where.not(:default_time_entry_activity_id => nil).sort.pluck(:default_time_entry_activity_id)
+        aid = find_matching_activity.call(activity_ids)
+        return aid if aid
+      end
+
+      if (project_default_activity = self.default(project))
+        aid = find_matching_activity.call([project_default_activity.id])
+        return aid if aid
+      end
+    end
+
+    if (global_activity = self.default)
+      aid = find_matching_activity.call([global_activity.id])
+      return aid if aid
+    end
+
+    nil
   end
 end
