@@ -17,16 +17,28 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require_relative '../test_helper'
+module ContextMenus
+  class BaseController < ApplicationController
+    layout false
+    helper :context_menus
+    helper_method :url_for
 
-class ProjectsQueriesHelperTest < Redmine::HelperTest
-  include ProjectsQueriesHelper
+    def url_for(options = nil)
+      if options.is_a?(Hash) && options[:controller].present?
+        controller_name = options[:controller].to_s
+        unless controller_name.start_with?('/')
+          options = options.dup
+          options[:controller] = "/#{controller_name}"
+        end
+      end
+      super
+    end
 
-  def test_csv_value
-    c_status = QueryColumn.new(:status)
-    c_parent_id = QueryColumn.new(:parent_id)
+    private
 
-    assert_equal "active", csv_value(c_status, Project.find(1), 1)
-    assert_equal "eCookbook", csv_value(c_parent_id, Project.find(4), 1)
+    def render_context_menu(template_name)
+      @back = back_url
+      render :template => "context_menus/#{template_name}"
+    end
   end
 end

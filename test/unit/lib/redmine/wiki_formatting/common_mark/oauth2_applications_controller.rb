@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+#
 # Redmine - project management software
 # Copyright (C) 2006-  Jean-Philippe Lang
 #
@@ -16,17 +17,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+class Oauth2ApplicationsController < Doorkeeper::ApplicationsController
+  menu_item :applications
 
-require_relative '../test_helper'
+  private
 
-class ProjectsQueriesHelperTest < Redmine::HelperTest
-  include ProjectsQueriesHelper
+  def application_params
+    params[:doorkeeper_application] ||= {}
+    params[:doorkeeper_application][:scopes] ||= []
 
-  def test_csv_value
-    c_status = QueryColumn.new(:status)
-    c_parent_id = QueryColumn.new(:parent_id)
+    scopes = Redmine::AccessControl.public_permissions.map{|p| p.name.to_s}
 
-    assert_equal "active", csv_value(c_status, Project.find(1), 1)
-    assert_equal "eCookbook", csv_value(c_parent_id, Project.find(4), 1)
+    if params[:doorkeeper_application][:scopes].is_a?(Array)
+      scopes |= params[:doorkeeper_application][:scopes]
+    else
+      scopes |= params[:doorkeeper_application][:scopes].split(/\s+/)
+    end
+    params[:doorkeeper_application][:scopes] = scopes.join(' ')
+    super
   end
 end
