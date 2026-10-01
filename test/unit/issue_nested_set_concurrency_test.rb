@@ -119,7 +119,7 @@ class IssueNestedSetConcurrencyTest < ActiveSupport::TestCase
 
   private
 
-  def threaded(count, &)
+  def threaded(count, &block)
     with_settings :notified_events => [] do
       threads = []
       count.times do |i|

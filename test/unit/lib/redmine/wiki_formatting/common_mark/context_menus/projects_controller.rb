@@ -17,16 +17,27 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require_relative '../test_helper'
+module ContextMenus
+  class ProjectsController < BaseController
+    before_action :require_admin
+    before_action :find_projects
 
-class ProjectsQueriesHelperTest < Redmine::HelperTest
-  include ProjectsQueriesHelper
+    def index
+      render_context_menu 'projects'
+    end
 
-  def test_csv_value
-    c_status = QueryColumn.new(:status)
-    c_parent_id = QueryColumn.new(:parent_id)
+    private
 
-    assert_equal "active", csv_value(c_status, Project.find(1), 1)
-    assert_equal "eCookbook", csv_value(c_parent_id, Project.find(4), 1)
+    def find_projects
+      @projects = Project.where(id: params[:ids]).to_a
+      if @projects.empty?
+        render_404
+        return
+      end
+
+      if @projects.size == 1
+        @project = @projects.first
+      end
+    end
   end
 end

@@ -17,16 +17,29 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require_relative '../test_helper'
+module ContextMenus
+  class UsersController < BaseController
+    before_action :require_admin
+    before_action :find_users
 
-class ProjectsQueriesHelperTest < Redmine::HelperTest
-  include ProjectsQueriesHelper
+    def index
+      @groups = Group.givable.sorted.to_a
+      @common_group_ids = Group.givable.joins(:groups_users).where(groups_users: { user_id: @users.map(&:id) }).distinct.pluck(:id).to_set
 
-  def test_csv_value
-    c_status = QueryColumn.new(:status)
-    c_parent_id = QueryColumn.new(:parent_id)
+      render_context_menu 'users'
+    end
 
-    assert_equal "active", csv_value(c_status, Project.find(1), 1)
-    assert_equal "eCookbook", csv_value(c_parent_id, Project.find(4), 1)
+    private
+
+    def find_users
+      @users = User.where(id: params[:id] || params[:ids]).to_a
+      raise ActiveRecord::RecordNotFound if @users.empty?
+
+      if @users.size == 1
+        @user = @users.first
+      end
+    rescue ActiveRecord::RecordNotFound
+      render_404
+    end
   end
 end

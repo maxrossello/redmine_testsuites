@@ -1149,7 +1149,7 @@ class ApplicationHelperTest < Redmine::HelperTest
   def test_html_tags
     to_test = {
       "<div>content</div>" => "<p>&lt;div&gt;content&lt;/div&gt;</p>",
-      "<div class=\"bold\">content</div>" => "<p>&lt;div class=&quot;bold&quot;&gt;content&lt;/div&gt;</p>",
+      "<div class=\"bold\">content</div>" => "<p>&lt;div class=\"bold\"&gt;content&lt;/div&gt;</p>",
       "<script>some script;</script>" => "<p>&lt;script&gt;some script;&lt;/script&gt;</p>",
       # do not escape pre/code tags
       "<pre>\nline 1\nline2</pre>" => pre_wrapper("<pre data-clipboard-target=\"pre\">line 1\nline2</pre>"),

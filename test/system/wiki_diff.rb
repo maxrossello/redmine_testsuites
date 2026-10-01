@@ -17,16 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require_relative '../test_helper'
+class WikiDiff < Redmine::Helpers::Diff
+  attr_reader :content_to, :content_from
 
-class ProjectsQueriesHelperTest < Redmine::HelperTest
-  include ProjectsQueriesHelper
-
-  def test_csv_value
-    c_status = QueryColumn.new(:status)
-    c_parent_id = QueryColumn.new(:parent_id)
-
-    assert_equal "active", csv_value(c_status, Project.find(1), 1)
-    assert_equal "eCookbook", csv_value(c_parent_id, Project.find(4), 1)
+  def initialize(content_to, content_from)
+    @content_to = content_to
+    @content_from = content_from
+    super(content_to.text, content_from.text)
   end
 end
