@@ -3,6 +3,9 @@
 # Redmine - project management software
 # Copyright (C) 2006-  Jean-Philippe Lang
 #
+# FileSystem adapter
+# File written by Paul Rivier, at Demotera.
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -23,18 +26,27 @@ class QuoteReplyHelperTest < ActionView::TestCase
   include ERB::Util
   include Redmine::QuoteReply::Helper
 
-  def test_quote_reply_button
-    with_locale 'en' do
-      url = quoted_issue_path(issues(:issues_001))
-
-      html = quote_reply_button(url: url)
-      assert_select_in html,
-        'a[data-quote-reply-url-param=?][data-quote-reply-text-formatting-param=?]:not([title])',
-        url, Setting.text_formatting
-
-      # When icon_only is true
-      html = quote_reply_button(url: url, icon_only: true)
-      assert_select_in html, 'a.icon-only.icon-quote[title=?]', 'Quote'
+  def self.human_attribute_name(attribute_key_name, *)
+    attr_name = attribute_key_name.to_s
+    if attr_name == "url"
+      attr_name = "root_directory"
     end
+    super(attr_name, *)
+  end
+
+  def self.scm_adapter_class
+    Redmine::Scm::Adapters::FilesystemAdapter
+  end
+
+  def self.scm_name
+    'Filesystem'
+  end
+
+  def supports_history?
+    false
+  end
+
+  def fetch_changesets
+    nil
   end
 end

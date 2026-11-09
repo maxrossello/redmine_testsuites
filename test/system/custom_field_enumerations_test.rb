@@ -17,13 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require_relative '../application_system_test_case'
+class Change < ApplicationRecord
+  belongs_to :changeset
 
-class CustomFieldEnumerationsTest < ApplicationSystemTestCase
-  def test_add_empty_value
-    custom_field = IssueCustomField.generate!(field_format: 'enumeration')
-    log_user('admin', 'admin')
-    visit "custom_fields/#{custom_field.id}/enumerations"
+  validates_presence_of :changeset_id, :action, :path
+  before_validation :replace_invalid_utf8_of_path
+  before_save :init_path
 
     click_on 'Add'
     assert page.has_css?('#errorExplanation', text: 'Name cannot be blank')

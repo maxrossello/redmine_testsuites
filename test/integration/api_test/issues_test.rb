@@ -364,6 +364,42 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     assert_equal 1, json['issue']['children'].count {|child| child.key?('children')}
   end
 
+  def generate_issue_with_invisible_descendants
+    issue = Issue.generate_with_descendants!(:project_id => 1)
+    child = issue.children.first
+    Issue.generate!(:project => issue.project, :subject => 'Private child', :parent_issue_id => issue.id, :is_private => true)
+    Issue.generate!(:project => issue.project, :subject => 'Private grandchild', :parent_issue_id => child.id, :is_private => true)
+    Issue.generate!(:project_id => 5, :subject => 'Child in private project', :parent_issue_id => issue.id)
+    issue.reload
+  end
+
+  test "GET /issues/:id.xml with subtasks should not include invisible descendants" do
+    issue = generate_issue_with_invisible_descendants
+    get "/issues/#{issue.id}.xml?include=children"
+
+    assert_select 'issue id', :text => issue.id.to_s do
+      assert_select '~ children[type=array] > issue', 2
+      assert_select '~ children[type=array] > issue > children > issue', 1
+    end
+    assert_select 'subject', :text => 'Child1'
+    assert_select 'subject', :text => 'Child2'
+    assert_select 'subject', :text => 'Child11'
+    assert_select 'subject', :text => 'Private child', :count => 0
+    assert_select 'subject', :text => 'Private grandchild', :count => 0
+    assert_select 'subject', :text => 'Child in private project', :count => 0
+  end
+
+  test "GET /issues/:id.json with subtasks should not include invisible descendants" do
+    issue = generate_issue_with_invisible_descendants
+    get "/issues/#{issue.id}.json?include=children"
+
+    json = ActiveSupport::JSON.decode(response.body)
+    children = json['issue']['children']
+    assert_equal ['Child1', 'Child2'], children.pluck('subject')
+    assert_equal ['Child11'], children.first['children'].pluck('subject')
+    assert_nil children.last['children']
+  end
+
   test "GET /issues/:id.json with no spent time should return floats" do
     issue = Issue.generate!
     get "/issues/#{issue.id}.json"
@@ -406,6 +442,30 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     assert_select 'issue changesets[type=array]' do
       assert_select 'changeset', 0
     end
+  end
+
+  test "GET /issues/:id.json?include=changesets authenticated via OAuth should not include changesets without view_changesets scope" do
+    Issue.find(1).changesets << Changeset.generate!(:comments => 'oauth changeset')
+
+    get '/issues/1.json?include=changesets', :headers => oauth_credentials('jsmith', 'view_issues')
+
+    assert_response :success
+    assert_equal [], response_data['issue']['changesets']
+  end
+
+  test "GET /issues/:id.json?include=changesets authenticated via OAuth should include changesets with view_changesets scope" do
+    Issue.find(1).changesets << Changeset.generate!(:comments => 'oauth changeset')
+
+    get '/issues/1.json?include=changesets', :headers => oauth_credentials('jsmith', 'view_issues view_changesets')
+
+    assert_response :success
+    assert_equal ['oauth changeset'], response_data['issue']['changesets'].pluck('comments')
+  end
+
+  test "GET /issues/:id.json authenticated via OAuth with an empty scope should be denied" do
+    get '/issues/1.json', :headers => oauth_credentials('jsmith', '')
+
+    assert_response :forbidden
   end
 
   test "GET /issues/:id.xml?include=allowed_statuses should include available statuses" do
@@ -621,6 +681,27 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
         :headers => credentials('jsmith'))
       assert_response :created
     end
+  end
+
+  test "POST /issues.json with copy_from authenticated via OAuth should not copy an issue without view_issues scope" do
+    assert_no_difference('Issue.count') do
+      post(
+        '/issues.json',
+        :params => {:copy_from => 4, :issue => {:project_id => 2}},
+        :headers => oauth_credentials('jsmith', 'add_issues copy_issues'))
+    end
+    assert_response :not_found
+  end
+
+  test "POST /issues.json with copy_from authenticated via OAuth should copy an issue with view_issues scope" do
+    assert_difference('Issue.count') do
+      post(
+        '/issues.json',
+        :params => {:copy_from => 4, :issue => {:project_id => 2}},
+        :headers => oauth_credentials('jsmith', 'add_issues copy_issues view_issues'))
+    end
+    assert_response :created
+    assert_equal Issue.find(4).description, response_data['issue']['description']
   end
 
   test "POST /issues.json without tracker_id should accept custom fields" do
@@ -885,6 +966,27 @@ class Redmine::ApiTest::IssuesTest < Redmine::ApiTest::Base
     assert_equal "API update", issue.subject
     journal = Journal.last
     assert_equal "A new note", journal.notes
+  end
+
+  test "PUT /issues/:id.json authenticated via OAuth should not update attributes without edit_issues scope" do
+    put(
+      '/issues/6.json',
+      :params => {:issue => {:subject => 'API update', :notes => 'A new note'}},
+      :headers => oauth_credentials('jsmith', 'view_issues add_issue_notes'))
+
+    assert_response :no_content
+    assert_not_equal 'API update', Issue.find(6).subject
+    assert_equal 'A new note', Journal.last.notes
+  end
+
+  test "PUT /issues/:id.json authenticated via OAuth should not change the tracker without add_issues scope" do
+    put(
+      '/issues/1.json',
+      :params => {:issue => {:tracker_id => 2}},
+      :headers => oauth_credentials('jsmith', 'view_issues edit_issues'))
+
+    assert_response :no_content
+    assert_equal 1, Issue.find(1).tracker_id
   end
 
   test "PUT /issues/:id.json with failed update" do

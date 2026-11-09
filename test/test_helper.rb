@@ -61,6 +61,15 @@ class ActiveSupport::TestCase
   self.use_transactional_tests = true
   self.use_instantiated_fixtures  = false
 
+  # Use the same time for fixtures and tests to prevent date-dependent
+  # failures when the date changes while running the test suite.
+  FROZEN_TIME = Time.now.freeze
+
+  def before_setup
+    travel_to FROZEN_TIME
+    super
+  end
+
   # Clear Settings cache after each test to prevent test interference
   teardown do
     Setting.clear_cache
@@ -485,6 +494,23 @@ module Redmine
         else
           raise "Unknown response format: #{format}"
         end
+      end
+
+      # Returns the headers for a request authenticated with an OAuth access
+      # token of the given user, limited to the given space separated scopes
+      def oauth_credentials(login, scopes)
+        application = Doorkeeper::Application.create!(
+          :name => 'Test App',
+          :redirect_uri => 'http://localhost/callback',
+          :scopes => scopes
+        )
+        token = Doorkeeper::AccessToken.create!(
+          :application_id => application.id,
+          :resource_owner_id => User.find_by_login(login).id,
+          :scopes => scopes,
+          :expires_in => 7200
+        )
+        {'Authorization' => "Bearer #{token.plaintext_token}"}
       end
     end
 
