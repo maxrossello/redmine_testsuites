@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-#
 # Redmine - project management software
 # Copyright (C) 2006-  Jean-Philippe Lang
 #
@@ -17,22 +16,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-class Oauth2ApplicationsController < Doorkeeper::ApplicationsController
-  menu_item :applications
+
+class Comment < ApplicationRecord
+  include Redmine::SafeAttributes
+  include Redmine::Reaction::Reactable
+
+  belongs_to :commented, :polymorphic => true, :counter_cache => true
+  belongs_to :author, :class_name => 'User'
+
+  validates_presence_of :commented, :author, :content
+
+  after_create_commit :send_notification
+
+  safe_attributes 'comments'
+
+  delegate :visible?, to: :commented
+
+  def comments=(arg)
+    self.content = arg
+  end
+
+  def comments
+    content
+  end
+
+  def project
+    commented.respond_to?(:project) ? commented.project : nil
+  end
 
   private
 
-  def application_params
-    params[:doorkeeper_application] ||= {}
-    params[:doorkeeper_application][:scopes] ||= []
-
-    scopes = Redmine::AccessControl.public_permissions.map{|p| p.name.to_s}
-
-    if params[:doorkeeper_application][:scopes].is_a?(Array)
-      scopes |= params[:doorkeeper_application][:scopes]
-    else
-      scopes |= params[:doorkeeper_application][:scopes].split(/\s+/)
+  def send_notification
+    event = "#{commented.class.name.underscore}_comment_added"
+    if Setting.notified_events.include?(event)
+      Mailer.public_send(:"deliver_#{event}", self)
     end
     params[:doorkeeper_application][:scopes] = scopes.join(' ')
     super
