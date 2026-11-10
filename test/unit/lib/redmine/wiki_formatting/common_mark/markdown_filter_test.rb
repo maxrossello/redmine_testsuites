@@ -28,7 +28,7 @@ if Object.const_defined?(:Commonmarker)
         markdown,
         Redmine::WikiFormatting::CommonMark::PIPELINE_CONFIG)
       filter.call
-    end
+  end
 
     # just a basic sanity test. more formatting tests in the formatter_test
     def test_should_render_markdown
