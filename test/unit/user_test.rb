@@ -507,6 +507,7 @@ class UserTest < ActiveSupport::TestCase
   def test_password_change_should_destroy_tokens
     recovery_token = Token.create!(:user_id => 2, :action => 'recovery')
     autologin_token = Token.create!(:user_id => 2, :action => 'autologin')
+    session_token = Token.create!(:user_id => 2, :action => 'session')
 
     user = User.find(2)
     user.password, user.password_confirmation = "a new password", "a new password"
@@ -514,18 +515,49 @@ class UserTest < ActiveSupport::TestCase
 
     assert_nil Token.find_by_id(recovery_token.id)
     assert_nil Token.find_by_id(autologin_token.id)
+    assert_nil Token.find_by_id(session_token.id)
   end
 
   def test_mail_change_should_destroy_tokens
     recovery_token = Token.create!(:user_id => 2, :action => 'recovery')
     autologin_token = Token.create!(:user_id => 2, :action => 'autologin')
+    session_token = Token.create!(:user_id => 2, :action => 'session')
 
     user = User.find(2)
     user.mail = "user@somwehere.com"
     assert user.save
 
     assert_nil Token.find_by_id(recovery_token.id)
-    assert_equal autologin_token, Token.find_by_id(autologin_token.id)
+    assert_nil Token.find_by_id(autologin_token.id)
+    assert_nil Token.find_by_id(session_token.id)
+  end
+
+  def test_lock_should_destroy_tokens
+    recovery_token = Token.create!(:user_id => 2, :action => 'recovery')
+    autologin_token = Token.create!(:user_id => 2, :action => 'autologin')
+    session_token = Token.create!(:user_id => 2, :action => 'session')
+
+    user = User.find(2)
+    user.status = User::STATUS_LOCKED
+    assert user.save
+
+    assert_nil Token.find_by_id(recovery_token.id)
+    assert_nil Token.find_by_id(autologin_token.id)
+    assert_nil Token.find_by_id(session_token.id)
+  end
+
+  def test_twofa_activation_should_destroy_tokens
+    recovery_token = Token.create!(:user_id => 2, :action => 'recovery')
+    autologin_token = Token.create!(:user_id => 2, :action => 'autologin')
+    session_token = Token.create!(:user_id => 2, :action => 'session')
+
+    user = User.find(2)
+    user.twofa_scheme = 'totp'
+    assert user.save
+
+    assert_nil Token.find_by_id(recovery_token.id)
+    assert_nil Token.find_by_id(autologin_token.id)
+    assert_nil Token.find_by_id(session_token.id)
   end
 
   def test_change_on_other_fields_should_not_destroy_tokens
@@ -538,6 +570,22 @@ class UserTest < ActiveSupport::TestCase
 
     assert_equal recovery_token, Token.find_by_id(recovery_token.id)
     assert_equal autologin_token, Token.find_by_id(autologin_token.id)
+  end
+
+  def test_delete_login_tokens_should_delete_recovery_autologin_and_session_tokens
+    recovery_token = Token.create!(:user_id => 2, :action => 'recovery')
+    autologin_token = Token.create!(:user_id => 2, :action => 'autologin')
+    session_token = Token.create!(:user_id => 2, :action => 'session')
+    api_token = Token.create!(:user_id => 2, :action => 'api')
+    other_users_token = Token.create!(:user_id => 3, :action => 'session')
+
+    User.find(2).delete_login_tokens
+
+    assert_nil Token.find_by_id(recovery_token.id)
+    assert_nil Token.find_by_id(autologin_token.id)
+    assert_nil Token.find_by_id(session_token.id)
+    assert Token.find_by_id(api_token.id)
+    assert Token.find_by_id(other_users_token.id)
   end
 
   def test_validate_login_presence
@@ -1507,6 +1555,26 @@ class UserTest < ActiveSupport::TestCase
     user.oauth_scope = [:view_issues, :admin]
     assert_not user.allowed_to?(:add_issues, project)
     assert user.allowed_to?(:view_issues, project)
+  end
+
+  def test_oauth_scope_should_limit_visible_issues
+    user = User.find 2
+    user.oauth_scope = [:view_issues]
+    # project 3 is visible through the Non member role, the others through memberships
+    assert_equal [1, 2, 3, 5], Issue.visible(user).pluck(:project_id).uniq.sort
+
+    user.oauth_scope = [:view_project]
+    assert_empty Issue.visible(user)
+  end
+
+  def test_empty_oauth_scope_should_deny_all_permissions
+    user = User.find 2
+    project = Project.find 1
+    user.oauth_scope = []
+    assert_not user.allowed_to?(:add_issues, project)
+    assert_not user.allowed_to?(:view_issues, project)
+    assert_not user.allowed_to?(:add_issues, nil, global: true)
+    assert_empty Issue.visible(user)
   end
 
   def test_destroy_should_delete_associated_reactions

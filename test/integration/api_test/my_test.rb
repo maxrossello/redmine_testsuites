@@ -101,6 +101,19 @@ class Redmine::ApiTest::MyTest < Redmine::ApiTest::Base
     assert_kind_of Array, json['errors']
   end
 
+  test "PUT /my/account.json with a changed mail should not generate a session token" do
+    Token.create!(:user_id => 3, :action => 'session')
+
+    put(
+      '/my/account.json',
+      :params => {:user => {:mail => 'dave@somenet.foo'}},
+      :headers => credentials('dlopper', 'foo'))
+    assert_response :no_content
+
+    assert_equal 'dave@somenet.foo', User.find(3).mail
+    assert_empty Token.where(:user_id => 3, :action => 'session')
+  end
+
   test "GET /my/account.json authenticated via OAuth should not disclose the api_key" do
     application = Doorkeeper::Application.create!(
       :name => 'Test App',
@@ -123,6 +136,25 @@ class Redmine::ApiTest::MyTest < Redmine::ApiTest::Base
       json['user'].key?('api_key'),
       "OAuth-authenticated request must not disclose the permanent api_key"
     )
+  end
+
+  test "GET /my/account.json authenticated via OAuth with a locked user should respond with 401" do
+    application = Doorkeeper::Application.create!(
+      :name => 'Test App',
+      :redirect_uri => 'http://localhost/callback',
+      :scopes => 'view_issues'
+    )
+    token = Doorkeeper::AccessToken.create!(
+      :application_id => application.id,
+      :resource_owner_id => 2,
+      :scopes => 'view_issues',
+      :expires_in => 7200
+    )
+    User.find(2).update_column(:status, User::STATUS_LOCKED)
+
+    get '/my/account.json', :headers => {'Authorization' => "Bearer #{token.plaintext_token}"}
+
+    assert_response :unauthorized
   end
 
   test "GET /my/account.json authenticated via API key should disclose the api_key" do
